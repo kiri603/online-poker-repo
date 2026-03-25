@@ -1,0 +1,173 @@
+<button
+  class="global-sound-btn"
+  @click="toggleSound"
+  :class="{ 'is-muted': !soundStatus }"
+>
+  <svg class="icon" aria-hidden="true" style="font-size: 20px">
+    <use
+      :xlink:href="soundStatus ? '#icon-soundsize' : '#icon-mute-copy'"
+    ></use>
+  </svg>
+</button>
+<div class="waiting-room">
+  <div class="top-right-settings">
+    <button class="settings-btn small" @click="showSettings = !showSettings">
+      ⚙️ {{ showSettings ? "收起设置" : "房间设置" }}
+    </button>
+
+    <div v-if="showSettings" class="settings-panel">
+      <h3
+        style="
+          margin-top: 0;
+          color: #f1c40f;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+          padding-bottom: 10px;
+          font-size: 16px;
+        "
+      >
+        房间高级设置
+      </h3>
+
+      <div class="settings-list mini">
+        <label class="setting-item">
+          <span>🀄 经典场 (默认规则)</span>
+          <input type="checkbox" :checked="isClassicMode" disabled />
+        </label>
+
+        <label class="setting-item disabled-item">
+          <span>🃏 启用赖子牌 (开发中)</span>
+          <input
+            type="checkbox"
+            v-model="roomSettings.enableWildcard"
+            disabled
+          />
+        </label>
+
+        <label class="setting-item">
+          <span>📜 启用锦囊牌</span>
+          <input
+            type="checkbox"
+            v-model="roomSettings.enableScrollCards"
+            :disabled="ownerId !== userId"
+            @change="handleScrollCardsChange"
+          />
+        </label>
+        <label class="setting-item">
+          <span>⚔️ 启用武将技能</span>
+          <input
+            type="checkbox"
+            v-model="roomSettings.enableSkills"
+            :disabled="ownerId !== userId"
+            @change="handleScrollCardsChange"
+          />
+        </label>
+      </div>
+
+      <p
+        v-if="ownerId !== userId"
+        class="hint-text"
+        style="color: #e74c3c; font-size: 12px; margin-top: 15px"
+      >
+        （仅房主可修改设置）
+      </p>
+    </div>
+  </div>
+
+  <h2 class="art-subtitle">等待大厅</h2>
+  <div v-if="ownerId !== userId && !isReady" class="please-ready-hint">
+    ⚠️ 还在等什么？请准备！
+  </div>
+
+  <div class="players-list">
+    <h3>房间内玩家 ({{ otherPlayers.length + (isSpectator ? 0 : 1) }}/4)</h3>
+    <div class="player-tags">
+      <span class="tag me" v-if="!isSpectator">
+        {{ userId }} (你)
+        <span class="status-badge"
+          >{{ ownerId === userId ? "👑房主" : isReady ? "✅已准备" : "❌未准备"
+          }}</span
+        >
+      </span>
+
+      <span class="tag" v-for="p in otherPlayers" :key="p.userId">
+        {{ p.userId }}
+        <span class="status-badge"
+          >{{ ownerId === p.userId ? "👑房主" : p.isReady ? "✅已准备" :
+          "❌未准备" }}</span
+        >
+        <button
+          class="kick-btn"
+          v-if="ownerId === userId || userId === 'room_manager'"
+          @click="kickPlayer(p.userId)"
+        >
+          踢出
+        </button>
+      </span>
+    </div>
+
+    <h3 v-if="spectators.length > 0" style="margin-top: 25px; color: #9b59b6">
+      👁️ 旁观者 / 管理员席位
+    </h3>
+    <div class="player-tags" v-if="spectators.length > 0">
+      <div class="player-tags" v-if="spectators.length > 0">
+        <span
+          class="tag"
+          style="background: #8e44ad; border-color: #9b59b6"
+          v-for="specId in spectators"
+          :key="specId"
+        >
+          {{ specId === 'room_manager' ? '🛡️ 系统巡查员' : specId }} {{ specId
+          === userId ? '(你)' : '' }}
+
+          <button
+            class="kick-btn"
+            v-if="(ownerId === userId || userId === 'room_manager') && specId !== userId && specId !== 'room_manager'"
+            @click="kickPlayer(specId)"
+          >
+            踢出
+          </button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="waiting-actions">
+    <template v-if="userId === 'room_manager'">
+      <button
+        class="kick-btn"
+        @click="disbandRoom"
+        style="
+          background: #c0392b;
+          font-size: 18px;
+          padding: 12px 30px;
+          border-radius: 8px;
+        "
+      >
+        🚨 强制解散该房间
+      </button>
+    </template>
+
+    <template v-else-if="ownerId === userId">
+      <button
+        class="start-btn"
+        @click="startGame"
+        :disabled="otherPlayers.length === 0 || !allReady"
+      >
+        {{ otherPlayers.length === 0 ? "需要至少2人" : !allReady ?
+        "等待其他玩家准备" : "开始游戏" }}
+      </button>
+    </template>
+
+    <template v-else>
+      <button
+        class="ready-btn"
+        @click="toggleReady"
+        :class="{ 'is-ready': isReady }"
+      >
+        {{ isReady ? "取消准备" : "准备" }}
+      </button>
+    </template>
+
+    <button class="return-btn" @click="returnToLobby">返回大厅</button>
+  </div>
+</div>

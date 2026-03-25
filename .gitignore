@@ -1,0 +1,14 @@
+# === 前端忽略 ===
+poker-frontend/node_modules/
+poker-frontend/dist/
+poker-frontend/.env.local
+
+# === 后端忽略 ===
+poker/target/
+poker/*.jar
+
+# === IDE 忽略 ===
+.idea/
+.vscode/
+*.iml
+.DS_Store
