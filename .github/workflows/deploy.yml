@@ -45,31 +45,33 @@ jobs:
           target: "/tmp"
 
       - name: 🔄 远程执行替换与重启脚本
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            echo "1. 停止旧版后端..."
-            ppkill -f "java -jar poker" || true
-
-            echo "2. 备份旧版本..."
-            mkdir -p /root/backup/frontend /root/backup/backend
-            rm -rf /root/backup/frontend/* /root/backup/backend/*
-            mv /var/www/html/* /root/backup/frontend/ 2>/dev/null || true
-            mv /poker/poker-0.0.1-SNAPSHOT.jar /root/backup/backend/ 2>/dev/null || true
-
-            echo "3. 部署新版本..."
-            mkdir -p /var/www/html /poker
-            mv /tmp/poker-frontend/dist/* /var/www/html/
-            mv /tmp/poker/target/poker-0.0.1-SNAPSHOT.jar /poker/
-
-            echo "4. 启动后端并重启 Nginx..."
-            cd /poker
-            nohup java -jar poker-0.0.1-SNAPSHOT.jar > game.log 2>&1 &
-            systemctl restart nginx
-
-            echo "5. 清理临时垃圾..."
-            rm -rf /tmp/poker-frontend /tmp/poker
-            echo "✅ 部署大功告成！"
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        script: |
+          echo "1. 停止旧版后端..."
+          # 【修改】：使用 -9 强制秒杀，并强行等待 3 秒，确保端口绝对释放！
+          killall -9 java || true
+          sleep 3
+          
+          echo "2. 备份旧版本..."
+          mkdir -p /root/backup/frontend /root/backup/backend
+          rm -rf /root/backup/frontend/* /root/backup/backend/*
+          mv /var/www/html/* /root/backup/frontend/ 2>/dev/null || true
+          mv /poker/poker-0.0.1-SNAPSHOT.jar /root/backup/backend/ 2>/dev/null || true
+          
+          echo "3. 部署新版本..."
+          mkdir -p /var/www/html /poker
+          mv /tmp/poker-frontend/dist/* /var/www/html/
+          mv /tmp/poker/target/poker-0.0.1-SNAPSHOT.jar /poker/
+          
+          echo "4. 启动后端并重启 Nginx..."
+          cd /poker
+          nohup java -jar poker-0.0.1-SNAPSHOT.jar > game.log 2>&1 &
+          systemctl restart nginx
+          
+          echo "5. 清理临时垃圾..."
+          rm -rf /tmp/poker-frontend /tmp/poker
+          echo "✅ 部署大功告成！"
