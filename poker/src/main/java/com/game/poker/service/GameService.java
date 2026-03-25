@@ -125,6 +125,8 @@ public class GameService {
     public void doStartGame(GameRoom room) {
         room.getSettings().entrySet().removeIf(entry -> entry.getKey().startsWith("gushou_active_"));
         room.getSettings().remove("luanjian_initiator");
+        room.getSettings().remove("jdsr_target");
+        room.getSettings().remove("jdsr_initiator");
         room.setStarted(true);
         room.setPhase("PLAYING");
         // 【修改】：加入锦囊牌的发牌逻辑
@@ -769,6 +771,10 @@ public class GameService {
         room.getSettings().entrySet().removeIf(entry -> entry.getKey().startsWith("gushou_active_"));
         room.getSettings().remove("luanjian_initiator");
         if (room != null) {
+            room.getSettings().entrySet().removeIf(entry -> entry.getKey().startsWith("gushou_active_"));
+            room.getSettings().remove("luanjian_initiator");
+            room.getSettings().remove("jdsr_target");
+            room.getSettings().remove("jdsr_initiator");
             room.setStarted(false);
             room.getTableCards().clear();
             room.setLastPlayUserId("");

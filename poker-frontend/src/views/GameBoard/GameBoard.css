@@ -884,16 +884,26 @@
   }
 
   .skills-container {
-    flex-direction: column; /* 保持纵向上下堆叠 */
-    gap: 15px; /* 卡片之间的上下间距 */
-    width: 85%; /* 占据手机屏幕的合理宽度 */
-    max-width: 340px; /* 限制最大宽度，使其看起来像一个精致的面板 */
-    max-height: 70vh; /* 屏幕太矮时允许上下滑动 */
-    overflow-y: auto; /* 允许纵向滑动查看所有技能 */
-    overflow-x: hidden; /* 【核心】：绝对禁止左右滑动！ */
+    flex-direction: column;
+    gap: 15px;
+    width: 85%;
+    max-width: 340px;
+    max-height: 55vh; /* 【修改】：稍微降低高度，给标题和下方倒计时留出呼吸空间 */
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 10px;
-    margin: 0 auto; /* 整体水平居中 */
-    align-items: stretch; /* 【核心】：让内部所有技能卡片自动拉伸，与外部容器宽度100%严丝合缝 */
+    margin: 0 auto;
+    align-items: stretch;
+    justify-content: flex-start; /* ====== 【核心修复】：解决 Flex 居中导致的顶部内容被强制裁剪问题 ====== */
+  }
+
+  /* ====== 【新增】：为手机端选将框定制顺滑的隐藏式滚动条 ====== */
+  .skills-container::-webkit-scrollbar {
+    width: 4px;
+  }
+  .skills-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
   }
 
   .skill-card {
