@@ -175,19 +175,23 @@ public class GameService {
         Player p = getPlayer(room, userId);
         if (p.isHasUsedSkillThisTurn()) throw new RuntimeException("本回合已使用过技能！");
 
-        if (cards.size() != 1) throw new RuntimeException("乱箭只能弃置 1 张牌！");
-        if (!cards.get(0).getSuit().equals("♠") && !cards.get(0).getSuit().equals("♣")) throw new RuntimeException("乱箭必须使用黑色牌！");
-
-        Card playedCard = cards.get(0);
-        java.util.Iterator<Card> iterator = p.getHandCards().iterator();
-        boolean found = false;
-        while (iterator.hasNext()) {
-            Card handCard = iterator.next();
-            if (handCard.getSuit().equals(playedCard.getSuit()) && handCard.getRank().equals(playedCard.getRank())) {
-                iterator.remove(); found = true; break;
-            }
+        // 【修改：变成消耗 2 张黑色牌】
+        if (cards.size() != 2) throw new RuntimeException("乱箭只能弃置 2 张牌！");
+        for (Card c : cards) {
+            if (!c.getSuit().equals("♠") && !c.getSuit().equals("♣")) throw new RuntimeException("乱箭必须使用黑色牌！");
         }
-        if (!found) throw new RuntimeException("手牌不足！");
+
+        for (Card playedCard : cards) {
+            java.util.Iterator<Card> iterator = p.getHandCards().iterator();
+            boolean found = false;
+            while (iterator.hasNext()) {
+                Card handCard = iterator.next();
+                if (handCard.getSuit().equals(playedCard.getSuit()) && handCard.getRank().equals(playedCard.getRank())) {
+                    iterator.remove(); found = true; break;
+                }
+            }
+            if (!found) throw new RuntimeException("手牌不足！");
+        }
 
         room.getDiscardPile().addAll(cards);
         p.setHasUsedSkillThisTurn(true);
@@ -198,13 +202,28 @@ public class GameService {
 
         room.getSettings().put("luanjian_initiator", userId); // 标记乱箭发动者
 
-        // ====== 【核心】：将全场所有人（包含自己）加入响应队列 ======
         for (Player other : room.getPlayers()) {
             if ("PLAYING".equals(other.getStatus())) {
                 room.getPendingAoePlayers().add(other.getUserId());
             }
         }
-        if (room.getPendingAoePlayers().isEmpty()) endAoePhase(room);
+
+        if (room.getPendingAoePlayers().isEmpty()) {
+            endAoePhase(room);
+        } else {
+            // ====== 【核心修复】：解决空手牌玩家卡死等 10 秒的 Bug ======
+            List<String> autoPassPlayers = new ArrayList<>();
+            for (String uid : room.getPendingAoePlayers()) {
+                Player ap = getPlayer(room, uid);
+                if (ap != null && ap.getHandCards().isEmpty()) {
+                    autoPassPlayers.add(uid);
+                }
+            }
+            // 自动帮没牌的人点“要不起”
+            for (String uid : autoPassPlayers) {
+                respondAoe(roomId, uid, null);
+            }
+        }
     }
 
 
@@ -405,39 +424,47 @@ public class GameService {
 
     public void resolveGuanxing(String roomId, String userId, List<Card> selected) {
         GameRoom room = getRoom(roomId);
-        Player p = getPlayer(room, userId);
-        if (!room.getPendingAoePlayers().contains(userId) || !"GUANXING".equals(room.getCurrentAoeType())) return;
+        if (room == null) return;
 
-        List<Card> fourCards = (List<Card>) room.getSettings().get("guanxingCards");
-        List<Card> discardCards = new ArrayList<>(fourCards);
-        for (Card sel : selected) {
-            p.getHandCards().add(sel);
-            discardCards.removeIf(c -> c.getSuit().equals(sel.getSuit()) && c.getRank().equals(sel.getRank()));
+        // ====== 【加锁：防止观星阶段的高频点击并发异常】 ======
+        synchronized (room) {
+            Player p = getPlayer(room, userId);
+            if (!room.getPendingAoePlayers().contains(userId) || !"GUANXING".equals(room.getCurrentAoeType())) return;
+
+            // ====== 【核心修复：防止网络卡顿双击导致的 NullPointerException 闪退】 ======
+            List<Card> fourCards = (List<Card>) room.getSettings().get("guanxingCards");
+            if (fourCards == null) {
+                log.warn("观星请求已失效或已被处理，丢弃重复请求。");
+                return;
+            }
+
+            if (selected.size() != 2) throw new RuntimeException("观星必须选择 2 张牌！");
+
+            List<Card> discardCards = new ArrayList<>(fourCards);
+            for (Card sel : selected) {
+                p.getHandCards().add(sel);
+                discardCards.removeIf(c -> c.getSuit().equals(sel.getSuit()) && c.getRank().equals(sel.getRank()));
+            }
+            room.getDiscardPile().addAll(discardCards);
+            room.getSettings().remove("guanxingCards");
+
+            String context = (String) room.getSettings().remove("guanxingContext");
+            String savedAoeType = (String) room.getSettings().remove("savedAoeType");
+            room.setCurrentAoeType(savedAoeType);
+
+            java.util.Set<String> savedPending = (java.util.Set<String>) room.getSettings().remove("savedPendingAoePlayers");
+            room.getPendingAoePlayers().clear();
+            if (savedPending != null) room.getPendingAoePlayers().addAll(savedPending);
+
+            checkOverloadAndWin(room, p);
+
+            if ("PASS".equals(context)) {
+                handleNextTurnAfterPass(room);
+            } else if ("AOE".equals(context)) {
+                finishAoeResponse(room, userId);
+            }
+            room.setCurrentTurnStartTime(System.currentTimeMillis());
         }
-        room.getDiscardPile().addAll(discardCards);
-        room.getSettings().remove("guanxingCards");
-
-        // ====== 【核心修复 3：安全读取冷藏状态】 ======
-        String context = (String) room.getSettings().remove("guanxingContext");
-
-        String savedAoeType = (String) room.getSettings().remove("savedAoeType");
-        room.setCurrentAoeType(savedAoeType);
-
-        java.util.Set<String> savedPending = (java.util.Set<String>) room.getSettings().remove("savedPendingAoePlayers");
-        room.getPendingAoePlayers().clear();
-        if (savedPending != null) {
-            room.getPendingAoePlayers().addAll(savedPending);
-        }
-        // ==========================================
-
-        checkOverloadAndWin(room, p);
-
-        if ("PASS".equals(context)) {
-            handleNextTurnAfterPass(room);
-        } else if ("AOE".equals(context)) {
-            finishAoeResponse(room, userId);
-        }
-        room.setCurrentTurnStartTime(System.currentTimeMillis());
     }
     /**
      * 玩家出牌
@@ -502,7 +529,6 @@ public class GameService {
 
                 // ====== 【新增】：借刀杀人结算逻辑 ======
                 if ("JDSR".equals(aoeCard.getRank())) {
-                    // 寻找下一位活着的玩家当“刀”
                     Player nextPlayer = null;
                     int currIndex = room.getPlayers().indexOf(player);
                     for (int i = 1; i < room.getPlayers().size(); i++) {
@@ -523,6 +549,17 @@ public class GameService {
                     // 回合强行移交给“刀”，开始 10 秒出牌倒计时
                     room.setCurrentTurnIndex(room.getPlayers().indexOf(nextPlayer));
                     room.setCurrentTurnStartTime(System.currentTimeMillis());
+
+                    // ====== 【核心修复】：借刀作为最后一张牌打出时，立即获胜 ======
+                    if (player.getHandCards().isEmpty()) {
+                        player.setStatus("WON");
+                        long aliveCount = room.getPlayers().stream().filter(p -> "PLAYING".equals(p.getStatus())).count();
+                        if (aliveCount <= 1) {
+                            for (Player p : room.getPlayers()) {
+                                if ("PLAYING".equals(p.getStatus())) p.setStatus("WON");
+                            }
+                        }
+                    }
                     return true;
                 }
 
@@ -569,10 +606,23 @@ public class GameService {
 
                 if (room.getPendingAoePlayers().isEmpty()) {
                     endAoePhase(room);
+                } else {
+                    // ====== 【核心修复】：如果你打出万箭/南蛮后手牌为0，自动帮你“要不起”摸2张，防止卡死倒计时 ======
+                    List<String> autoPassPlayers = new ArrayList<>();
+                    for (String uid : room.getPendingAoePlayers()) {
+                        Player ap = getPlayer(room, uid);
+                        if (ap != null && ap.getHandCards().isEmpty()) {
+                            autoPassPlayers.add(uid);
+                        }
+                    }
+                    for (String uid : autoPassPlayers) {
+                        respondAoe(roomId, uid, null);
+                    }
                 }
                 return true;
             } else {
-                // ====== 【核心修复】：严禁把多张锦囊牌当作对子/顺子等普通牌型打出 ======
+                // ====== 【核心保留】：严禁把多张锦囊牌当作对子/顺子等普通牌型打出 ======
+                // （这个 else 绝对不能删，否则玩家可以双重出牌作弊）
                 for (Card c : playedCards) {
                     if ("SCROLL".equals(c.getSuit())) {
                         throw new RuntimeException("锦囊牌只能单张使用，不可与其他牌组合出牌！");
@@ -779,88 +829,69 @@ public class GameService {
             }
         }
     }
-    // 【回退版】：恢复基础的离开房间逻辑，移除对 hasAlivePlayer 的流式校验
     public void safeLeaveRoom(String roomId, String userId) {
         GameRoom room = roomMap.get(roomId);
         if (room == null) return;
         Player p = getPlayer(room, userId);
 
-        if (room.isStarted()) {
-            if (p != null) {
-                p.setDisconnected(true); // 无论死活，只要在对局中跑了，先标记为幽灵，保证 List 长度不变防 Bug
+        // ====== 【核心修复 1：加锁防止玩家退出时与其他操作并发冲突】 ======
+        synchronized (room) {
+            if (room.isStarted()) {
+                if (p != null) {
+                    p.setDisconnected(true); // 无论死活，标记为幽灵
+                    if ("PLAYING".equals(p.getStatus())) {
+                        p.setStatus("LOST");
+                        log.info("❌ 玩家 [{}] 游戏中途断线，已被自动淘汰！", userId);
 
-                if ("PLAYING".equals(p.getStatus())) {
-                    p.setStatus("LOST"); // 正在打牌的人跑了，强制淘汰
-                    log.info("❌ 玩家 [{}] 游戏中途断线，已被自动淘汰出局！", userId);
-
-                    // 丢弃手牌
-                    if (p.getHandCards() != null) {
-                        room.getDiscardPile().addAll(p.getHandCards());
-                        p.getHandCards().clear();
-                    }
-                    room.getPendingAoePlayers().remove(userId);
-                    if (room.getCurrentAoeType() != null && room.getPendingAoePlayers().isEmpty()) {
-                        endAoePhase(room);
-                    }
-
-                    // 检查是否只剩一个活人
-                    long aliveCount = room.getPlayers().stream().filter(player -> "PLAYING".equals(player.getStatus())).count();
-                    if (aliveCount <= 1) {
-                        Player lastPlayer = room.getPlayers().stream().filter(player -> "PLAYING".equals(player.getStatus())).findFirst().orElse(null);
-                        if (lastPlayer != null) {
-                            lastPlayer.setStatus("WON");
-                            log.info("🏆 其他玩家均已断线或淘汰！玩家 [{}] 躺赢！", lastPlayer.getUserId());
+                        if (p.getHandCards() != null) {
+                            room.getDiscardPile().addAll(p.getHandCards());
+                            p.getHandCards().clear();
                         }
-                    } else {
-                        // 如果游戏还没结束，处理牌权
-                        boolean isCurrentTurn = room.getPlayers().get(room.getCurrentTurnIndex()).getUserId().equals(userId);
-
-                        if (userId.equals(room.getLastPlayPlayerId())) {
-                            if (!room.getLastPlayedCards().isEmpty()) {
-                                room.getDiscardPile().addAll(room.getLastPlayedCards());
-                            }
-                            room.getLastPlayedCards().clear();
-                            room.setLastPlayPlayerId("");
+                        room.getPendingAoePlayers().remove(userId);
+                        if (room.getCurrentAoeType() != null && room.getPendingAoePlayers().isEmpty()) {
+                            endAoePhase(room);
                         }
-                        if (isCurrentTurn && room.getCurrentAoeType() == null) {
-                            nextTurn(room);
-                            String nextUserId = room.getPlayers().get(room.getCurrentTurnIndex()).getUserId();
-                            if (nextUserId.equals(room.getLastPlayPlayerId())) {
-                                if (!room.getLastPlayedCards().isEmpty()) {
-                                    room.getDiscardPile().addAll(room.getLastPlayedCards());
-                                }
+
+                        long aliveCount = room.getPlayers().stream().filter(player -> "PLAYING".equals(player.getStatus())).count();
+                        if (aliveCount <= 1) {
+                            Player lastPlayer = room.getPlayers().stream().filter(player -> "PLAYING".equals(player.getStatus())).findFirst().orElse(null);
+                            if (lastPlayer != null) lastPlayer.setStatus("WON");
+                        } else {
+                            boolean isCurrentTurn = room.getPlayers().get(room.getCurrentTurnIndex()).getUserId().equals(userId);
+                            if (userId.equals(room.getLastPlayPlayerId())) {
+                                if (!room.getLastPlayedCards().isEmpty()) room.getDiscardPile().addAll(room.getLastPlayedCards());
                                 room.getLastPlayedCards().clear();
                                 room.setLastPlayPlayerId("");
                             }
+                            if (isCurrentTurn && room.getCurrentAoeType() == null) {
+                                nextTurn(room);
+                                String nextUserId = room.getPlayers().get(room.getCurrentTurnIndex()).getUserId();
+                                if (nextUserId.equals(room.getLastPlayPlayerId())) {
+                                    if (!room.getLastPlayedCards().isEmpty()) room.getDiscardPile().addAll(room.getLastPlayedCards());
+                                    room.getLastPlayedCards().clear();
+                                    room.setLastPlayPlayerId("");
+                                }
+                            }
                         }
                     }
+                } else {
+                    room.getSpectators().remove(userId);
                 }
-
-                // 恢复为旧版的判空逻辑
-                if (room.getPlayers().isEmpty() && room.getSpectators().isEmpty()) {
-                    roomMap.remove(roomId);
-                }
-
             } else {
-                room.getSpectators().remove(userId); // 纯旁观者随时可以跑
-                if (room.getPlayers().isEmpty() && room.getSpectators().isEmpty()) {
-                    roomMap.remove(roomId);
+                if (p != null) room.getPlayers().remove(p);
+                room.getSpectators().remove(userId);
+                if (room.getOwnerId() != null && room.getOwnerId().equals(userId)) {
+                    Player nextOwner = room.getPlayers().stream().filter(player -> !player.isDisconnected()).findFirst().orElse(null);
+                    if (nextOwner != null) room.setOwnerId(nextOwner.getUserId());
                 }
             }
-        } else {
-            // 游戏未开始（等待大厅状态），随便怎么移出 List 都行
-            if (p != null) room.getPlayers().remove(p);
-            room.getSpectators().remove(userId);
 
-            // 恢复为旧版的判空和移交房主逻辑
-            if (room.getPlayers().isEmpty() && room.getSpectators().isEmpty()) {
+            // ====== 【核心修复 2：彻底消灭幽灵房间】 ======
+            // 只要房间里没有任何存活状态的人（全部是 disconnected），立刻销毁房间释放内存！
+            boolean hasAlivePlayer = room.getPlayers().stream().anyMatch(player -> !player.isDisconnected());
+            if (!hasAlivePlayer && room.getSpectators().isEmpty()) {
+                log.info("♻️ 房间 [{}] 已无真实活人，系统已彻底清空并销毁该幽灵房间！", roomId);
                 roomMap.remove(roomId);
-            } else if (room.getOwnerId() != null && room.getOwnerId().equals(userId)) {
-                // 如果房主跑了，移交房主给下一个
-                Player nextOwner = room.getPlayers().isEmpty() ? null : room.getPlayers().get(0);
-                if (nextOwner != null) {
-                    room.setOwnerId(nextOwner.getUserId());
-                }
             }
         }
     }
@@ -907,10 +938,12 @@ public class GameService {
                 room.getDiscardPile().add(discardCard);
             }
 
-            // ====== 【修改】：乱箭发动者响应结束后，摸一张牌 ======
+            // ====== 【修改】：乱箭发动者响应结束后，摸 2 张牌 ======
             if (isLuanjianInitiator) {
-                Card c = drawCard(room);
-                if (c != null) player.getHandCards().add(c);
+                for(int i=0; i<2; i++){
+                    Card c = drawCard(room);
+                    if (c != null) player.getHandCards().add(c);
+                }
                 room.getSettings().remove("luanjian_initiator"); // 清除标记
             }
 

@@ -225,7 +225,7 @@
           :disabled="
             jdsrTarget === userId ? true :
             mySkill === 'ZHIHENG' ? selectedCards.length !== 1 : 
-            mySkill === 'LUANJIAN' ? (selectedCards.length < 1 || selectedCards.length > 2) : 
+            mySkill === 'LUANJIAN' ? selectedCards.length !== 2 :
             mySkill === 'GUSHOU' ? (tableCards.length === 0 && !onlyHasScrolls) : 
             false
           "
@@ -385,8 +385,8 @@
       <div class="skill-card luanjian-card" @click="selectSkill('LUANJIAN')">
         <h3>🏹 乱箭</h3>
         <p>
-          出牌阶段限一次，弃置 1
-          张黑色手牌当做【万箭齐发】。结算时你可以使用任意牌响应，响应后摸 1
+          出牌阶段限一次，弃置 2
+          张黑色手牌当做【万箭齐发】。结算时你可以使用任意牌响应，响应后摸 2
           张牌。
         </p>
       </div>

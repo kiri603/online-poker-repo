@@ -114,7 +114,7 @@ const replaceCard = () => {
     c.selected = false;
     // =======================================================
   } else if (mySkill.value === "LUANJIAN") {
-    if (selectedCards.value.length !== 1) return alert("乱箭只能选择 1 张牌");
+    if (selectedCards.value.length !== 2) return alert("乱箭只能选择 1 张牌");
     const isBlack = selectedCards.value.every(
       (c) => c.suit === "♠" || c.suit === "♣",
     );

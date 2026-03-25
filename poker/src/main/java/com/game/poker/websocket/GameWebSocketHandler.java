@@ -573,7 +573,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                             boolean isPlaying = room.isStarted() && p != null && "PLAYING".equals(p.getStatus());
 
                             gameService.safeLeaveRoom(roomId, userId);
-
+                            if (gameService.getRoom(roomId) == null) {
+                                roomSessions.remove(roomId);
+                                break;
+                            }
                             if (isPlaying) {
                                 broadcastToRoom(roomId, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"玩家 [" + userId + "] 中途逃跑，已被自动淘汰！\"}"));
 
@@ -635,83 +638,87 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         GameRoom room = gameService.getRoom(roomId);
         if (room == null) return;
 
-        if (Boolean.TRUE.equals(room.getSettings().get("justShuffled"))) {
-            broadcastToRoom(roomId, new TextMessage("{\"event\": \"DECK_SHUFFLED\"}"));
-            room.getSettings().remove("justShuffled"); // 播完立刻擦除标记，防止重复播
-        }
+        String jsonPayload; // 将 JSON 字符串的组装提取出来
 
-        if (room.getSettings().containsKey("cardWarningUserId")) {
-            String warningUserId = (String) room.getSettings().get("cardWarningUserId");
-            int warningCount = (Integer) room.getSettings().get("cardWarningCount");
-            broadcastToRoom(roomId, new TextMessage(
-                    "{\"event\": \"CARD_WARNING\", \"userId\": \"" + warningUserId + "\", \"count\": " + warningCount + "}"
-            ));
-            // 播完立刻擦除，防止重复播报
-            room.getSettings().remove("cardWarningUserId");
-            room.getSettings().remove("cardWarningCount");
-        }
-
-        List<Map<String, Object>> playersInfo = new ArrayList<>();
-        for (com.game.poker.model.Player p : room.getPlayers()) {
-            Map<String, Object> pInfo = new java.util.HashMap<>();
-            pInfo.put("userId", p.getUserId());
-            pInfo.put("cardCount", p.getHandCards().size()); // 只发数量，不发具体的牌
-            pInfo.put("status", p.getStatus());
-            pInfo.put("isReady", p.isReady());
-            pInfo.put("skill", p.getSkill());
-            playersInfo.add(pInfo);
-        }
-
-        // ====== 声明 state 对象 ======
-        Map<String, Object> state = new java.util.HashMap<>();
-        state.put("event", "SYNC_STATE");
-        state.put("ownerId", room.getOwnerId());
-        state.put("serverTime", System.currentTimeMillis());
-        state.put("currentTurnStartTime", room.getCurrentTurnStartTime());
-
-        // ====== 【核心优化与修复：白名单极致瘦身，彻底消除序列化卡顿】 ======
-        Map<String, Object> safeSettings = new java.util.HashMap<>();
-        safeSettings.put("enableScrollCards", room.getSettings().get("enableScrollCards"));
-        safeSettings.put("enableWildcard", room.getSettings().get("enableWildcard"));
-        safeSettings.put("enableSkills", room.getSettings().get("enableSkills"));
-        safeSettings.put("skillsSelected", room.getSettings().get("skillsSelected"));
-
-        // 仅在五谷丰登与借刀杀人发生时，动态透传必需的提示数据，绝不发送底牌！
-        if ("WGFD".equals(room.getCurrentAoeType())) {
-            safeSettings.put("wgfdCards", room.getSettings().get("wgfdCards"));
-            safeSettings.put("wgfdQueue", room.getSettings().get("wgfdQueue"));
-        }
-        if (room.getSettings().containsKey("jdsr_target")) {
-            safeSettings.put("jdsr_target", room.getSettings().get("jdsr_target"));
-            safeSettings.put("jdsr_initiator", room.getSettings().get("jdsr_initiator"));
-        }
-
-        state.put("settings", safeSettings);
-
-        // ====== 【核心修复】：增加越界安全保护，防止玩家退出后索引错位崩溃 ======
-        String currentTurnUser = "";
-        if (!room.getPlayers().isEmpty()) {
-            int safeIndex = room.getCurrentTurnIndex();
-            if (safeIndex >= 0 && safeIndex < room.getPlayers().size()) {
-                currentTurnUser = room.getPlayers().get(safeIndex).getUserId();
-            } else {
-                currentTurnUser = room.getPlayers().get(0).getUserId(); // 越界兜底
+        // ====== 【极限并发优化：房间级原子锁，彻底杜绝 50 人在线时的遍历闪退】 ======
+        synchronized (room) {
+            if (Boolean.TRUE.equals(room.getSettings().get("justShuffled"))) {
+                broadcastToRoom(roomId, new TextMessage("{\"event\": \"DECK_SHUFFLED\"}"));
+                room.getSettings().remove("justShuffled");
             }
+
+            if (room.getSettings().containsKey("cardWarningUserId")) {
+                String warningUserId = (String) room.getSettings().get("cardWarningUserId");
+                int warningCount = (Integer) room.getSettings().get("cardWarningCount");
+                broadcastToRoom(roomId, new TextMessage(
+                        "{\"event\": \"CARD_WARNING\", \"userId\": \"" + warningUserId + "\", \"count\": " + warningCount + "}"
+                ));
+                room.getSettings().remove("cardWarningUserId");
+                room.getSettings().remove("cardWarningCount");
+            }
+
+            List<Map<String, Object>> playersInfo = new ArrayList<>();
+            for (com.game.poker.model.Player p : room.getPlayers()) {
+                Map<String, Object> pInfo = new java.util.HashMap<>();
+                pInfo.put("userId", p.getUserId());
+                pInfo.put("cardCount", p.getHandCards().size());
+                pInfo.put("status", p.getStatus());
+                pInfo.put("isReady", p.isReady());
+                pInfo.put("skill", p.getSkill());
+                playersInfo.add(pInfo);
+            }
+
+            Map<String, Object> state = new java.util.HashMap<>();
+            state.put("event", "SYNC_STATE");
+            state.put("ownerId", room.getOwnerId());
+            state.put("serverTime", System.currentTimeMillis());
+            state.put("currentTurnStartTime", room.getCurrentTurnStartTime());
+
+            Map<String, Object> safeSettings = new java.util.HashMap<>();
+            safeSettings.put("enableScrollCards", room.getSettings().get("enableScrollCards"));
+            safeSettings.put("enableWildcard", room.getSettings().get("enableWildcard"));
+            safeSettings.put("enableSkills", room.getSettings().get("enableSkills"));
+            safeSettings.put("skillsSelected", room.getSettings().get("skillsSelected"));
+
+            if ("WGFD".equals(room.getCurrentAoeType())) {
+                safeSettings.put("wgfdCards", room.getSettings().get("wgfdCards"));
+                safeSettings.put("wgfdQueue", room.getSettings().get("wgfdQueue"));
+            }
+            if (room.getSettings().containsKey("jdsr_target")) {
+                safeSettings.put("jdsr_target", room.getSettings().get("jdsr_target"));
+                safeSettings.put("jdsr_initiator", room.getSettings().get("jdsr_initiator"));
+            }
+
+            state.put("settings", safeSettings);
+
+            String currentTurnUser = "";
+            if (!room.getPlayers().isEmpty()) {
+                int safeIndex = room.getCurrentTurnIndex();
+                if (safeIndex >= 0 && safeIndex < room.getPlayers().size()) {
+                    currentTurnUser = room.getPlayers().get(safeIndex).getUserId();
+                } else {
+                    currentTurnUser = room.getPlayers().get(0).getUserId();
+                }
+            }
+
+            state.put("currentTurn", currentTurnUser);
+            state.put("players", playersInfo);
+            state.put("spectators", room.getSpectators());
+            state.put("isStarted", room.isStarted());
+            state.put("tableCards", room.getLastPlayedCards());
+            state.put("lastPlayPlayer", room.getLastPlayPlayerId());
+            state.put("currentAoeType", room.getCurrentAoeType());
+            state.put("pendingAoePlayers", room.getPendingAoePlayers());
+            state.put("aoeStartTime", room.getAoeStartTime());
+            state.put("aoeInitiator", room.getAoeInitiator());
+            state.put("luanjianInitiator", room.getSettings().get("luanjian_initiator"));
+
+            // 在锁内部进行安全的序列化
+            jsonPayload = objectMapper.writeValueAsString(state);
         }
 
-        state.put("currentTurn", currentTurnUser);
-        state.put("players", playersInfo);
-        state.put("spectators", room.getSpectators());
-        state.put("isStarted", room.isStarted());
-        state.put("tableCards", room.getLastPlayedCards());
-        state.put("lastPlayPlayer", room.getLastPlayPlayerId());
-        state.put("currentAoeType", room.getCurrentAoeType());
-        state.put("pendingAoePlayers", room.getPendingAoePlayers());
-        state.put("aoeStartTime", room.getAoeStartTime());
-        state.put("aoeInitiator", room.getAoeInitiator());
-        state.put("luanjianInitiator", room.getSettings().get("luanjian_initiator"));
-
-        broadcastToRoom(roomId, new TextMessage(objectMapper.writeValueAsString(state)));
+        // 【网络优化】：把发送数据的动作放在锁外面，防止阻塞业务逻辑！
+        broadcastToRoom(roomId, new TextMessage(jsonPayload));
     }
     // ====== 【新增：全场手牌强制同步器】 ======
     private void syncAllHands(String roomId) throws Exception {
@@ -727,9 +734,15 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private void syncPlayerHand(String roomId, String userId) throws Exception {
         GameRoom room = gameService.getRoom(roomId);
         if (room != null) {
-            com.game.poker.model.Player p = room.getPlayers().stream().filter(u -> u.getUserId().equals(userId)).findFirst().orElse(null);
-            if (p != null) {
-                String handJson = objectMapper.writeValueAsString(p.getHandCards());
+            String handJson = "";
+            // ====== 对单人手牌提取也加锁 ======
+            synchronized (room) {
+                com.game.poker.model.Player p = room.getPlayers().stream().filter(u -> u.getUserId().equals(userId)).findFirst().orElse(null);
+                if (p != null) {
+                    handJson = objectMapper.writeValueAsString(p.getHandCards());
+                }
+            }
+            if (!handJson.isEmpty()) {
                 sendToUser(roomId, userId, new TextMessage("{\"event\": \"SYNC_HAND\", \"cards\": " + handJson + "}"));
             }
         }
