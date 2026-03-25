@@ -52,7 +52,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             echo "1. 停止旧版后端..."
-            pkill -f poker || true
+            ppkill -f "java -jar poker" || true
 
             echo "2. 备份旧版本..."
             mkdir -p /root/backup/frontend /root/backup/backend
