@@ -91,6 +91,7 @@
 
       <span class="tag" v-for="p in otherPlayers" :key="p.userId">
         {{ p.userId }}
+        <span v-if="p.isBot" class="status-badge">脚本AI</span>
         <span class="status-badge"
           >{{ ownerId === p.userId ? "👑房主" : p.isReady ? "✅已准备" :
           "❌未准备" }}</span
@@ -148,6 +149,13 @@
     </template>
 
     <template v-else-if="ownerId === userId">
+      <button
+        class="ready-btn"
+        @click="addScriptAi"
+        :disabled="otherPlayers.length + 1 >= 4"
+      >
+        添加脚本AI
+      </button>
       <button
         class="start-btn"
         @click="startGame"

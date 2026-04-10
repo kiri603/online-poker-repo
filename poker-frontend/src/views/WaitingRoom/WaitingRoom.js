@@ -42,6 +42,7 @@ const kickPlayer = (targetId) => {
 // 核心流程按钮操作
 const startGame = () => sendMsg("START_GAME", null);
 const toggleReady = () => sendMsg("READY", null);
+const addScriptAi = () => sendMsg("ADD_SCRIPT_AI", null);
 
 // 返回联机大厅 (主动断开 WebSocket)
 const returnToLobby = () => {
@@ -59,6 +60,7 @@ export {
   handleScrollCardsChange,
   kickPlayer,
   startGame,
+  addScriptAi,
   toggleReady,
   returnToLobby,
   soundStatus,

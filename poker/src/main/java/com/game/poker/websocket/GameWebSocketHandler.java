@@ -5,6 +5,8 @@ import com.game.poker.model.Card;
 import com.game.poker.model.GameMessage;
 import com.game.poker.model.GameRoom;
 import com.game.poker.service.GameService;
+import com.game.poker.service.ScriptedAiService;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,13 +20,47 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
+    private static final long ROOM_EMOJI_COOLDOWN_MS = 8_000L;
+    private static final long ROOM_EMOJI_COOLDOWN_JITTER_MS = 3_000L;
+    private static final long BOT_EMOJI_COOLDOWN_MS = 18_000L;
+    private static final long BOT_EMOJI_COOLDOWN_JITTER_MS = 7_000L;
+    private static final long BOT_EMOJI_DELAY_MS = 500L;
+    private static final long BOT_EMOJI_DELAY_JITTER_MS = 1_200L;
+
+    private static final String EMOJI_SMILE = "image_emoticon.png";
+    private static final String EMOJI_LOVING = "image_emoticon2.png";
+    private static final String EMOJI_PLAYFUL = "image_emoticon3.png";
+    private static final String EMOJI_ANGRY = "image_emoticon6.png";
+    private static final String EMOJI_CRYING = "image_emoticon9.png";
+    private static final String EMOJI_WRY = "image_emoticon10.png";
+    private static final String EMOJI_CONFUSED = "image_emoticon15.png";
+    private static final String EMOJI_SMUG = "image_emoticon16.png";
+    private static final String EMOJI_SICK = "image_emoticon17.png";
+    private static final String EMOJI_LAUGHING = "image_emoticon22.png";
+    private static final String EMOJI_SLY = "image_emoticon23.png";
+    private static final String EMOJI_HUGGING = "image_emoticon24.png";
+    private static final String EMOJI_STRESSED = "image_emoticon27.png";
+    private static final String EMOJI_PLEADING = "image_emoticon28.png";
+    private static final String EMOJI_HUFFING = "image_emoticon33.png";
+    private static final String EMOJI_HEART = "image_emoticon34.png";
+    private static final String EMOJI_BROKEN_HEART = "image_emoticon35.png";
+    private static final String EMOJI_ROSE = "image_emoticon36.png";
+    private static final String EMOJI_THINKING = "image_emoticon73.png";
+    private static final String EMOJI_FINGER_HEART = "image_emoticon88.png";
 
     @Autowired
     private GameService gameService;
+
+    @Autowired
+    private ScriptedAiService scriptedAiService;
 
     // JSON 转换工具
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -33,10 +69,20 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, CopyOnWriteArraySet<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
     // 记录 SessionID -> 用户ID (用于断开连接时清理)
     private final Map<String, String> sessionUserMap = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService botExecutor = Executors.newSingleThreadScheduledExecutor();
+    private final Map<String, Long> botScheduleVersion = new ConcurrentHashMap<>();
+    private final Map<String, Long> roomEmojiCooldownUntil = new ConcurrentHashMap<>();
+    private final Map<String, Long> botEmojiCooldownUntil = new ConcurrentHashMap<>();
+    private final Map<String, String> botLastEmoji = new ConcurrentHashMap<>();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         log.info("新的 WebSocket 连接建立: {}", session.getId());
+    }
+
+    @PreDestroy
+    public void shutdownBotExecutor() {
+        botExecutor.shutdownNow();
     }
 
     @Override
@@ -342,6 +388,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     gameService.toggleReady(roomId, userId);
                     broadcastGameState(roomId);
                     break;
+                case "ADD_SCRIPT_AI":
+                    try {
+                        gameService.addScriptedBot(roomId, userId);
+                    } catch (Exception e) {
+                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                    }
+                    broadcastGameState(roomId);
+                    break;
                 // 【新增】：接收房主的高级设置更新
                 case "UPDATE_SETTINGS":
                     GameRoom sRoom = gameService.getRoom(roomId);
@@ -362,6 +416,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         }
 
                         // 2. 检查是否所有还在房间里的活人玩家，都已经返回了等待大厅
+                        r.getPlayers().stream()
+                                .filter(com.game.poker.model.Player::isBot)
+                                .filter(player -> !player.isDisconnected())
+                                .forEach(bot -> {
+                                    bot.setStatus("WAITING");
+                                    bot.setReady(true);
+                                });
                         boolean allWaiting = r.getPlayers().stream()
                                 .filter(player -> !player.isDisconnected())
                                 .allMatch(player -> "WAITING".equals(player.getStatus()));
@@ -637,6 +698,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private void broadcastGameState(String roomId) throws Exception {
         GameRoom room = gameService.getRoom(roomId);
         if (room == null) return;
+        String warningUserId = null;
+        Integer warningCount = null;
 
         String jsonPayload; // 将 JSON 字符串的组装提取出来
 
@@ -648,8 +711,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
 
             if (room.getSettings().containsKey("cardWarningUserId")) {
-                String warningUserId = (String) room.getSettings().get("cardWarningUserId");
-                int warningCount = (Integer) room.getSettings().get("cardWarningCount");
+                warningUserId = (String) room.getSettings().get("cardWarningUserId");
+                warningCount = (Integer) room.getSettings().get("cardWarningCount");
                 broadcastToRoom(roomId, new TextMessage(
                         "{\"event\": \"CARD_WARNING\", \"userId\": \"" + warningUserId + "\", \"count\": " + warningCount + "}"
                 ));
@@ -664,6 +727,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 pInfo.put("cardCount", p.getHandCards().size());
                 pInfo.put("status", p.getStatus());
                 pInfo.put("isReady", p.isReady());
+                pInfo.put("isBot", p.isBot());
                 pInfo.put("skill", p.getSkill());
                 playersInfo.add(pInfo);
             }
@@ -719,8 +783,614 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         // 【网络优化】：把发送数据的动作放在锁外面，防止阻塞业务逻辑！
         broadcastToRoom(roomId, new TextMessage(jsonPayload));
+        if (warningUserId != null && warningCount != null) {
+            maybeReactToCardWarning(roomId, warningUserId, warningCount);
+        }
+        scheduleBotAction(roomId);
     }
     // ====== 【新增：全场手牌强制同步器】 ======
+    private void scheduleBotAction(String roomId) {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null) {
+            botScheduleVersion.remove(roomId);
+            return;
+        }
+        boolean hasBot = room.getPlayers().stream().anyMatch(com.game.poker.model.Player::isBot);
+        if (!hasBot || !room.isStarted()) {
+            return;
+        }
+
+        long version = botScheduleVersion.merge(roomId, 1L, Long::sum);
+        botExecutor.schedule(() -> {
+            Long latestVersion = botScheduleVersion.get(roomId);
+            if (latestVersion == null || latestVersion.longValue() != version) {
+                return;
+            }
+            try {
+                runBotAction(roomId);
+            } catch (Exception e) {
+                log.error("scripted bot action failed for room {}", roomId, e);
+            }
+        }, 2, TimeUnit.SECONDS);
+    }
+
+    private void runBotAction(String roomId) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null || !room.isStarted()) {
+            botScheduleVersion.remove(roomId);
+            return;
+        }
+
+        if ("SKILL_SELECTION".equals(room.getPhase())) {
+            handleBotSkillSelection(roomId);
+            return;
+        }
+
+        if (room.getCurrentAoeType() != null) {
+            handleBotAoeAction(roomId, room.getCurrentAoeType());
+            return;
+        }
+
+        handleBotTurn(roomId);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handleBotSkillSelection(String roomId) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null || !"SKILL_SELECTION".equals(room.getPhase())) {
+            return;
+        }
+
+        Map<String, String> skillsSelected;
+        Object rawSkills = room.getSettings().get("skillsSelected");
+        if (rawSkills instanceof Map<?, ?> rawMap) {
+            skillsSelected = (Map<String, String>) rawMap;
+        } else {
+            skillsSelected = new ConcurrentHashMap<>();
+            room.getSettings().put("skillsSelected", skillsSelected);
+        }
+
+        com.game.poker.model.Player bot = room.getPlayers().stream()
+                .filter(com.game.poker.model.Player::isBot)
+                .filter(player -> !skillsSelected.containsKey(player.getUserId()))
+                .findFirst()
+                .orElse(null);
+        if (bot == null) {
+            return;
+        }
+
+        String skill = scriptedAiService.chooseSkill(room, bot);
+        if (skill == null || skill.isBlank()) {
+            skill = "ZHIHENG";
+        }
+
+        skillsSelected.put(bot.getUserId(), skill);
+        bot.setSkill(skill);
+
+        if (skillsSelected.size() == room.getPlayers().size()) {
+            gameService.doStartGame(room);
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"GAME_STARTED\"}"));
+            syncAllHands(roomId);
+        }
+
+        broadcastGameState(roomId);
+    }
+
+    private void handleBotAoeAction(String roomId, String aoeType) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null || aoeType == null) {
+            return;
+        }
+
+        com.game.poker.model.Player bot = room.getPlayers().stream()
+                .filter(com.game.poker.model.Player::isBot)
+                .filter(player -> room.getPendingAoePlayers().contains(player.getUserId()))
+                .findFirst()
+                .orElse(null);
+        if (bot == null) {
+            return;
+        }
+
+        switch (aoeType) {
+            case "GUANXING":
+                handleBotGuanxing(roomId, bot);
+                break;
+            case "WGFD":
+                handleBotWgfd(roomId, bot);
+                break;
+            case "GUSHOU_DISCARD":
+                handleBotGushouDiscard(roomId, bot);
+                break;
+            default:
+                handleBotRespondAoe(roomId, bot);
+                break;
+        }
+    }
+
+    private void handleBotTurn(String roomId) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null || room.getCurrentAoeType() != null || room.getPlayers().isEmpty()) {
+            return;
+        }
+
+        int turnIndex = room.getCurrentTurnIndex();
+        if (turnIndex < 0 || turnIndex >= room.getPlayers().size()) {
+            return;
+        }
+
+        com.game.poker.model.Player bot = room.getPlayers().get(turnIndex);
+        if (!bot.isBot() || !"PLAYING".equals(bot.getStatus())) {
+            return;
+        }
+
+        ScriptedAiService.TurnDecision decision = scriptedAiService.decideTurn(room, bot);
+        if (decision == null) {
+            decision = ScriptedAiService.TurnDecision.pass();
+        }
+
+        switch (decision.getType()) {
+            case PLAY:
+                if (!decision.getCards().isEmpty()) {
+                    handleBotPlay(roomId, bot, decision.getCards());
+                }
+                break;
+            case PASS:
+                handleBotPass(roomId, bot);
+                break;
+            case REPLACE:
+                if (!decision.getCards().isEmpty()) {
+                    handleBotReplace(roomId, bot, decision.getCards().get(0));
+                }
+                break;
+            case USE_SKILL:
+                if ("LUANJIAN".equals(decision.getSkill())) {
+                    handleBotLuanjian(roomId, bot, decision.getCards());
+                }
+                break;
+            case USE_GUSHOU:
+                handleBotUseGushou(roomId, bot);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private enum BotEmojiScenario {
+        TRICK_ATTACK,
+        AGGRESSIVE_PLAY,
+        TACTICAL_PLAY,
+        PRESSURED_PASS,
+        DEFENSE_SUCCESS,
+        DEFENSE_FAIL,
+        CLOSE_TO_WIN,
+        OPPONENT_IN_DANGER,
+        VICTORY
+    }
+
+    private void maybeSendBotEmoji(String roomId, com.game.poker.model.Player bot, BotEmojiScenario scenario) {
+        if (bot == null || !bot.isBot()) {
+            return;
+        }
+
+        String emoji = chooseBotEmoji(roomId, bot, scenario);
+        if (emoji == null) {
+            return;
+        }
+
+        long delayMs = BOT_EMOJI_DELAY_MS + ThreadLocalRandom.current().nextLong(BOT_EMOJI_DELAY_JITTER_MS + 1);
+        botExecutor.schedule(() -> {
+            try {
+                GameRoom room = gameService.getRoom(roomId);
+                if (room == null) {
+                    return;
+                }
+
+                boolean stillPresent = room.getPlayers().stream()
+                        .anyMatch(player -> bot.getUserId().equals(player.getUserId()));
+                if (!stillPresent) {
+                    return;
+                }
+
+                broadcastToRoom(roomId, new TextMessage(
+                        "{\"event\": \"EMOJI_RECEIVED\", \"userId\": \"" + bot.getUserId() + "\", \"emoji\": \"" + emoji + "\"}"
+                ));
+            } catch (Exception e) {
+                log.warn("failed to send bot emoji for room {} and user {}", roomId, bot.getUserId(), e);
+            }
+        }, delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    private String chooseBotEmoji(String roomId, com.game.poker.model.Player bot, BotEmojiScenario scenario) {
+        String botKey = botEmojiKey(roomId, bot.getUserId());
+        long now = System.currentTimeMillis();
+        if (now < roomEmojiCooldownUntil.getOrDefault(roomId, 0L)
+                || now < botEmojiCooldownUntil.getOrDefault(botKey, 0L)) {
+            return null;
+        }
+
+        double chance = switch (scenario) {
+            case TRICK_ATTACK -> 0.55;
+            case AGGRESSIVE_PLAY -> 0.38;
+            case TACTICAL_PLAY -> 0.24;
+            case PRESSURED_PASS -> 0.32;
+            case DEFENSE_SUCCESS -> 0.18;
+            case DEFENSE_FAIL -> 0.26;
+            case CLOSE_TO_WIN -> bot.getHandCards().size() <= 1 ? 0.6 : 0.42;
+            case OPPONENT_IN_DANGER -> 0.28;
+            case VICTORY -> 0.9;
+        };
+        if (ThreadLocalRandom.current().nextDouble() > chance) {
+            return null;
+        }
+
+        List<String> pool = switch (scenario) {
+            case TRICK_ATTACK -> List.of(EMOJI_SMUG, EMOJI_SLY, EMOJI_PLAYFUL, EMOJI_CONFUSED, EMOJI_ANGRY);
+            case AGGRESSIVE_PLAY -> List.of(EMOJI_ANGRY, EMOJI_SMUG, EMOJI_SLY, EMOJI_HUFFING, EMOJI_PLAYFUL);
+            case TACTICAL_PLAY -> List.of(EMOJI_THINKING, EMOJI_WRY, EMOJI_SMUG, EMOJI_LOVING, EMOJI_FINGER_HEART);
+            case PRESSURED_PASS -> List.of(EMOJI_STRESSED, EMOJI_CRYING, EMOJI_CONFUSED, EMOJI_THINKING, EMOJI_SICK, EMOJI_PLEADING);
+            case DEFENSE_SUCCESS -> List.of(EMOJI_SMUG, EMOJI_WRY, EMOJI_THINKING, EMOJI_HUFFING);
+            case DEFENSE_FAIL -> List.of(EMOJI_STRESSED, EMOJI_CRYING, EMOJI_SICK, EMOJI_BROKEN_HEART, EMOJI_PLEADING);
+            case CLOSE_TO_WIN -> List.of(EMOJI_LAUGHING, EMOJI_SMILE, EMOJI_SMUG, EMOJI_PLAYFUL, EMOJI_HUGGING, EMOJI_FINGER_HEART);
+            case OPPONENT_IN_DANGER -> List.of(EMOJI_SMUG, EMOJI_SLY, EMOJI_LAUGHING, EMOJI_HUFFING, EMOJI_THINKING);
+            case VICTORY -> List.of(EMOJI_LAUGHING, EMOJI_SMILE, EMOJI_LOVING, EMOJI_HUGGING, EMOJI_HEART, EMOJI_ROSE, EMOJI_FINGER_HEART);
+        };
+
+        String lastEmoji = botLastEmoji.get(botKey);
+        List<String> availablePool = pool.stream()
+                .filter(emoji -> !emoji.equals(lastEmoji))
+                .toList();
+        List<String> finalPool = availablePool.isEmpty() ? pool : availablePool;
+        String chosen = finalPool.get(ThreadLocalRandom.current().nextInt(finalPool.size()));
+
+        roomEmojiCooldownUntil.put(
+                roomId,
+                now + ROOM_EMOJI_COOLDOWN_MS + ThreadLocalRandom.current().nextLong(ROOM_EMOJI_COOLDOWN_JITTER_MS + 1)
+        );
+        botEmojiCooldownUntil.put(
+                botKey,
+                now + BOT_EMOJI_COOLDOWN_MS + ThreadLocalRandom.current().nextLong(BOT_EMOJI_COOLDOWN_JITTER_MS + 1)
+        );
+        botLastEmoji.put(botKey, chosen);
+        return chosen;
+    }
+
+    private void maybeReactToCardWarning(String roomId, String warningUserId, int warningCount) {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null || warningCount <= 0) {
+            return;
+        }
+
+        com.game.poker.model.Player warnedPlayer = room.getPlayers().stream()
+                .filter(player -> warningUserId.equals(player.getUserId()))
+                .findFirst()
+                .orElse(null);
+        if (warnedPlayer != null && warnedPlayer.isBot()) {
+            maybeSendBotEmoji(roomId, warnedPlayer, BotEmojiScenario.CLOSE_TO_WIN);
+            return;
+        }
+
+        List<com.game.poker.model.Player> botReactors = room.getPlayers().stream()
+                .filter(com.game.poker.model.Player::isBot)
+                .filter(player -> "PLAYING".equals(player.getStatus()))
+                .filter(player -> !warningUserId.equals(player.getUserId()))
+                .toList();
+        if (botReactors.isEmpty()) {
+            return;
+        }
+
+        com.game.poker.model.Player reactor = botReactors.get(ThreadLocalRandom.current().nextInt(botReactors.size()));
+        maybeSendBotEmoji(roomId, reactor, BotEmojiScenario.OPPONENT_IN_DANGER);
+    }
+
+    private String botEmojiKey(String roomId, String userId) {
+        return roomId + "::" + userId;
+    }
+
+    private BotEmojiScenario determineBotPlayEmojiScenario(List<Card> playedCards, com.game.poker.model.Player bot) {
+        if (playedCards == null || playedCards.isEmpty()) {
+            return null;
+        }
+        if (bot.getHandCards().size() <= 2) {
+            return BotEmojiScenario.CLOSE_TO_WIN;
+        }
+        if (playedCards.size() == 1 && "SCROLL".equals(playedCards.get(0).getSuit())) {
+            String rank = playedCards.get(0).getRank();
+            if ("JDSR".equals(rank)) {
+                return BotEmojiScenario.TRICK_ATTACK;
+            }
+            return "WGFD".equals(rank) ? BotEmojiScenario.TACTICAL_PLAY : BotEmojiScenario.AGGRESSIVE_PLAY;
+        }
+        if (playedCards.size() >= 4 || isRocket(playedCards)) {
+            return BotEmojiScenario.AGGRESSIVE_PLAY;
+        }
+        return null;
+    }
+
+    private boolean isRocket(List<Card> cards) {
+        return cards.size() == 2
+                && cards.stream().anyMatch(card -> "JOKER".equals(card.getSuit()) && "小王".equals(card.getRank()))
+                && cards.stream().anyMatch(card -> "JOKER".equals(card.getSuit()) && "大王".equals(card.getRank()));
+    }
+
+    private void recoverBotAction(String roomId, com.game.poker.model.Player bot, String action, RuntimeException error) throws Exception {
+        log.warn("scripted bot [{}] failed to {} in room {}: {}", bot.getUserId(), action, roomId, error.getMessage());
+        fallbackBotAction(roomId, bot, action);
+    }
+
+    private void fallbackBotAction(String roomId, com.game.poker.model.Player bot, String action) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null || room.getCurrentAoeType() != null || room.getPlayers().isEmpty()) {
+            return;
+        }
+
+        int turnIndex = room.getCurrentTurnIndex();
+        if (turnIndex < 0 || turnIndex >= room.getPlayers().size()) {
+            return;
+        }
+
+        com.game.poker.model.Player currentPlayer = room.getPlayers().get(turnIndex);
+        if (!currentPlayer.getUserId().equals(bot.getUserId())) {
+            return;
+        }
+
+        boolean jdsrTarget = room.getSettings().containsKey("jdsr_target")
+                && bot.getUserId().equals(room.getSettings().get("jdsr_target"));
+        boolean responseTurn = jdsrTarget
+                || (!room.getLastPlayedCards().isEmpty() && !bot.getUserId().equals(room.getLastPlayPlayerId()));
+        boolean onlyHasScrolls = bot.getHandCards().stream().allMatch(card -> "SCROLL".equals(card.getSuit()));
+
+        if (!responseTurn && !onlyHasScrolls) {
+            log.warn("scripted bot [{}] has no safe fallback after {} failed in room {}", bot.getUserId(), action, roomId);
+            return;
+        }
+
+        log.warn("scripted bot [{}] falls back to PASS after {} failed in room {}", bot.getUserId(), action, roomId);
+        handleBotPass(roomId, bot);
+    }
+
+    private void handleBotReplace(String roomId, com.game.poker.model.Player bot, Card discardCard) throws Exception {
+        try {
+            if (!gameService.replaceCard(roomId, bot.getUserId(), discardCard)) {
+                fallbackBotAction(roomId, bot, "replace");
+                return;
+            }
+        } catch (RuntimeException e) {
+            recoverBotAction(roomId, bot, "replace", e);
+            return;
+        }
+        broadcastToRoom(roomId, new TextMessage("{\"event\": \"PLAYER_REPLACED\", \"userId\": \"" + bot.getUserId() + "\"}"));
+        syncPlayerHand(roomId, bot.getUserId());
+        broadcastGameState(roomId);
+    }
+
+    private void handleBotLuanjian(String roomId, com.game.poker.model.Player bot, List<Card> cards) throws Exception {
+        if (cards == null || cards.size() != 2) {
+            return;
+        }
+        try {
+            gameService.useLuanjian(roomId, bot.getUserId(), cards);
+        } catch (RuntimeException e) {
+            recoverBotAction(roomId, bot, "use LUANJIAN", e);
+            return;
+        }
+        broadcastToRoom(roomId, new TextMessage("{\"event\": \"SKILL_USED\", \"userId\": \"" + bot.getUserId() + "\", \"skillName\": \"LUANJIAN\"}"));
+        syncPlayerHand(roomId, bot.getUserId());
+        broadcastGameState(roomId);
+        maybeSendBotEmoji(roomId, bot, BotEmojiScenario.AGGRESSIVE_PLAY);
+    }
+
+    private void handleBotUseGushou(String roomId, com.game.poker.model.Player bot) throws Exception {
+        try {
+            gameService.useGushou(roomId, bot.getUserId());
+        } catch (RuntimeException e) {
+            recoverBotAction(roomId, bot, "use GUSHOU", e);
+            return;
+        }
+        syncPlayerHand(roomId, bot.getUserId());
+        broadcastToRoom(roomId, new TextMessage("{\"event\": \"SKILL_USED\", \"userId\": \"" + bot.getUserId() + "\", \"skillName\": \"GUSHOU\"}"));
+        publishWinnerIfNeeded(roomId, List.of());
+        broadcastGameState(roomId);
+        maybeSendBotEmoji(roomId, bot, BotEmojiScenario.TACTICAL_PLAY);
+    }
+
+    private void handleBotPlay(String roomId, com.game.poker.model.Player bot, List<Card> playedCards) throws Exception {
+        boolean isAoe = playedCards.size() == 1 && "SCROLL".equals(playedCards.get(0).getSuit());
+        try {
+            if (!gameService.playCards(roomId, bot.getUserId(), playedCards)) {
+                fallbackBotAction(roomId, bot, "play cards");
+                return;
+            }
+        } catch (RuntimeException e) {
+            recoverBotAction(roomId, bot, "play cards", e);
+            return;
+        }
+
+        if (!isAoe) {
+            String cardsJson = objectMapper.writeValueAsString(playedCards);
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"CARDS_PLAYED\", \"userId\": \"" + bot.getUserId() + "\", \"cards\": " + cardsJson + "}"));
+        } else {
+            String aoeRank = playedCards.get(0).getRank();
+            if ("JDSR".equals(aoeRank)) {
+                String cardsJson = objectMapper.writeValueAsString(playedCards);
+                broadcastToRoom(roomId, new TextMessage("{\"event\": \"CARDS_PLAYED\", \"userId\": \"" + bot.getUserId() + "\", \"cards\": " + cardsJson + "}"));
+            } else {
+                String aoeName = "NMRQ".equals(aoeRank) ? "南蛮入侵" : "WJQF".equals(aoeRank) ? "万箭齐发" : "五谷丰登";
+                broadcastToRoom(roomId, new TextMessage("{\"event\": \"AOE_PLAYED\", \"userId\": \"" + bot.getUserId() + "\", \"aoeName\": \"" + aoeName + "\"}"));
+            }
+        }
+
+        BotEmojiScenario emojiScenario = determineBotPlayEmojiScenario(playedCards, bot);
+        syncPlayerHand(roomId, bot.getUserId());
+        publishWinnerIfNeeded(roomId, isAoe ? List.of() : playedCards);
+        broadcastGameState(roomId);
+        if (emojiScenario != null) {
+            maybeSendBotEmoji(roomId, bot, emojiScenario);
+        }
+    }
+
+    private void handleBotPass(String roomId, com.game.poker.model.Player bot) throws Exception {
+        GameRoom roomBefore = gameService.getRoom(roomId);
+        boolean wasJdsrTarget = roomBefore != null
+                && roomBefore.getSettings().containsKey("jdsr_target")
+                && bot.getUserId().equals(roomBefore.getSettings().get("jdsr_target"));
+        boolean pressuredPass = roomBefore != null
+                && !roomBefore.getLastPlayedCards().isEmpty()
+                && !bot.getUserId().equals(roomBefore.getLastPlayPlayerId());
+
+        gameService.passTurn(roomId, bot.getUserId());
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null) {
+            return;
+        }
+
+        if ("GUANXING".equals(room.getCurrentAoeType()) && room.getPendingAoePlayers().contains(bot.getUserId())) {
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"SKILL_USED\", \"userId\": \"" + bot.getUserId() + "\", \"skillName\": \"GUANXING\"}"));
+            broadcastGameState(roomId);
+            return;
+        }
+
+        broadcastToRoom(roomId, new TextMessage("{\"event\": \"PLAYER_PASSED\", \"userId\": \"" + bot.getUserId() + "\"}"));
+        syncPlayerHand(roomId, bot.getUserId());
+
+        if (room.getLastPlayedCards().isEmpty()) {
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"ROUND_RESET\"}"));
+        }
+
+        publishWinnerIfNeeded(roomId, List.of());
+        broadcastGameState(roomId);
+        if (wasJdsrTarget || pressuredPass) {
+            maybeSendBotEmoji(roomId, bot, BotEmojiScenario.PRESSURED_PASS);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handleBotGuanxing(String roomId, com.game.poker.model.Player bot) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null) {
+            return;
+        }
+
+        List<Card> options = room.getSettings().get("guanxingCards") instanceof List<?> rawCards
+                ? (List<Card>) rawCards
+                : List.of();
+        if (options.isEmpty()) {
+            return;
+        }
+
+        List<Card> selectedCards = scriptedAiService.chooseGuanxingCards(bot, options);
+        if (selectedCards.size() != Math.min(2, options.size())) {
+            selectedCards = new ArrayList<>(options.subList(0, Math.min(2, options.size())));
+        }
+
+        gameService.resolveGuanxing(roomId, bot.getUserId(), selectedCards);
+        GameRoom roomAfter = gameService.getRoom(roomId);
+
+        broadcastToRoom(roomId, new TextMessage("{\"event\": \"PLAYER_PASSED\", \"userId\": \"" + bot.getUserId() + "\"}"));
+        syncPlayerHand(roomId, bot.getUserId());
+
+        if (roomAfter != null && roomAfter.getLastPlayedCards().isEmpty() && roomAfter.getCurrentAoeType() == null) {
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"ROUND_RESET\"}"));
+        }
+
+        publishWinnerIfNeeded(roomId, List.of());
+        broadcastGameState(roomId);
+        maybeSendBotEmoji(roomId, bot, BotEmojiScenario.TACTICAL_PLAY);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handleBotWgfd(String roomId, com.game.poker.model.Player bot) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null) {
+            return;
+        }
+
+        List<Card> options = room.getSettings().get("wgfdCards") instanceof List<?> rawCards
+                ? (List<Card>) rawCards
+                : List.of();
+        if (options.isEmpty()) {
+            return;
+        }
+
+        Card selectedCard = scriptedAiService.chooseWgfdCard(bot, options);
+        if (selectedCard == null) {
+            selectedCard = options.get(0);
+        }
+
+        gameService.resolveWgfd(roomId, bot.getUserId(), selectedCard);
+        syncPlayerHand(roomId, bot.getUserId());
+        publishWinnerIfNeeded(roomId, List.of());
+        broadcastGameState(roomId);
+        maybeSendBotEmoji(roomId, bot, BotEmojiScenario.TACTICAL_PLAY);
+    }
+
+    private void handleBotRespondAoe(String roomId, com.game.poker.model.Player bot) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null) {
+            return;
+        }
+
+        Card responseCard = scriptedAiService.chooseAoeResponseCard(room, bot);
+        gameService.respondAoe(roomId, bot.getUserId(), responseCard);
+
+        if (responseCard != null) {
+            String animJson = objectMapper.writeValueAsString(responseCard);
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"AOE_ANIMATION\", \"userId\": \"" + bot.getUserId() + "\", \"card\": " + animJson + "}"));
+        } else {
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"PLAYER_PASSED\", \"userId\": \"" + bot.getUserId() + "\"}"));
+        }
+
+        syncPlayerHand(roomId, bot.getUserId());
+        publishWinnerIfNeeded(roomId, List.of());
+        broadcastGameState(roomId);
+        maybeSendBotEmoji(roomId, bot, responseCard == null ? BotEmojiScenario.DEFENSE_FAIL : BotEmojiScenario.DEFENSE_SUCCESS);
+    }
+
+    private void handleBotGushouDiscard(String roomId, com.game.poker.model.Player bot) throws Exception {
+        int discardCount = Math.min(2, bot.getHandCards().size());
+        if (discardCount <= 0) {
+            return;
+        }
+
+        List<Card> cards = scriptedAiService.chooseGushouDiscards(bot, discardCount);
+        if (cards.size() != discardCount) {
+            cards = new ArrayList<>(bot.getHandCards().subList(0, discardCount));
+        }
+
+        for (Card card : cards) {
+            String animJson = objectMapper.writeValueAsString(card);
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"AOE_ANIMATION\", \"userId\": \"" + bot.getUserId() + "\", \"card\": " + animJson + "}"));
+        }
+
+        gameService.discardGushou(roomId, bot.getUserId(), cards);
+        syncPlayerHand(roomId, bot.getUserId());
+        publishWinnerIfNeeded(roomId, List.of());
+        broadcastGameState(roomId);
+    }
+
+    private boolean publishWinnerIfNeeded(String roomId, List<Card> winningCards) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null) {
+            return false;
+        }
+
+        com.game.poker.model.Player winner = room.getPlayers().stream()
+                .filter(player -> "WON".equals(player.getStatus()))
+                .findFirst()
+                .orElse(null);
+        if (winner == null) {
+            return false;
+        }
+
+        String winningCardsJson = objectMapper.writeValueAsString(winningCards == null ? List.of() : winningCards);
+        broadcastToRoom(roomId, new TextMessage("{\"event\": \"GAME_OVER\", \"winner\": \"" + winner.getUserId() + "\", \"winningCards\": " + winningCardsJson + "}"));
+        room.setStarted(false);
+        room.getPlayers().forEach(player -> player.setReady(player.isBot()));
+        if (winner.isBot()) {
+            maybeSendBotEmoji(roomId, winner, BotEmojiScenario.VICTORY);
+        }
+        return true;
+    }
+
     private void syncAllHands(String roomId) throws Exception {
         GameRoom room = gameService.getRoom(roomId);
         if (room != null) {

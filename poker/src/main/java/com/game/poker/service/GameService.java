@@ -20,6 +20,39 @@ public class GameService {
     @Autowired(required = false) // 如果你还没有写 RuleEngine，可以先加上 required=false 防止报错
     private RuleEngine ruleEngine;
 
+    private static final List<String> SCRIPTED_AI_NAMES = List.of(
+            "AI\u73a9\u5bb6-\u8bf8\u845b\u4eae",
+            "AI\u73a9\u5bb6-\u5218\u5907",
+            "AI\u73a9\u5bb6-\u66f9\u64cd",
+            "AI\u73a9\u5bb6-\u5b59\u6743",
+            "AI\u73a9\u5bb6-\u5173\u7fbd",
+            "AI\u73a9\u5bb6-\u5f20\u98de",
+            "AI\u73a9\u5bb6-\u8d75\u4e91",
+            "AI\u73a9\u5bb6-\u9a6c\u8d85",
+            "AI\u73a9\u5bb6-\u9ec4\u5fe0",
+            "AI\u73a9\u5bb6-\u5468\u745c",
+            "AI\u73a9\u5bb6-\u53f8\u9a6c\u61ff",
+            "AI\u73a9\u5bb6-\u5415\u5e03",
+            "AI\u73a9\u5bb6-\u8c82\u8749",
+            "AI\u73a9\u5bb6-\u5b59\u5c1a\u9999",
+            "AI\u73a9\u5bb6-\u9c81\u8083",
+            "AI\u73a9\u5bb6-\u9646\u900a",
+            "AI\u73a9\u5bb6-\u8bb8\u891a",
+            "AI\u73a9\u5bb6-\u590f\u4faf\u60c7",
+            "AI\u73a9\u5bb6-\u5f20\u8fbd",
+            "AI\u73a9\u5bb6-\u90ed\u5609",
+            "AI\u73a9\u5bb6-\u8340\u5f67",
+            "AI\u73a9\u5bb6-\u5e9e\u7edf",
+            "AI\u73a9\u5bb6-\u9ec4\u6708\u82f1",
+            "AI\u73a9\u5bb6-\u59dc\u7ef4",
+            "AI\u73a9\u5bb6-\u9093\u827e",
+            "AI\u73a9\u5bb6-\u592a\u53f2\u6148",
+            "AI\u73a9\u5bb6-\u7518\u5b81",
+            "AI\u73a9\u5bb6-\u5415\u8499",
+            "AI\u73a9\u5bb6-\u534e\u4f57",
+            "AI\u73a9\u5bb6-\u5178\u97e6"
+    );
+
     // 内存中存储所有活跃的房间（使用线程安全的 Map）
     private final Map<String, GameRoom> roomMap = new ConcurrentHashMap<>();
     public java.util.Map<String, com.game.poker.model.GameRoom> getRoomMap() {
@@ -96,6 +129,29 @@ public class GameService {
             log.info("玩家 [{}] 加入了房间 [{}]。当前房间人数: {}", userId, roomId, room.getPlayers().size());
         }
         return room;
+    }
+
+    public Player addScriptedBot(String roomId, String ownerId) {
+        GameRoom room = roomMap.get(roomId);
+        if (room == null) {
+            throw new RuntimeException("房间不存在！");
+        }
+        if (room.isStarted()) {
+            throw new RuntimeException("游戏已经开始，无法继续添加脚本AI！");
+        }
+        if (!ownerId.equals(room.getOwnerId())) {
+            throw new RuntimeException("只有房主可以添加脚本AI！");
+        }
+        if (room.getPlayers().size() >= 4) {
+            throw new RuntimeException("房间已满，无法继续添加脚本AI！");
+        }
+
+        String botId = nextBotId(room);
+        Player bot = new Player(botId, true);
+        bot.setStatus("WAITING");
+        bot.setReady(true);
+        room.getPlayers().add(bot);
+        return bot;
     }
 
     /**
@@ -175,6 +231,10 @@ public class GameService {
     public void useLuanjian(String roomId, String userId, List<Card> cards) {
         GameRoom room = getRoom(roomId);
         Player p = getPlayer(room, userId);
+        if (room == null || p == null || !isPlayerTurn(room, userId)) return;
+        if (room.getSettings().containsKey("jdsr_target") && userId.equals(room.getSettings().get("jdsr_target"))) {
+            throw new RuntimeException("借刀期间不能使用技能！");
+        }
         if (p.isHasUsedSkillThisTurn()) throw new RuntimeException("本回合已使用过技能！");
 
         // 【修改：变成消耗 2 张黑色牌】
@@ -265,6 +325,10 @@ public class GameService {
         GameRoom room = roomMap.get(roomId);
         Player player = getPlayer(room, userId);
 
+        if (room != null && room.getSettings().containsKey("jdsr_target")
+                && userId.equals(room.getSettings().get("jdsr_target"))) {
+            throw new RuntimeException("借刀期间不能使用技能！");
+        }
         if (room == null || player == null || !isPlayerTurn(room, userId) || player.isHasReplacedCardThisTurn()) {
             log.warn("玩家 [{}] 换牌失败：可能非当前回合，或本回合已经换过牌", userId);
             return false;
@@ -756,6 +820,60 @@ public class GameService {
         }
     }
 
+/*    private String nextBotId(GameRoom room) {
+        int index = 1;
+        while (true) {
+            String candidate = "脚本AI-" + index;
+            boolean exists = room.getPlayers().stream().anyMatch(player -> candidate.equals(player.getUserId()))
+                    || room.getSpectators().contains(candidate);
+            if (!exists) {
+                return candidate;
+            }
+            index++;
+        }
+    }
+
+*/
+
+    private String nextBotId(GameRoom room) {
+        List<String> availableNames = new ArrayList<>(SCRIPTED_AI_NAMES);
+        availableNames.removeIf(candidate -> room.getPlayers().stream().anyMatch(player -> candidate.equals(player.getUserId()))
+                || room.getSpectators().contains(candidate));
+
+        if (!availableNames.isEmpty()) {
+            return availableNames.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(availableNames.size()));
+        }
+
+        int index = 1;
+        while (true) {
+            String candidate = "AI\u73a9\u5bb6-\u5019\u8865" + index;
+            boolean exists = room.getPlayers().stream().anyMatch(player -> candidate.equals(player.getUserId()))
+                    || room.getSpectators().contains(candidate);
+            if (!exists) {
+                return candidate;
+            }
+            index++;
+        }
+    }
+
+    private Player chooseNextOwner(GameRoom room) {
+        Player nextHumanOwner = room.getPlayers().stream()
+                .filter(player -> !player.isDisconnected() && !player.isBot())
+                .findFirst()
+                .orElse(null);
+        if (nextHumanOwner != null) {
+            return nextHumanOwner;
+        }
+        return room.getPlayers().stream()
+                .filter(player -> !player.isDisconnected())
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean hasActiveHumanPlayers(GameRoom room) {
+        return room.getPlayers().stream().anyMatch(player -> !player.isBot() && !player.isDisconnected());
+    }
+
     // --- 新增：切换准备状态 ---
     public void toggleReady(String roomId, String userId) {
         GameRoom room = roomMap.get(roomId);
@@ -787,16 +905,19 @@ public class GameService {
 
             room.getPlayers().removeIf(Player::isDisconnected);
             if (!room.getPlayers().isEmpty() && room.getPlayers().stream().noneMatch(p -> p.getUserId().equals(room.getOwnerId()))) {
-                room.setOwnerId(room.getPlayers().get(0).getUserId());
+                Player nextOwner = chooseNextOwner(room);
+                if (nextOwner != null) {
+                    room.setOwnerId(nextOwner.getUserId());
+                }
             }
 
             for (Player p : room.getPlayers()) {
                 p.getHandCards().clear();
-                if (!"WAITING".equals(p.getStatus())) {
-                    p.setReady(false);
-                }
                 p.setStatus("WAITING");
+                p.setReady(p.isBot());
                 p.setHasReplacedCardThisTurn(false);
+                p.setHasUsedAoeThisTurn(false);
+                p.setHasUsedSkillThisTurn(false);
             }
             java.util.List<String> toRemove = new java.util.ArrayList<>();
             for (String specId : room.getSpectators()) {
@@ -808,13 +929,16 @@ public class GameService {
             room.getSpectators().removeAll(toRemove);
             // 重新洗牌
             room.initDeck();
+            if (!hasActiveHumanPlayers(room) && room.getSpectators().isEmpty()) {
+                roomMap.remove(roomId);
+            }
         }
     }
     public java.util.Collection<GameRoom> getAllRooms() {
         return roomMap.values();
     }
     // 【新增】：踢出玩家
-    public void kickPlayer(String roomId, String ownerId, String targetId) {
+/*    public void kickPlayer(String roomId, String ownerId, String targetId) {
         GameRoom room = roomMap.get(roomId);
         if (room != null) {
             if ("room_manager".equals(targetId)) {
@@ -835,6 +959,41 @@ public class GameService {
             }
         }
     }
+*/
+
+    public void kickPlayer(String roomId, String ownerId, String targetId) {
+        GameRoom room = roomMap.get(roomId);
+        if (room == null) {
+            return;
+        }
+        if ("room_manager".equals(targetId)) {
+            log.warn("owner [{}] attempted to kick the room manager", ownerId);
+            return;
+        }
+        if (!room.getOwnerId().equals(ownerId) && !"room_manager".equals(ownerId)) {
+            return;
+        }
+
+        room.getPlayers().removeIf(player -> player.getUserId().equals(targetId));
+        room.getSpectators().remove(targetId);
+
+        if (!room.getPlayers().isEmpty() && targetId.equals(room.getOwnerId())) {
+            Player nextOwner = chooseNextOwner(room);
+            if (nextOwner != null) {
+                room.setOwnerId(nextOwner.getUserId());
+            }
+        }
+
+        if (room.getPlayers().isEmpty() && room.getSpectators().isEmpty()) {
+            roomMap.remove(roomId);
+            return;
+        }
+
+        if (!hasActiveHumanPlayers(room) && room.getSpectators().isEmpty()) {
+            roomMap.remove(roomId);
+        }
+    }
+
     public void safeLeaveRoom(String roomId, String userId) {
         GameRoom room = roomMap.get(roomId);
         if (room == null) return;
@@ -887,7 +1046,7 @@ public class GameService {
                 if (p != null) room.getPlayers().remove(p);
                 room.getSpectators().remove(userId);
                 if (room.getOwnerId() != null && room.getOwnerId().equals(userId)) {
-                    Player nextOwner = room.getPlayers().stream().filter(player -> !player.isDisconnected()).findFirst().orElse(null);
+                    Player nextOwner = chooseNextOwner(room);
                     if (nextOwner != null) room.setOwnerId(nextOwner.getUserId());
                 }
             }
@@ -895,6 +1054,10 @@ public class GameService {
             // ====== 【核心修复 2：彻底消灭幽灵房间】 ======
             // 只要房间里没有任何存活状态的人（全部是 disconnected），立刻销毁房间释放内存！
             boolean hasAlivePlayer = room.getPlayers().stream().anyMatch(player -> !player.isDisconnected());
+            if (hasAlivePlayer && !hasActiveHumanPlayers(room) && room.getSpectators().isEmpty()) {
+                roomMap.remove(roomId);
+                return;
+            }
             if (!hasAlivePlayer && room.getSpectators().isEmpty()) {
                 log.info("♻️ 房间 [{}] 已无真实活人，系统已彻底清空并销毁该幽灵房间！", roomId);
                 roomMap.remove(roomId);
