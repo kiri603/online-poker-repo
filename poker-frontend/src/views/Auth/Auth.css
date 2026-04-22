@@ -4,6 +4,7 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   box-sizing: border-box;
   overflow: hidden;
   color: #fff5e6;
@@ -586,10 +587,13 @@
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: auto;
     transform: none;
     max-width: 100%;
-    padding: clamp(48px, 9vh, 88px) clamp(20px, 5vw, 40px) clamp(32px, 6vh, 60px);
+    padding:
+      clamp(48px, 9vh, 88px)
+      clamp(20px, 5vw, 40px)
+      calc(170px + env(safe-area-inset-bottom, 0px));
     box-sizing: border-box;
     gap: 14px;
     align-items: center;
@@ -615,10 +619,15 @@
   }
 
   .auth-cta-row {
+    position: fixed;
+    left: 50%;
+    bottom: calc(clamp(18px, 3.5vh, 32px) + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 3;
     flex-direction: column;
     width: min(340px, 86vw);
     gap: 12px;
-    margin-top: auto;
+    margin-top: 0;
   }
 
   .cta {
@@ -699,7 +708,16 @@
 
 @media (max-width: 480px) {
   .auth-hero {
-    padding: clamp(36px, 7vh, 68px) clamp(16px, 4vw, 28px) clamp(28px, 5vh, 48px);
+    padding:
+      clamp(36px, 7vh, 68px)
+      clamp(16px, 4vw, 28px)
+      calc(150px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+  }
+
+  .auth-cta-row {
+    bottom: calc(clamp(14px, 3vh, 24px) + env(safe-area-inset-bottom, 0px));
+    width: min(320px, 88vw);
     gap: 10px;
   }
 
@@ -721,11 +739,6 @@
   .auth-tagline {
     font-size: clamp(12px, 3.4vw, 15px);
     letter-spacing: 2px;
-  }
-
-  .auth-cta-row {
-    width: min(300px, 88vw);
-    gap: 10px;
   }
 
   .cta {
@@ -783,13 +796,25 @@
 
 @media (max-height: 600px) and (max-width: 768px) {
   .auth-hero {
-    padding-top: clamp(20px, 4vh, 36px);
-    padding-bottom: clamp(16px, 3vh, 28px);
-    gap: 8px;
+    padding-top: clamp(16px, 4vh, 32px);
+    padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
   }
 
   .auth-title-text {
-    font-size: clamp(36px, 9vw, 52px);
+    font-size: clamp(32px, 8vw, 48px);
+  }
+
+  .auth-cta-row {
+    flex-direction: row;
+    width: min(560px, 92vw);
+    gap: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cta {
+    height: 48px;
+    padding: 0 14px;
   }
 }
 
