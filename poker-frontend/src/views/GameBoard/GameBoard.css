@@ -322,9 +322,9 @@
   padding: 15px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  width: 250px;
-  height: 250px;
+  gap: 18px;
+  width: 320px;
+  height: 320px;
   overflow-y: auto;
   margin-right: 5px;
   box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.3);
@@ -337,8 +337,8 @@
   border-radius: 4px;
 }
 .emoji-item {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   cursor: pointer;
   transition: transform 0.2s;
   display: flex;
@@ -358,9 +358,9 @@
   position: absolute;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
-  padding: 5px;
-  width: 45px;
-  height: 45px;
+  padding: 8px;
+  width: 72px;
+  height: 72px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   z-index: 50;
   display: flex;
@@ -375,7 +375,7 @@
 .emoji-bubble::after {
   content: "";
   position: absolute;
-  border-width: 8px;
+  border-width: 12px;
   border-style: solid;
 }
 .emoji-bubble.other {
@@ -388,7 +388,7 @@
 .emoji-bubble.other::after {
   top: 50%;
   right: 100%;
-  margin-top: -8px;
+  margin-top: -12px;
   border-color: transparent rgba(255, 255, 255, 0.95) transparent transparent;
 }
 .emoji-bubble.me {
@@ -400,7 +400,7 @@
 .emoji-bubble.me::after {
   top: 100%;
   left: 20%;
-  margin-left: -8px;
+  margin-left: -12px;
   border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
 }
 
@@ -1048,6 +1048,20 @@
   .emoji-item {
     width: 45px;
     height: 45px;
+  }
+  .emoji-bubble {
+    width: 45px;
+    height: 45px;
+    padding: 5px;
+  }
+  .emoji-bubble::after {
+    border-width: 8px;
+  }
+  .emoji-bubble.other::after {
+    margin-top: -8px;
+  }
+  .emoji-bubble.me::after {
+    margin-left: -8px;
   }
   .emoji-bubble.me {
     bottom: 180%;
