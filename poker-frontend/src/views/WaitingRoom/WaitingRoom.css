@@ -377,6 +377,13 @@
   z-index: 1000;
   padding: 0;
 }
+.global-sound-btn .sound-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  color: inherit;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
+}
 .global-sound-btn:hover {
   background: rgba(255, 255, 255, 0.4);
   transform: scale(1.1);
@@ -395,9 +402,9 @@
     width: 32px;
     height: 32px;
   }
-  .global-sound-btn svg {
-    width: 16px !important;
-    height: 16px !important;
+  .global-sound-btn .sound-icon {
+    width: 16px;
+    height: 16px;
   }
 }
 @media screen and (max-width: 768px) {

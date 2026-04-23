@@ -1,188 +1,403 @@
-<div class="top-right-hud">
-  <button
-    class="global-sound-btn"
-    @click="toggleSound"
-    :class="{ 'is-muted': !soundStatus }"
-  >
-    <svg class="icon" aria-hidden="true" style="font-size: 20px">
-      <use
-        :xlink:href="soundStatus ? '#icon-soundsize' : '#icon-mute-copy'"
-      ></use>
-    </svg>
-  </button>
-</div>
+<div class="lobby-shell">
+  <div class="lobby-vignette" aria-hidden="true"></div>
 
-<div class="lobby-view-container">
-  <button class="rule-toggle-btn" @click="showRules = true">📐 游戏规则</button>
-  <button class="update-toggle-btn" @click="showUpdates = true">📙 更新公告</button>
-
-  <div v-if="showRules" class="rules-modal" @click="showRules = false">
-    <div class="rules-content" @click.stop>
-      <h2>核心规则玩法</h2>
-      <ul>
-        <li>
-          <strong>发牌与出牌：</strong>开局每人获得 8
-          张手牌，由系统随机指定一名玩家先出，随后顺时针轮流。牌型大小依据经典“斗地主”规则。
-        </li>
-        <li>
-          <strong>技能【制衡】：</strong>在你的出牌回合，你可以选择“制衡”（弃置 1
-          张手牌，并重新摸 1 张），每回合限用 1 次。
-        </li>
-        <li>
-          <strong>过牌惩罚：</strong>如果没有牌大过上家，或者主动选择“要不起”，将被惩罚<strong>需要摸
-            2 张牌</strong
-          >。
-        </li>
-        <li>
-          <strong>胜负判定：</strong> <br />🏆
-          <strong>获胜：</strong>最先出光所有手牌即可直接获胜！ <br />❌
-          <strong>淘汰：</strong>手牌数量<strong>超过 14 张</strong
-          >，将直接被淘汰。场上其余玩家全被淘汰时，最后存活者“直接获胜”。
-        </li>
-      </ul>
-      <button class="close-rule-btn" @click="showRules = false">
-        我知道了
-      </button>
-      <div class="detail-link-wrapper">
-        <span class="detail-rule-link" @click="goToRuleDetail">>>详情</span>
+  <div class="lobby-top-left">
+    <div class="lobby-brand" aria-label="三国斗地主">
+      <div class="brand-frame">
+        <span class="brand-main">三国斗地主</span>
+        <span class="brand-sub">斗智斗牌</span>
       </div>
+    </div>
+
+    <div class="lobby-side-buttons">
+      <button
+        type="button"
+        class="side-btn"
+        @click="openInfoPanel('rules')"
+      >
+        <svg class="side-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 4h12a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3V4z" />
+          <path d="M4 17a3 3 0 0 0 3 3" />
+          <path d="M8 8h8" />
+          <path d="M8 12h6" />
+        </svg>
+        <span>游戏规则</span>
+      </button>
+      <button
+        type="button"
+        class="side-btn"
+        @click="openInfoPanel('updates')"
+      >
+        <svg class="side-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 10v6l3 2 12-5V7z" />
+          <path d="M18 9a3 3 0 0 1 0 6" />
+          <path d="M8 16v3a2 2 0 0 0 4 0v-2" />
+        </svg>
+        <span>更新公告</span>
+      </button>
     </div>
   </div>
 
-  <div v-if="showUpdates" class="rules-modal" @click="showUpdates = false">
-    <div class="rules-content" @click.stop>
-      <h2>最新更新内容</h2>
-      <ul>
-        <li>
-          <strong>🤖 增加AI玩家：</strong><br />
-          现在支持脚本 AI 玩家自动进房、自动选技能、自动出牌、自动发表情与自动准备。
-        </li>
-        <li>
-          <strong>👤 账号系统：</strong><br />
-          新增注册登录、设备记住登录，以及游客登录功能。
-        </li>
-        <li>
-          <strong>📐 锦囊与技能模式：</strong><br />
-          锦囊牌、武将技能仍可在创建房间时自由组合启用。
-        </li>
-        <li>
-          <strong>bug修复:</strong><br />
-          修复了洗牌并发双倍复制 Bug;
-        </li>
-        <li
-          style="
-            margin-top: 15px;
-            border-top: 1px dashed rgba(255, 255, 255, 0.2);
-            padding-top: 10px;
-            color: #bdc3c7;
-          "
+  <div class="lobby-top-right">
+    <button
+      type="button"
+      class="global-sound-btn"
+      :class="{ 'is-muted': !soundStatus }"
+      @click="toggleSound"
+      :aria-label="soundStatus ? '静音背景音乐' : '开启背景音乐'"
+    >
+      <!--
+        Inline SVG instead of <use href="#icon-soundsize"> because the
+        iconfont.cn sprite hard-codes fill="#000000" on the inner <path>.
+        Paths inside a <use> shadow tree can't inherit a color change from
+        outside, which is why the icon previously rendered pitch-black
+        against the dark button.
+      -->
+      <svg
+        v-if="soundStatus"
+        class="sound-icon"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          d="M15.5 8.5a5 5 0 0 1 0 7"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          d="M19 5a10 10 0 0 1 0 14"
+        />
+      </svg>
+      <svg
+        v-else
+        class="sound-icon"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          d="m15.5 9.5 6 6M21.5 9.5l-6 6"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <main class="lobby-main">
+    <h1 class="lobby-title">
+      <span class="lobby-title-text">联机大厅</span>
+    </h1>
+
+    <section class="lobby-stage">
+      <article class="room-entry-card">
+        <p class="room-entry-hint">输入房间号加入，或创建新房间与好友一起玩！</p>
+        <div class="room-entry-field">
+          <input
+            v-model="roomId"
+            class="room-entry-input"
+            placeholder="请输入 4~6 位房间号"
+            maxlength="6"
+            inputmode="numeric"
+            @keyup.enter="handleJoinClick"
+          />
+        </div>
+        <button
+          type="button"
+          class="room-entry-action"
+          @click="handleJoinClick"
         >
-          📕 游戏Bug反馈以及建议途径<br />
-          游戏测试交流群 QQ：1082246463
-        </li>
-      </ul>
-      <button class="close-rule-btn" @click="showUpdates = false">
-        我已知道
-      </button>
+          <svg class="room-entry-action-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11.5-6.86a1 1 0 0 0 0-1.72L9.5 4.28A1 1 0 0 0 8 5.14z" />
+          </svg>
+          <span>加入 / 创建房间</span>
+        </button>
+      </article>
+
+      <article class="room-list-card">
+        <header class="room-list-header">
+          <span class="ornament" aria-hidden="true">♠ ♣</span>
+          <span class="room-list-title">当前公开房间（点击加入）</span>
+          <span class="ornament" aria-hidden="true">♥ ♦</span>
+        </header>
+
+        <div v-if="publicRooms.length === 0" class="room-list-empty">
+          暂无公开房间
+        </div>
+
+        <ul v-else class="room-list">
+          <li
+            v-for="room in publicRooms"
+            :key="room.roomId"
+            class="room-card"
+            @click="quickJoin(room.roomId)"
+          >
+            <div class="room-card-num">{{ room.roomId }}</div>
+            <div
+              class="room-card-mode"
+              :class="getRoomModeClass(room)"
+            >
+              {{ getRoomModeLabel(room) }}
+            </div>
+            <div class="room-card-people">
+              {{ room.playerCount || 0 }}/{{ getRoomCapacity(room) }}人
+            </div>
+            <div
+              class="room-card-status"
+              :class="room.status === 'PLAYING' ? 'playing' : 'waiting'"
+            >
+              {{ room.status === "PLAYING" ? "游戏中" : "准备中" }}
+            </div>
+            <button
+              type="button"
+              class="room-card-join"
+              @click.stop="quickJoin(room.roomId)"
+            >
+              加入
+            </button>
+          </li>
+        </ul>
+
+        <button
+          type="button"
+          class="room-list-refresh"
+          @click="refreshRooms"
+          :disabled="refreshing"
+        >
+          <svg class="refresh-icon" :class="{ spinning: refreshing }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 12a8 8 0 1 1-3.5-6.6" />
+            <path d="M20 4v5h-5" />
+          </svg>
+          <span>{{ refreshing ? "刷新中..." : "刷新列表" }}</span>
+        </button>
+      </article>
+    </section>
+  </main>
+
+  <div
+    v-if="showRules || showUpdates"
+    class="info-overlay"
+    role="dialog"
+    aria-modal="true"
+    @click.self="closeInfoPanel"
+  >
+    <div class="info-panel">
+      <div class="info-panel-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="activeInfoTab === 'updates'"
+          :class="['info-tab', { active: activeInfoTab === 'updates' }]"
+          @click="setInfoTab('updates')"
+        >
+          更新公告
+        </button>
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="activeInfoTab === 'rules'"
+          :class="['info-tab', { active: activeInfoTab === 'rules' }]"
+          @click="setInfoTab('rules')"
+        >
+          游戏规则
+        </button>
+        <button
+          type="button"
+          class="info-close"
+          aria-label="关闭"
+          @click="closeInfoPanel"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6L6 18" />
+            <path d="M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div v-if="activeInfoTab === 'updates'" class="info-body">
+        <h2 class="info-headline">最新更新内容</h2>
+        <ul class="info-list">
+          <li>
+            <span class="info-bullet updates"></span>
+            <div>
+              <strong>增加AI玩家：</strong>
+              现在支持脚本 AI 玩家自动进房、自动选技能、自动出牌、自动发表情与自动准备。
+            </div>
+          </li>
+          <li>
+            <span class="info-bullet account"></span>
+            <div>
+              <strong>账号系统：</strong>
+              新增注册登录、设备记住登录，以及游客登录功能。
+            </div>
+          </li>
+          <li>
+            <span class="info-bullet skills"></span>
+            <div>
+              <strong>锦囊与技能模式：</strong>
+              锦囊牌、武将技能仍可在创建房间时自由组合启用。
+            </div>
+          </li>
+          <li>
+            <span class="info-bullet bug"></span>
+            <div>
+              <strong>bug 修复：</strong>
+              修复了洗牌并发双倍复制 Bug。
+            </div>
+          </li>
+          <li class="info-contact">
+            <span class="info-bullet feedback"></span>
+            <div>
+              <strong>游戏 Bug 反馈以及建议途径：</strong>
+              游戏测试交流群 QQ：1082246463
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div v-else class="info-body">
+        <h2 class="info-headline">核心规则玩法</h2>
+        <ul class="info-list">
+          <li>
+            <span class="info-bullet skills"></span>
+            <div>
+              <strong>发牌与出牌：</strong>
+              开局每人获得 8 张手牌，由系统随机指定一名玩家先出，随后顺时针轮流。牌型大小依据经典「斗地主」规则。
+            </div>
+          </li>
+          <li>
+            <span class="info-bullet updates"></span>
+            <div>
+              <strong>技能【制衡】：</strong>
+              在你的出牌回合，你可以选择「制衡」（弃置 1 张手牌并重新摸 1 张），每回合限用 1 次。
+            </div>
+          </li>
+          <li>
+            <span class="info-bullet bug"></span>
+            <div>
+              <strong>过牌惩罚：</strong>
+              如果没有牌大过上家，或者主动选择「要不起」，将被惩罚<strong>需要摸 2 张牌</strong>。
+            </div>
+          </li>
+          <li>
+            <span class="info-bullet account"></span>
+            <div>
+              <strong>胜负判定：</strong><br />
+              🏆 <strong>获胜：</strong>最先出光所有手牌即可直接获胜！<br />
+              ❌ <strong>淘汰：</strong>手牌数量<strong>超过 14 张</strong>将直接被淘汰。场上其余玩家全被淘汰时，最后存活者「直接获胜」。
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="info-actions">
+        <button type="button" class="info-primary" @click="closeInfoPanel">
+          我知道了
+        </button>
+        <button type="button" class="info-detail-link" @click="goToRuleDetail">
+          查看详情 »
+        </button>
+      </div>
     </div>
   </div>
 
   <div
     v-if="showCreateModal"
-    class="rules-modal"
-    @click="showCreateModal = false"
+    class="info-overlay create-overlay"
+    @click.self="showCreateModal = false"
   >
-    <div class="rules-content" style="max-width: 400px" @click.stop>
-      <h2 style="color: #2ecc71">🎙️ 创建房间: {{ roomId }}</h2>
+    <div class="info-panel info-panel-narrow">
+      <div class="info-panel-tabs single">
+        <span class="info-tab active">创建房间</span>
+        <button
+          type="button"
+          class="info-close"
+          aria-label="关闭"
+          @click="showCreateModal = false"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6L6 18" />
+            <path d="M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-      <div class="settings-list mini" style="margin-top: 20px">
-        <label class="setting-item">
-          <span>🎴 经典场(默认规则)</span>
-          <input type="checkbox" checked disabled />
-        </label>
-        <label class="setting-item">
-          <span>📐 启用锦囊牌</span>
-          <input
-            type="checkbox"
-            v-model="roomSettings.enableScrollCards"
-          />
-        </label>
-        <label class="setting-item">
-          <span>🗡️ 启用武将技能</span>
-          <input type="checkbox" v-model="roomSettings.enableSkills" />
-        </label>
-        <label class="setting-item">
-          <span>🔐 设为私密房间</span>
-          <input type="checkbox" v-model="isPrivate" />
-        </label>
+      <div class="info-body create-body">
+        <div class="create-roomno">
+          房间号 <strong>{{ roomId }}</strong>
+        </div>
+        <ul class="settings-list">
+          <li class="setting-item">
+            <span>🎴 经典场（默认规则）</span>
+            <label class="switch">
+              <input type="checkbox" checked disabled />
+              <span class="slider"></span>
+            </label>
+          </li>
+          <li class="setting-item">
+            <span>📐 启用锦囊牌</span>
+            <label class="switch">
+              <input type="checkbox" v-model="roomSettings.enableScrollCards" />
+              <span class="slider"></span>
+            </label>
+          </li>
+          <li class="setting-item">
+            <span>🗡️ 启用武将技能</span>
+            <label class="switch">
+              <input type="checkbox" v-model="roomSettings.enableSkills" />
+              <span class="slider"></span>
+            </label>
+          </li>
+          <li class="setting-item">
+            <span>🔐 设为私密房间</span>
+            <label class="switch">
+              <input type="checkbox" v-model="isPrivate" />
+              <span class="slider"></span>
+            </label>
+          </li>
+        </ul>
 
         <input
           v-if="isPrivate"
           v-model="roomPassword"
           type="password"
+          class="create-password-input"
           placeholder="请设置 4 位数字密码"
           maxlength="4"
-          style="
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 6px;
-            border: none;
-            box-sizing: border-box;
-          "
+          inputmode="numeric"
         />
       </div>
 
-      <div
-        class="rules-actions"
-        style="margin-top: 30px; display: flex; gap: 15px"
-      >
+      <div class="info-actions create-actions">
         <button
-          class="secondary-btn"
-          style="background: #95a5a6"
+          type="button"
+          class="info-secondary"
           @click="showCreateModal = false"
         >
           取消
         </button>
         <button
-          class="close-rule-btn"
-          style="background: #27ae60"
+          type="button"
+          class="info-primary"
           @click="confirmCreateRoom"
         >
           确认创建
         </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="lobby-wrapper">
-    <div class="login-screen">
-      <h1 class="art-title">联机大厅</h1>
-      <input v-model="roomId" placeholder="请输入房间号 (如 101)" />
-      <button @click="handleJoinClick">加入 / 创建房间</button>
-    </div>
-
-    <div class="room-list-panel">
-      <h3>当前公开房间 (点击加入)</h3>
-      <div v-if="publicRooms.length === 0" class="empty-rooms">
-        暂无公开房间
-      </div>
-
-      <div
-        v-for="room in publicRooms"
-        :key="room.roomId"
-        class="room-item"
-        @click="quickJoin(room.roomId)"
-      >
-        <div class="room-info">房间号: <strong>{{ room.roomId }}</strong></div>
-        <div class="room-stats">
-          <span>👌 {{ room.playerCount }}/4</span>
-          <span
-            :class="['room-status', room.status === 'PLAYING' ? 'playing' : 'waiting']"
-          >
-            {{ room.status === "PLAYING" ? "对战中" : "准备中" }}
-          </span>
-        </div>
       </div>
     </div>
   </div>

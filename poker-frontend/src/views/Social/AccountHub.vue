@@ -1,10 +1,17 @@
 <template>
   <div v-if="authUser" class="account-hub">
     <button class="account-trigger" @click="handleAccountClick">
+      <span class="account-trigger-avatar" aria-hidden="true">{{
+        displayInitial
+      }}</span>
       <span class="account-trigger-name">{{
         authUser.nickname || authUser.username
       }}</span>
-      <span class="account-trigger-arrow">▾</span>
+      <span class="account-trigger-arrow" aria-hidden="true">
+        <svg viewBox="0 0 12 7" fill="currentColor" focusable="false">
+          <path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+      </span>
       <span v-if="socialNotificationCount > 0" class="account-trigger-dot"></span>
     </button>
   </div>
@@ -365,6 +372,11 @@ import {
 const profile = computed(() => socialProfile.value || {});
 const records = computed(() => profile.value.recentRecords || []);
 const isViewingSelf = computed(() => profile.value.self !== false);
+const displayInitial = computed(() => {
+  const raw = authUser.value?.nickname || authUser.value?.username || "";
+  const char = Array.from(String(raw).trim())[0] || "?";
+  return char.toUpperCase();
+});
 const levelProgressWidth = computed(() => ({
   width: `${Math.max(0, Math.min(100, profile.value.levelProgressPercent || 0))}%`,
 }));
@@ -411,8 +423,9 @@ const formatTime = (value) => {
 <style scoped>
 .account-hub {
   position: fixed;
-  top: 18px;
-  right: 74px;
+  top: clamp(16px, 2vh, 22px);
+  /* Sit directly to the left of the lobby's 40px sound button (right: clamp(16px,1.8vw,22px)) with a 10px gap */
+  right: calc(clamp(16px, 1.8vw, 22px) + 50px);
   z-index: 1200;
 }
 
@@ -420,29 +433,86 @@ const formatTime = (value) => {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  gap: 10px;
+  height: 40px;
+  padding: 0 16px 0 6px;
+  border: 1px solid rgba(233, 185, 73, 0.45);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #edf6ff;
-  backdrop-filter: blur(10px);
+  background: rgba(10, 18, 30, 0.45);
+  color: #ffde9a;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   cursor: pointer;
-  box-shadow: 0 8px 22px rgba(19, 31, 44, 0.18);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px rgba(255, 220, 150, 0.08);
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.account-trigger:hover {
+  background: rgba(20, 32, 52, 0.6);
+  border-color: rgba(255, 214, 128, 0.78);
+  transform: scale(1.04);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.35),
+    0 0 14px rgba(255, 198, 102, 0.38);
+}
+
+.account-trigger:active {
+  transform: scale(0.98);
+}
+
+.account-trigger-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f6c667 0%, #c48221 100%);
+  color: #2a1603;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 241, 196, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .account-trigger-name {
-  max-width: 108px;
+  max-width: 112px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(255, 196, 108, 0.28);
 }
 
 .account-trigger-arrow {
-  font-size: 11px;
-  opacity: 0.78;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd07a;
+  opacity: 0.92;
+  transition: transform 0.2s ease;
+}
+
+.account-trigger-arrow svg {
+  width: 10px;
+  height: 6px;
+}
+
+.account-trigger:hover .account-trigger-arrow {
+  transform: translateY(1px);
 }
 
 .account-trigger-dot,
@@ -457,8 +527,9 @@ const formatTime = (value) => {
 
 .account-trigger-dot {
   position: absolute;
-  top: 4px;
-  right: 5px;
+  top: -2px;
+  right: -2px;
+  border: 2px solid rgba(10, 18, 30, 0.9);
 }
 
 .tab-dot {
@@ -993,16 +1064,30 @@ const formatTime = (value) => {
 @media screen and (max-width: 768px) {
   .account-hub {
     top: 10px;
-    right: 48px;
+    /* Mobile sound button is 34px wide + 8px gap from its right:10px anchor */
+    right: 52px;
   }
 
   .account-trigger {
-    padding: 6px 10px;
+    height: 34px;
+    padding: 0 12px 0 4px;
+    gap: 8px;
+  }
+
+  .account-trigger-avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
   }
 
   .account-trigger-name {
-    max-width: 84px;
-    font-size: 11px;
+    max-width: 82px;
+    font-size: 12px;
+  }
+
+  .account-trigger-arrow svg {
+    width: 9px;
+    height: 5px;
   }
 
   .social-overlay {
