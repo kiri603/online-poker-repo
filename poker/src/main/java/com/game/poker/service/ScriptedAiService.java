@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ScriptedAiService {
-    private static final List<String> BOT_SKILLS = List.of("ZHIHENG", "LUANJIAN", "GUANXING", "GUSHOU");
+    private static final List<String> BOT_SKILLS = List.of("ZHIHENG", "LUANJIAN", "GUANXING", "GUSHOU", "KUROU");
 /*
 
     private static final String SUIT_SPADE = "♠";
@@ -87,6 +87,13 @@ public class ScriptedAiService {
         if (!freeTurn && "GUSHOU".equals(bot.getSkill()) && !bot.isHasUsedSkillThisTurn()
                 && shouldUseGushou(room, bot, bestNormal, cache)) {
             return TurnDecision.useGushou();
+        }
+
+        if ("KUROU".equals(bot.getSkill()) && !bot.isKurouPendingAwakenDiscard()) {
+            List<Card> kurouDiscards = chooseKurouDiscards(hand);
+            if (kurouDiscards.size() == 2 && shouldUseKurou(room, bot, hand, bestNormal, cache)) {
+                return TurnDecision.useKurou(kurouDiscards);
+            }
         }
 
         if ("LUANJIAN".equals(bot.getSkill()) && !bot.isHasUsedSkillThisTurn()) {
@@ -159,6 +166,74 @@ public class ScriptedAiService {
                 .sorted(Comparator.comparingInt(card -> discardCost(hand, card)))
                 .limit(Math.min(count, hand.size()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 【苦肉】挑选 2 张弃置价值最低的非锦囊手牌。
+     */
+    public List<Card> chooseKurouDiscards(Player bot) {
+        return chooseKurouDiscards(safeHand(bot));
+    }
+
+    private List<Card> chooseKurouDiscards(List<Card> hand) {
+        return hand.stream()
+                .filter(card -> !SUIT_SCROLL.equals(card.getSuit()))
+                .sorted(Comparator.comparingInt(card -> discardCost(hand, card)))
+                .limit(2)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 【苦肉·觉醒】返回值：非 null = 弃置该黑色牌；null = 跳过。
+     * 仅当黑色废牌价值很低且仍有黑牌时才弃置。
+     */
+    public Card chooseKurouAwakenDiscardCard(Player bot) {
+        List<Card> hand = safeHand(bot);
+        if (hand.isEmpty()) {
+            return null;
+        }
+        Card best = hand.stream()
+                .filter(card -> SUIT_SPADE.equals(card.getSuit())
+                        || SUIT_CLUB.equals(card.getSuit())
+                        || (SUIT_JOKER.equals(card.getSuit()) && RANK_SMALL_JOKER.equals(card.getRank())))
+                .min(Comparator.comparingInt(card -> discardCost(hand, card)))
+                .orElse(null);
+        if (best == null) {
+            return null;
+        }
+        int cost = discardCost(hand, best);
+        // 手牌较多时（>10）更倾向弃置；价值过高的黑牌优先留着
+        int threshold = hand.size() > 10 ? 40 : 24;
+        if (cost <= threshold) {
+            return best;
+        }
+        return null;
+    }
+
+    private boolean shouldUseKurou(GameRoom room, Player bot, List<Card> hand,
+                                   PlayCandidate bestNormal, Map<String, Integer> cache) {
+        // 基础限制：手牌 < 2 不可用；爆牌风险规避（净 +2，+2 后 > 14 即输）
+        if (hand.size() < 2) {
+            return false;
+        }
+        int handAfter = hand.size() + 2;
+        if (handAfter > 14) {
+            return false;
+        }
+        // 已觉醒后更保守，避免无意义叠牌
+        int ceiling = bot.isKurouAwakened() ? 9 : 11;
+        if (hand.size() > ceiling) {
+            return false;
+        }
+        // 触发场景：没有好牌打 / 预估需要较多回合才能出完
+        int currentTurns = estimateTurnsToFinish(hand, cache);
+        if (bestNormal == null) {
+            return true;
+        }
+        if (bestNormal.kind == PatternKind.BOMB || bestNormal.kind == PatternKind.ROCKET) {
+            return false;
+        }
+        return currentTurns > 4;
     }
 
     public List<Card> chooseEmergencyFreeTurnPlay(Player bot) {
@@ -821,7 +896,8 @@ public class ScriptedAiService {
         PASS,
         REPLACE,
         USE_SKILL,
-        USE_GUSHOU
+        USE_GUSHOU,
+        USE_KUROU
     }
 
     public static class TurnDecision {
@@ -853,6 +929,10 @@ public class ScriptedAiService {
 
         public static TurnDecision useGushou() {
             return new TurnDecision(TurnDecisionType.USE_GUSHOU, List.of(), "GUSHOU");
+        }
+
+        public static TurnDecision useKurou(List<Card> cards) {
+            return new TurnDecision(TurnDecisionType.USE_KUROU, new ArrayList<>(cards), "KUROU");
         }
 
         public TurnDecisionType getType() {

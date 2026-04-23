@@ -19,6 +19,35 @@ public class Player {
     private String skill = "ZHIHENG";
     private boolean hasUsedSkillThisTurn = false;
 
+    // ====== 【苦肉技能】：跨回合累计计数、觉醒态、觉醒后出牌挂起标记 ======
+    private int kurouUseCount = 0;
+    private boolean kurouAwakened = false;
+    private boolean kurouPendingAwakenDiscard = false;
+
+    public int getKurouUseCount() {
+        return kurouUseCount;
+    }
+
+    public void setKurouUseCount(int kurouUseCount) {
+        this.kurouUseCount = kurouUseCount;
+    }
+
+    public boolean isKurouAwakened() {
+        return kurouAwakened;
+    }
+
+    public void setKurouAwakened(boolean kurouAwakened) {
+        this.kurouAwakened = kurouAwakened;
+    }
+
+    public boolean isKurouPendingAwakenDiscard() {
+        return kurouPendingAwakenDiscard;
+    }
+
+    public void setKurouPendingAwakenDiscard(boolean kurouPendingAwakenDiscard) {
+        this.kurouPendingAwakenDiscard = kurouPendingAwakenDiscard;
+    }
+
     public String getSkill() {
         return skill;
     }

@@ -21,6 +21,8 @@ let emojiTimeouts = {};
 let globalTimer = null;
 let isTimeoutTriggered = false;
 let lastTickSecond = -1;
+// 苦肉音效延播句柄：若紧随其后收到 SKILL_AWAKEN，则取消普通语音，避免两段语音撞车
+let pendingKurouSfxTimeout = null;
 
 // ==========================================
 // 2. 基础通信与动作封装
@@ -179,6 +181,9 @@ export const connectWebSocket = (isCreating = false) => {
                 .slice(0, required)
                 .map((c) => ({ suit: c.suit, rank: c.rank, weight: c.weight }));
               sendMsg("GUSHOU_DISCARD", cleanCards);
+            } else if (state.currentAoeType.value === "KUROU_AWAKEN_DISCARD") {
+              // 【苦肉·觉醒】：超时自动跳过额外弃置
+              sendMsg("KUROU_AWAKEN_DISCARD", null);
             } else {
               sendMsg("RESPOND_AOE", null);
             } // 超时自动要不起
@@ -284,6 +289,13 @@ export const connectWebSocket = (isCreating = false) => {
           state.isReady.value = me.isReady;
           state.myStatus.value = me.status;
           if (me.skill) state.mySkill.value = me.skill;
+          // 【苦肉】：本地 me 的计数 / 觉醒态同步
+          if (typeof me.kurouUseCount === "number") {
+            state.kurouUseCount.value = me.kurouUseCount;
+          }
+          if (typeof me.kurouAwakened === "boolean") {
+            state.kurouAwakened.value = me.kurouAwakened;
+          }
         }
         if (res.isStarted !== undefined) {
           // 如果后端标记游戏已结束，且产生了胜者，但我自己还没返回大厅（状态不是 WAITING）
@@ -393,6 +405,9 @@ export const connectWebSocket = (isCreating = false) => {
         state.winner.value = "";
         state.tableCards.value = [];
         state.lastPlayPlayer.value = "";
+        // 【苦肉】新开局时重置本地 me 的计数/觉醒态
+        state.kurouUseCount.value = 0;
+        state.kurouAwakened.value = false;
         playAudio("shuffle");
         state.isShuffling.value = true;
         setTimeout(() => {
@@ -538,6 +553,29 @@ export const connectWebSocket = (isCreating = false) => {
           // ====== 【新增：固守全服语音与飘字特效】 ======
           showActionText(res.userId, "固守", "skill");
           playAudio("action_gushou");
+        } else if (res.skillName === "KUROU") {
+          // ====== 【新增：苦肉全服飘字 + 语音】 ======
+          showActionText(res.userId, "苦肉", "skill");
+          // 短暂延迟播放，若紧随其后收到 SKILL_AWAKEN 则跳过普通语音
+          if (pendingKurouSfxTimeout) {
+            clearTimeout(pendingKurouSfxTimeout);
+          }
+          pendingKurouSfxTimeout = setTimeout(() => {
+            pendingKurouSfxTimeout = null;
+            playAudio("action_kurou");
+          }, 120);
+        }
+        break;
+      case "SKILL_AWAKEN":
+        // 【新增：觉醒特效】苦肉累计 >=3 次触发整局永久觉醒
+        if (pendingKurouSfxTimeout) {
+          clearTimeout(pendingKurouSfxTimeout);
+          pendingKurouSfxTimeout = null;
+        }
+        showActionText(res.userId, "苦肉·觉醒", "skill");
+        playAudio("action_kurou_awaken");
+        if (res.userId === state.userId.value) {
+          state.kurouAwakened.value = true;
         }
         break;
       case "PLAYER_REPLACED":

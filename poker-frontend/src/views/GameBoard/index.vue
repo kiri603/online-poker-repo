@@ -63,6 +63,10 @@ import {
   jdsrTarget,
   jdsrInitiator,
   luanjianInitiator, // <--- 干净的唯一引入
+  kurouUseCount,
+  kurouAwakened,
+  confirmKurouAwakenDiscard,
+  skipKurouAwakenDiscard,
 } from "./GameBoard.js";
 
 // ====== 【核心修复 2：防脱发防白屏机制】 ======
@@ -127,6 +131,10 @@ const _exposeToHtml = {
   jdsrTarget,
   jdsrInitiator,
   luanjianInitiator, // <--- 干净的唯一暴露
+  kurouUseCount,
+  kurouAwakened,
+  confirmKurouAwakenDiscard,
+  skipKurouAwakenDiscard,
 };
 </script>
 

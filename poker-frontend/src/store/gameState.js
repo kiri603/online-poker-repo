@@ -115,6 +115,10 @@ export const showWgfdModal = ref(false);
 export const wgfdCards = ref([]);
 export const selectedWgfdCard = ref([]);
 
+// ====== 【苦肉技能】：本地 me 的计数 / 觉醒态 ======
+export const kurouUseCount = ref(0);
+export const kurouAwakened = ref(false);
+
 export const isClassicMode = computed(
   () =>
     !roomSettings.value.enableWildcard && !roomSettings.value.enableScrollCards,

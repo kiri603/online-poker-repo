@@ -119,6 +119,22 @@
   cursor: not-allowed;
   opacity: 0.8;
 }
+.kurou-btn {
+  background: linear-gradient(135deg, #8e1e1e 0%, #c0392b 100%);
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 0 10px #e74c3c, inset 0 0 6px rgba(255, 255, 255, 0.15);
+  letter-spacing: 1px;
+}
+.kurou-btn:disabled {
+  background: #6b3a3a;
+  color: #f1f1f1;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+  text-shadow: none;
+}
 .spectator-hint {
   text-align: center;
   font-size: 20px;
@@ -855,6 +871,10 @@
   border-color: #2824b8;
   box-shadow: 0 15px 40px rgba(62, 92, 122, 0.3);
 }
+.kurou-card:hover {
+  border-color: #c0392b;
+  box-shadow: 0 15px 40px rgba(192, 57, 43, 0.35);
+}
 .skill-card:hover {
   transform: translateY(-15px) scale(1.02);
   background: linear-gradient(145deg, #34495e, #2c3e50);
@@ -1278,6 +1298,19 @@
     1px -1px 0 #d35400,
     -1px 1px 0 #d35400,
     0 0 15px #e67e22 !important;
+}
+/* ====== 苦肉·觉醒弃牌文字 (红色同款特效，与苦肉语音/飘字风格一致) ====== */
+.art-text-kurou {
+  font-size: 32px !important;
+  font-weight: 900 !important;
+  color: #fff1f1 !important;
+  letter-spacing: 2px;
+  text-shadow:
+    2px 2px 0 #8e1e1e,
+    -1px -1px 0 #8e1e1e,
+    1px -1px 0 #8e1e1e,
+    -1px 1px 0 #8e1e1e,
+    0 0 15px #e74c3c !important;
 }
 /* ====== 【借刀杀人：绝对定位独立悬浮层】 ====== */
 .jdsr-floating-notification {

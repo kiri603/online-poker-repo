@@ -220,6 +220,10 @@ public class GameService {
             player.setHasReplacedCardThisTurn(false);
             player.setHasUsedAoeThisTurn(false);
             player.setHasUsedSkillThisTurn(false);
+            // 【苦肉技能】：本局开时重置计数/觉醒/挂起态；同局内跨回合保留
+            player.setKurouUseCount(0);
+            player.setKurouAwakened(false);
+            player.setKurouPendingAwakenDiscard(false);
             // 打印每个玩家的初始手牌
             log.info("玩家 [{}] 获得初始手牌 (共{}张): {}", player.getUserId(), initialCards.size(), initialCards);
         }
@@ -380,6 +384,17 @@ public class GameService {
         synchronized (room) {
             Player player = getPlayer(room, userId);
             if (player == null || !isPlayerTurn(room, userId)) return;
+
+            // 【防御】：若此刻玩家已经 LOST/WON（例如苦肉爆牌瞬间，前端倒计时滞后触发 PASS），
+            // 不能再给他发惩罚牌，直接把回合让给下家。
+            if (!"PLAYING".equals(player.getStatus())) {
+                log.info("玩家 [{}] 已非 PLAYING（{}），忽略本次 PASS 并推进回合", userId, player.getStatus());
+                long aliveCount = room.getPlayers().stream().filter(p -> "PLAYING".equals(p.getStatus())).count();
+                if (aliveCount >= 2) {
+                    handleNextTurnAfterPass(room);
+                }
+                return;
+            }
 
             if (room.getSettings().containsKey("jdsr_target") && userId.equals(room.getSettings().get("jdsr_target"))) {
                 log.info("玩家 [{}] 被借刀时要不起，摸1张牌", userId);
@@ -759,6 +774,25 @@ public class GameService {
                 room.setCurrentTurnStartTime(System.currentTimeMillis());
                 return true;
             }
+
+            // ====== 【苦肉·觉醒】：已觉醒的玩家，主动打出普通牌型后可选额外弃 1 张黑色牌 ======
+            // 天然不触发：锦囊（已在上方 return）、AOE 响应（走 respondAoe）、JDSR 接牌成功（已在上方 return）
+            if ("KUROU".equals(player.getSkill()) && player.isKurouAwakened()) {
+                boolean hasBlack = player.getHandCards().stream()
+                        .anyMatch(c -> "\u2660".equals(c.getSuit())
+                                || "\u2663".equals(c.getSuit())
+                                || ("JOKER".equals(c.getSuit()) && "\u5c0f\u738b".equals(c.getRank())));
+                if (hasBlack) {
+                    player.setKurouPendingAwakenDiscard(true);
+                    room.setCurrentAoeType("KUROU_AWAKEN_DISCARD");
+                    room.setAoeStartTime(System.currentTimeMillis());
+                    room.getPendingAoePlayers().clear();
+                    room.getPendingAoePlayers().add(userId);
+                    log.info("玩家 [{}] 苦肉已觉醒，挂起等待选择额外弃置黑色牌", userId);
+                    return true;
+                }
+            }
+
             nextTurn(room);
             return true;
         }
@@ -1301,6 +1335,165 @@ public class GameService {
         nextTurn(room);
 
         // 手动清空桌面
+        Player nextPlayer = room.getPlayers().get(room.getCurrentTurnIndex());
+        if (nextPlayer.getUserId().equals(room.getLastPlayPlayerId())) {
+            if (room.getLastPlayedCards() != null) room.getLastPlayedCards().clear();
+            room.setLastPlayPlayerId("");
+        }
+    }
+
+    /**
+     * 【苦肉】：回合内无限次使用，弃 2 张手牌 + 摸 4 张。
+     * 跨回合累计 >= 3 次即永久觉醒（整局保留）。
+     * 不消耗 hasUsedSkillThisTurn；借刀目标期间禁用；爆牌（>14）即输。
+     * 返回布尔：是否由本次使用触发了觉醒（供 WS 层判断是否广播 SKILL_AWAKEN）。
+     */
+    public boolean useKurou(String roomId, String userId, List<Card> cards) {
+        GameRoom room = getRoom(roomId);
+        Player player = getPlayer(room, userId);
+        if (room == null || player == null || !isPlayerTurn(room, userId)) {
+            throw new RuntimeException("非本人回合，无法使用苦肉！");
+        }
+        if (room.getSettings().containsKey("jdsr_target") && userId.equals(room.getSettings().get("jdsr_target"))) {
+            throw new RuntimeException("借刀期间不能使用技能！");
+        }
+        if (!"KUROU".equals(player.getSkill())) {
+            throw new RuntimeException("你没有选择苦肉技能！");
+        }
+        // 觉醒后弃黑牌挂起期间禁止再发动苦肉，避免状态错乱
+        if (player.isKurouPendingAwakenDiscard()) {
+            throw new RuntimeException("请先处理觉醒后的弃置选择！");
+        }
+        if (cards == null || cards.size() != 2) {
+            throw new RuntimeException("苦肉必须弃置 2 张牌！");
+        }
+
+        // 严谨地校验并移除手牌（参照 useLuanjian）
+        for (Card playedCard : cards) {
+            java.util.Iterator<Card> iterator = player.getHandCards().iterator();
+            boolean found = false;
+            while (iterator.hasNext()) {
+                Card handCard = iterator.next();
+                if (handCard.getSuit().equals(playedCard.getSuit())
+                        && handCard.getRank().trim().equalsIgnoreCase(playedCard.getRank().trim())) {
+                    iterator.remove();
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) throw new RuntimeException("手牌中不存在待弃置的牌！");
+        }
+
+        room.getDiscardPile().addAll(cards);
+
+        // 摸 4 张
+        for (int i = 0; i < 4; i++) {
+            Card c = drawCard(room);
+            if (c != null) player.getHandCards().add(c);
+        }
+
+        // 累计计数 + 觉醒判定
+        boolean awakenTriggered = false;
+        player.setKurouUseCount(player.getKurouUseCount() + 1);
+        if (player.getKurouUseCount() >= 3 && !player.isKurouAwakened()) {
+            player.setKurouAwakened(true);
+            awakenTriggered = true;
+            log.info("玩家 [{}] 苦肉累计使用 {} 次，触发永久觉醒！",
+                    userId, player.getKurouUseCount());
+        }
+        log.info("玩家 [{}] 发动苦肉：弃 2 摸 4（手牌 {} 张，累计 {} 次{}）",
+                userId, player.getHandCards().size(), player.getKurouUseCount(),
+                player.isKurouAwakened() ? "，已觉醒" : "");
+
+        // 爆牌（>14）即输，参照固守逻辑
+        if (player.getHandCards().size() > 14) {
+            checkOverloadAndWin(room, player);
+            long aliveCount = room.getPlayers().stream()
+                    .filter(p -> "PLAYING".equals(p.getStatus())).count();
+            if (aliveCount <= 1) {
+                for (Player p : room.getPlayers()) {
+                    if ("PLAYING".equals(p.getStatus())) p.setStatus("WON");
+                }
+            }
+            // 【关键修复】：自爆后立刻把回合交给下家，否则当前回合仍挂在死者身上，
+            // 倒计时到期会触发前端自动 PASS，把 2 张惩罚牌塞回已经 LOST 的玩家。
+            boolean gameEnded = room.getPlayers().stream().anyMatch(p -> "WON".equals(p.getStatus()));
+            if (!gameEnded && !"PLAYING".equals(player.getStatus())) {
+                // 苦肉阶段本人尚未对当前trick做出反应，复用 pass 的收尾逻辑即可
+                // （nextTurn + 若新回合对应 lastPlayPlayerId 则清空桌面）
+                handleNextTurnAfterPass(room);
+            }
+            return awakenTriggered;
+        }
+
+        // 注意：回合不流转，允许同一回合再用、再出牌
+        return awakenTriggered;
+    }
+
+    /**
+     * 【苦肉·觉醒】：普通出牌挂起时，玩家选 1 张黑色牌弃置，或传 null 跳过。
+     * 结束后 nextTurn。
+     */
+    public void kurouAwakenDiscard(String roomId, String userId, Card card) {
+        GameRoom room = getRoom(roomId);
+        Player player = getPlayer(room, userId);
+        if (room == null || player == null) return;
+
+        if (!"KUROU_AWAKEN_DISCARD".equals(room.getCurrentAoeType())
+                || !room.getPendingAoePlayers().contains(userId)
+                || !player.isKurouPendingAwakenDiscard()) {
+            throw new RuntimeException("当前不是苦肉觉醒弃牌阶段！");
+        }
+
+        if (card != null) {
+            String suit = card.getSuit();
+            String rank = card.getRank();
+            boolean isBlackSuit = "\u2660".equals(suit) || "\u2663".equals(suit);
+            boolean isSmallJoker = "JOKER".equals(suit) && "\u5c0f\u738b".equals(rank);
+            if (!isBlackSuit && !isSmallJoker) {
+                throw new RuntimeException("觉醒弃置必须为黑色牌（♠ / ♣ / 小王）！");
+            }
+            boolean removed = false;
+            java.util.Iterator<Card> iterator = player.getHandCards().iterator();
+            while (iterator.hasNext()) {
+                Card handCard = iterator.next();
+                if (handCard.getSuit().equals(card.getSuit())
+                        && handCard.getRank().trim().equalsIgnoreCase(card.getRank().trim())) {
+                    iterator.remove();
+                    removed = true;
+                    break;
+                }
+            }
+            if (!removed) throw new RuntimeException("手牌中不存在该黑色牌！");
+            room.getDiscardPile().add(card);
+            log.info("玩家 [{}] 苦肉觉醒：额外弃置黑色牌 {}", userId, card);
+        } else {
+            log.info("玩家 [{}] 苦肉觉醒：跳过额外弃置", userId);
+        }
+
+        // 清挂起态
+        room.getPendingAoePlayers().remove(userId);
+        room.setCurrentAoeType(null);
+        room.setAoeStartTime(0);
+        player.setKurouPendingAwakenDiscard(false);
+
+        // 胜负兜底（极端情况下打空手牌本已走胜利分支，这里额外再校验一次）
+        if (player.getHandCards().isEmpty() && "PLAYING".equals(player.getStatus())) {
+            player.setStatus("WON");
+        }
+        long aliveCount = room.getPlayers().stream()
+                .filter(p -> "PLAYING".equals(p.getStatus())).count();
+        if (aliveCount <= 1) {
+            for (Player p : room.getPlayers()) {
+                if ("PLAYING".equals(p.getStatus())) p.setStatus("WON");
+            }
+        }
+        boolean gameEnded = room.getPlayers().stream().anyMatch(p -> "WON".equals(p.getStatus()));
+        if (gameEnded) return;
+
+        nextTurn(room);
+
+        // 复用固守的回合回旋清理：若下一位是桌面牌拥有者，清空桌面
         Player nextPlayer = room.getPlayers().get(room.getCurrentTurnIndex());
         if (nextPlayer.getUserId().equals(room.getLastPlayPlayerId())) {
             if (room.getLastPlayedCards() != null) room.getLastPlayedCards().clear();

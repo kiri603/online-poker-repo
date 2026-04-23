@@ -108,6 +108,16 @@
       </p>
     </div>
 
+    <div
+      v-else-if="currentAoeType === 'KUROU_AWAKEN_DISCARD'"
+      class="played-cards"
+    >
+      <p class="table-hint art-text-kurou">
+        {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
+        }}：苦肉·觉醒，正在弃牌...
+      </p>
+    </div>
+
     <div v-else-if="currentAoeType" class="played-cards aoe-table-display">
       <p class="table-hint" style="color: #e74c3c">{{ aoeInitiator }}:</p>
       <div class="card-display-row">
@@ -179,6 +189,43 @@
       </div>
     </template>
 
+    <template v-else-if="currentAoeType === 'KUROU_AWAKEN_DISCARD'">
+      <div
+        v-if="amIPendingAoe"
+        class="aoe-action-bar"
+        style="
+          background: rgba(120, 20, 40, 0.92);
+          box-shadow: 0 0 15px rgba(192, 57, 43, 0.7);
+        "
+      >
+        <div class="countdown-timer" :class="{ hurry: countdown <= 3 }">
+          ⏰ {{ countdown }}s
+        </div>
+        <span class="aoe-hint">
+          苦肉·觉醒：可弃置 1 张黑色牌（♠/♣/小王），或跳过
+        </span>
+        <button @click="skipKurouAwakenDiscard" class="pass-btn">跳过</button>
+        <button
+          @click="confirmKurouAwakenDiscard"
+          class="play-btn"
+          style="background-color: #c0392b"
+          :disabled="
+            selectedCards.length !== 1 ||
+            (
+              selectedCards[0].suit !== '♠' &&
+              selectedCards[0].suit !== '♣' &&
+              !(selectedCards[0].suit === 'JOKER' && selectedCards[0].rank === '小王')
+            )
+          "
+        >
+          弃置此黑牌
+        </button>
+      </div>
+      <div v-else class="wait-text" style="color: #e74c3c">
+        ⏳ 正在等待 {{ pendingAoePlayers[0] }} 觉醒弃牌...
+      </div>
+    </template>
+
     <template v-else-if="currentAoeType === 'GUANXING'">
       <div class="wait-text">✨ 观星</div>
     </template>
@@ -220,18 +267,24 @@
           ⏰ {{ countdown }}s
         </div>
         <button
-          v-if="mySkill !== 'GUANXING'"
+          v-if="mySkill !== 'GUANXING' && !(mySkill === 'KUROU' && jdsrTarget === userId)"
           @click="replaceCard"
+          :class="mySkill === 'KUROU' ? 'kurou-btn' : ''"
           :disabled="
             jdsrTarget === userId ? true :
             mySkill === 'ZHIHENG' ? selectedCards.length !== 1 : 
             mySkill === 'LUANJIAN' ? selectedCards.length !== 2 :
             mySkill === 'GUSHOU' ? (tableCards.length === 0 && !onlyHasScrolls) : 
+            mySkill === 'KUROU' ? selectedCards.length !== 2 :
             false
           "
         >
-          {{ mySkill === 'LUANJIAN' ? '乱箭' : (mySkill === 'GUSHOU' ? '固守' :
-          '制衡') }}
+          {{
+            mySkill === 'LUANJIAN' ? '乱箭' :
+            mySkill === 'GUSHOU' ? '固守' :
+            mySkill === 'KUROU' ? (kurouAwakened ? '苦肉·觉醒' : ('苦肉 (' + kurouUseCount + '/3)')) :
+            '制衡'
+          }}
         </button>
         <button
           @click="passTurn"
@@ -402,6 +455,14 @@
         <p>
           立即结束回合并摸 4 张牌。若下回接牌，则弃置 2
           张牌；若下回依然要不起，则免除摸牌惩罚。
+        </p>
+      </div>
+
+      <div class="skill-card kurou-card" @click="selectSkill('KUROU')">
+        <h3>💔 苦肉</h3>
+        <p>
+          出牌阶段无限次，弃置 2 张手牌并摸 4 张牌。累计使用 3
+          次永久觉醒：此后每次主动打出普通牌型后，可额外弃置一张黑色牌。
         </p>
       </div>
     </div>

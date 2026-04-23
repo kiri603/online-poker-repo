@@ -39,6 +39,8 @@ import {
   jdsrTarget,
   jdsrInitiator,
   luanjianInitiator, // <--- 确保只有这一个是新增的
+  kurouUseCount,
+  kurouAwakened,
 } from "@/store/gameState.js";
 import { computed } from "vue";
 import { soundStatus, toggleSound, playBGM } from "@/store/audioManager.js";
@@ -132,6 +134,16 @@ const replaceCard = () => {
     sendMsg("USE_SKILL", { skill: "GUANXING" });
   } else if (mySkill.value === "GUSHOU") {
     sendMsg("USE_GUSHOU", null);
+  } else if (mySkill.value === "KUROU") {
+    if (selectedCards.value.length !== 2)
+      return alert("苦肉必须选择 2 张牌！");
+    const cleanCards = selectedCards.value.map((c) => ({
+      suit: c.suit,
+      rank: c.rank,
+      weight: c.weight,
+    }));
+    sendMsg("USE_SKILL", { skill: "KUROU", cards: cleanCards });
+    selectedCards.value.forEach((c) => (c.selected = false));
   }
 };
 const selectSkill = (s) => {
@@ -203,6 +215,24 @@ const confirmGushouDiscard = () => {
   sendMsg("GUSHOU_DISCARD", cleanCards);
   selectedCards.value.forEach((c) => (c.selected = false));
 };
+
+// ====== 新增：苦肉·觉醒额外弃黑交互 ======
+const confirmKurouAwakenDiscard = () => {
+  if (selectedCards.value.length !== 1) return;
+  const c = selectedCards.value[0];
+  const isBlackSuit = c.suit === "\u2660" || c.suit === "\u2663";
+  const isSmallJoker = c.suit === "JOKER" && c.rank === "\u5c0f\u738b";
+  if (!isBlackSuit && !isSmallJoker) {
+    return alert("觉醒弃置必须为黑色牌（♠ / ♣ / 小王）！");
+  }
+  const cleanCard = { suit: c.suit, rank: c.rank, weight: c.weight };
+  sendMsg("KUROU_AWAKEN_DISCARD", cleanCard);
+  selectedCards.value.forEach((card) => (card.selected = false));
+};
+const skipKurouAwakenDiscard = () => {
+  selectedCards.value.forEach((card) => (card.selected = false));
+  sendMsg("KUROU_AWAKEN_DISCARD", null);
+};
 export {
   userId,
   otherPlayers,
@@ -265,4 +295,8 @@ export {
   jdsrTarget,
   jdsrInitiator,
   luanjianInitiator, // <--- 确保只有这一个是新增的
+  kurouUseCount,
+  kurouAwakened,
+  confirmKurouAwakenDiscard,
+  skipKurouAwakenDiscard,
 };

@@ -290,6 +290,28 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     }
                     break;
 
+                // ====== 【新增：处理苦肉觉醒后额外弃黑牌 / 跳过】 ======
+                case "KUROU_AWAKEN_DISCARD":
+                    try {
+                        Card kurouCard = null;
+                        Object dataObj = gameMsg.getData();
+                        if (dataObj != null && !(dataObj instanceof String s && s.isEmpty())) {
+                            // 允许 data 为 null / 空 => 跳过
+                            kurouCard = objectMapper.convertValue(dataObj, Card.class);
+                        }
+                        if (kurouCard != null) {
+                            String animJson = objectMapper.writeValueAsString(kurouCard);
+                            broadcastToRoom(roomId, new TextMessage("{\"event\": \"AOE_ANIMATION\", \"userId\": \"" + userId + "\", \"card\": " + animJson + "}"));
+                        }
+                        gameService.kurouAwakenDiscard(roomId, userId, kurouCard);
+                        syncPlayerHand(roomId, userId);
+                        publishWinnerIfNeeded(roomId, List.of());
+                        broadcastGameState(roomId);
+                    } catch (Exception e) {
+                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                    }
+                    break;
+
                 // ====== 【新增：主动使用固守】 ======
                 case "USE_GUSHOU":
                     try {
@@ -489,6 +511,16 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                                 String cardsJson = objectMapper.writeValueAsString(fourCards);
                                 sendToUser(roomId, userId, new TextMessage("{\"event\": \"GUANXING_SHOW\", \"cards\": " + cardsJson + "}"));
                             }
+                        } else if ("KUROU".equals(skillName)) {
+                            // ====== 【新增：苦肉】弃 2 摸 4，回合内无限次；累计 3 次永久觉醒 ======
+                            List<Card> cards = objectMapper.convertValue(skillData.get("cards"), new com.fasterxml.jackson.core.type.TypeReference<List<Card>>(){});
+                            boolean awakenTriggered = gameService.useKurou(roomId, userId, cards);
+                            broadcastToRoom(roomId, new TextMessage("{\"event\": \"SKILL_USED\", \"userId\": \"" + userId + "\", \"skillName\": \"KUROU\"}"));
+                            if (awakenTriggered) {
+                                broadcastToRoom(roomId, new TextMessage("{\"event\": \"SKILL_AWAKEN\", \"userId\": \"" + userId + "\", \"skillName\": \"KUROU\"}"));
+                            }
+                            // 苦肉使用后可能爆牌淘汰 / 触发躺赢
+                            publishWinnerIfNeeded(roomId, List.of());
                         }
                         syncPlayerHand(roomId, userId);// 【核心修复】：无论放什么技能，强刷全场手牌！
                         broadcastGameState(roomId);
@@ -738,6 +770,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 pInfo.put("isReady", p.isReady());
                 pInfo.put("isBot", p.isBot());
                 pInfo.put("skill", p.getSkill());
+                // 【苦肉】对外暴露计数和觉醒态，供前端 UI 展示 (0/3) 与觉醒特效
+                pInfo.put("kurouUseCount", p.getKurouUseCount());
+                pInfo.put("kurouAwakened", p.isKurouAwakened());
                 playersInfo.add(pInfo);
             }
 
@@ -910,6 +945,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             case "GUSHOU_DISCARD":
                 handleBotGushouDiscard(roomId, bot);
                 break;
+            case "KUROU_AWAKEN_DISCARD":
+                handleBotKurouAwakenDiscard(roomId, bot);
+                break;
             default:
                 handleBotRespondAoe(roomId, bot);
                 break;
@@ -958,6 +996,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 break;
             case USE_GUSHOU:
                 handleBotUseGushou(roomId, bot);
+                break;
+            case USE_KUROU:
+                if (!decision.getCards().isEmpty()) {
+                    handleBotUseKurou(roomId, bot, decision.getCards());
+                }
                 break;
             default:
                 break;
@@ -1432,6 +1475,44 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
 
         gameService.discardGushou(roomId, bot.getUserId(), cards);
+        syncPlayerHand(roomId, bot.getUserId());
+        publishWinnerIfNeeded(roomId, List.of());
+        broadcastGameState(roomId);
+    }
+
+    private void handleBotUseKurou(String roomId, com.game.poker.model.Player bot, List<Card> cards) throws Exception {
+        if (cards == null || cards.size() != 2) {
+            return;
+        }
+        boolean awakenTriggered;
+        try {
+            awakenTriggered = gameService.useKurou(roomId, bot.getUserId(), cards);
+        } catch (RuntimeException e) {
+            recoverBotAction(roomId, bot, "use KUROU", e);
+            return;
+        }
+        broadcastToRoom(roomId, new TextMessage("{\"event\": \"SKILL_USED\", \"userId\": \"" + bot.getUserId() + "\", \"skillName\": \"KUROU\"}"));
+        if (awakenTriggered) {
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"SKILL_AWAKEN\", \"userId\": \"" + bot.getUserId() + "\", \"skillName\": \"KUROU\"}"));
+        }
+        syncPlayerHand(roomId, bot.getUserId());
+        publishWinnerIfNeeded(roomId, List.of());
+        broadcastGameState(roomId);
+        maybeSendBotEmoji(roomId, bot, BotEmojiScenario.TACTICAL_PLAY);
+    }
+
+    private void handleBotKurouAwakenDiscard(String roomId, com.game.poker.model.Player bot) throws Exception {
+        Card card = scriptedAiService.chooseKurouAwakenDiscardCard(bot);
+        if (card != null) {
+            String animJson = objectMapper.writeValueAsString(card);
+            broadcastToRoom(roomId, new TextMessage("{\"event\": \"AOE_ANIMATION\", \"userId\": \"" + bot.getUserId() + "\", \"card\": " + animJson + "}"));
+        }
+        try {
+            gameService.kurouAwakenDiscard(roomId, bot.getUserId(), card);
+        } catch (RuntimeException e) {
+            recoverBotAction(roomId, bot, "kurou awaken discard", e);
+            return;
+        }
         syncPlayerHand(roomId, bot.getUserId());
         publishWinnerIfNeeded(roomId, List.of());
         broadcastGameState(roomId);
