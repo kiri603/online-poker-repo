@@ -304,6 +304,93 @@ class ScriptedAiServiceTest {
     }
 
     @Test
+    void gushouBotKeepsCheapSingleResponseInsteadOfUsingSkill() throws Exception {
+        // 回归：之前固守会在“明明有很自然的单牌应对”时也抢先发动，
+        // 导致白白把回合让掉。这种低破坏度回应应直接打出。
+        ScriptedAiService service = createServiceWithRuleEngine();
+        GameRoom room = new GameRoom("room-gushou-cheap-response");
+
+        Player opponent = new Player("p1");
+        opponent.setStatus("PLAYING");
+        Player bot = new Player("bot", true);
+        bot.setStatus("PLAYING");
+        bot.setSkill("GUSHOU");
+        bot.getHandCards().add(card("\u2660", "J", 9));
+        bot.getHandCards().add(card("\u2665", "9", 7));
+        bot.getHandCards().add(card("\u2663", "Q", 10));
+        bot.getHandCards().add(card("JOKER", "\u5c0f\u738b", 14));
+        bot.getHandCards().add(card("\u2666", "10", 8));
+        bot.getHandCards().add(card("\u2663", "6", 4));
+        bot.getHandCards().add(card("\u2660", "7", 5));
+        bot.getHandCards().add(card("\u2665", "A", 12));
+
+        room.setPlayers(new ArrayList<>(List.of(opponent, bot)));
+        room.setCurrentTurnIndex(1);
+        room.setLastPlayPlayerId(opponent.getUserId());
+        room.setLastPlayedCards(new ArrayList<>(List.of(card("\u2663", "7", 5))));
+
+        ScriptedAiService.TurnDecision decision = service.decideTurn(room, bot);
+
+        assertEquals(ScriptedAiService.TurnDecisionType.PLAY, decision.getType());
+        assertEquals(1, decision.getCards().size());
+    }
+
+    @Test
+    void gushouBotUsesSkillWhenNoNormalResponseExists() throws Exception {
+        ScriptedAiService service = createServiceWithRuleEngine();
+        GameRoom room = new GameRoom("room-gushou-no-response");
+
+        Player opponent = new Player("p1");
+        opponent.setStatus("PLAYING");
+        Player bot = new Player("bot", true);
+        bot.setStatus("PLAYING");
+        bot.setSkill("GUSHOU");
+        bot.getHandCards().add(card("\u2660", "3", 1));
+        bot.getHandCards().add(card("\u2665", "5", 3));
+        bot.getHandCards().add(card("\u2663", "7", 5));
+        bot.getHandCards().add(card("\u2666", "9", 7));
+
+        room.setPlayers(new ArrayList<>(List.of(opponent, bot)));
+        room.setCurrentTurnIndex(1);
+        room.setLastPlayPlayerId(opponent.getUserId());
+        room.setLastPlayedCards(new ArrayList<>(List.of(
+                card("\u2660", "10", 8),
+                card("\u2665", "10", 8)
+        )));
+
+        ScriptedAiService.TurnDecision decision = service.decideTurn(room, bot);
+
+        assertEquals(ScriptedAiService.TurnDecisionType.USE_GUSHOU, decision.getType());
+    }
+
+    @Test
+    void gushouBotPrefersScrollOverUsingSkillWhenScrollPlayIsAvailable() throws Exception {
+        ScriptedAiService service = createServiceWithRuleEngine();
+        GameRoom room = new GameRoom("room-gushou-scroll-over-skill");
+
+        Player opponent = new Player("p1");
+        opponent.setStatus("PLAYING");
+        Player bot = new Player("bot", true);
+        bot.setStatus("PLAYING");
+        bot.setSkill("GUSHOU");
+        bot.getHandCards().add(card("SCROLL", "JDSR", 19));
+        bot.getHandCards().add(card("\u2660", "3", 1));
+        bot.getHandCards().add(card("\u2665", "5", 3));
+        bot.getHandCards().add(card("\u2663", "7", 5));
+
+        room.setPlayers(new ArrayList<>(List.of(opponent, bot)));
+        room.setCurrentTurnIndex(1);
+        room.setLastPlayPlayerId(opponent.getUserId());
+        room.setLastPlayedCards(new ArrayList<>(List.of(card("\u2666", "8", 6))));
+
+        ScriptedAiService.TurnDecision decision = service.decideTurn(room, bot);
+
+        assertEquals(ScriptedAiService.TurnDecisionType.PLAY, decision.getType());
+        assertEquals("SCROLL", decision.getCards().get(0).getSuit());
+        assertEquals("JDSR", decision.getCards().get(0).getRank());
+    }
+
+    @Test
     void luanjianBotPlaysBombToWinInsteadOfUsingSkill() throws Exception {
         // LUANJIAN（乱箭）平时会用 2 张黑牌触发 AoE 而留住炸弹，
         // 但只剩一手炸弹能直接获胜时，必须整手打出，不能消耗掉收官的炸弹。

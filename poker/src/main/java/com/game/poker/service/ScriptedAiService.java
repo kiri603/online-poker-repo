@@ -89,7 +89,7 @@ public class ScriptedAiService {
                 : chooseBestScrollAction(room, bot, hand, freeTurn, bestNormal, cache);
 
         if (!freeTurn && "GUSHOU".equals(bot.getSkill()) && !bot.isHasUsedSkillThisTurn()
-                && shouldUseGushou(room, bot, bestNormal, cache)) {
+                && shouldUseGushou(room, bot, hand, bestNormal, bestScroll, cache)) {
             return TurnDecision.useGushou();
         }
 
@@ -282,23 +282,57 @@ public class ScriptedAiService {
         return fallback == null ? List.of() : new ArrayList<>(fallback.cards);
     }
 
-    private boolean shouldUseGushou(GameRoom room, Player bot, PlayCandidate bestNormal, Map<String, Integer> cache) {
-        List<Card> hand = safeHand(bot);
-        if (hand.size() > 10) {
+    private boolean shouldUseGushou(GameRoom room, Player bot, List<Card> hand,
+                                    PlayCandidate bestNormal, ScrollAction bestScroll,
+                                    Map<String, Integer> cache) {
+        if (hand.size() > 9) {
             return false;
         }
         // 一手清空手牌即可获胜时，必须打出，不能用固守保留炸弹/王炸
         if (isFinishingPlay(hand, bestNormal)) {
             return false;
         }
+        // 固守的定位是“无法舒服接牌时的补牌技”，而不是无脑跳过所有回应。
+        // 只要已经有高质量锦囊动作，就应优先走锦囊路线，不应被固守截走。
+        if (bestScroll != null) {
+            return false;
+        }
+
+        boolean threat = isThreatSituation(room, bot);
+        int currentTurns = estimateTurnsToFinish(hand, cache);
+        long looseSingles = countLooseSingles(hand);
+        boolean messyHand = looseSingles >= 3 || currentTurns >= Math.max(5, hand.size() - 1);
+
         if (bestNormal == null) {
-            return true;
+            // 完全无法接牌时，固守用于“补牌重整”通常优于普通 PASS，
+            // 但仍要求当前手牌不至于过满，且牌型确实偏慢/偏碎。
+            return messyHand || currentTurns >= 4 || hand.size() <= 5;
         }
-        if (bestNormal.kind == PatternKind.BOMB || bestNormal.kind == PatternKind.ROCKET) {
-            return true;
+
+        // 对手临近收官时，任何能稳稳接上的普通解都优先打出，不能把节奏主动让掉。
+        if (threat) {
+            return false;
         }
+
+        int disruption = playDisruptionCost(hand, bestNormal);
         int turnsAfterPlay = estimateTurnsToFinish(removeCards(hand, bestNormal.cards), cache);
-        return turnsAfterPlay >= 3;
+        boolean premiumResponse = bestNormal.kind == PatternKind.BOMB || bestNormal.kind == PatternKind.ROCKET;
+
+        // 若当前有便宜、不破坏牌型的正常回应，就不该为了“贪 4 张”而开固守。
+        if (!premiumResponse && disruption <= 20) {
+            return false;
+        }
+        if (!premiumResponse && turnsAfterPlay <= currentTurns + 1) {
+            return false;
+        }
+
+        // 炸弹/王炸属于昂贵资源，只有在手牌偏慢且不会立刻错失胜机时才值得保留。
+        if (premiumResponse) {
+            return hand.size() <= 7 && currentTurns >= 4 && turnsAfterPlay >= 3;
+        }
+
+        // 其余情况仅在“手牌偏碎 + 应对代价明显偏高”时发动，避免固守过度抢节奏。
+        return hand.size() <= 6 && messyHand && disruption >= 24 && currentTurns >= 4;
     }
 
     private boolean shouldUseLuanjian(GameRoom room, Player bot, boolean freeTurn,
