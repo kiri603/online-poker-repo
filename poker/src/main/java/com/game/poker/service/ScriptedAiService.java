@@ -212,28 +212,54 @@ public class ScriptedAiService {
 
     private boolean shouldUseKurou(GameRoom room, Player bot, List<Card> hand,
                                    PlayCandidate bestNormal, Map<String, Integer> cache) {
-        // 基础限制：手牌 < 2 不可用；爆牌风险规避（净 +2，+2 后 > 14 即输）
+        // 苦肉核心定位：【控牌】—— 把碎牌/散牌换掉以形成更好的组合，
+        // 而不是盲目追求觉醒。觉醒之后再用性价比骤降，门槛要更高。
+        //
+        // 机制：弃 2 摸 4，净 +2；手牌 > 14 即爆牌判负。
+        // 所以必须保留足够的"爆牌安全余量"，不允许贴着 14 用。
+
         if (hand.size() < 2) {
             return false;
         }
+
+        // 威胁局面（任一对手 ≤ 2 张）：放弃刷牌，保留节奏与资源应对
+        if (isThreatSituation(room, bot)) {
+            return false;
+        }
+
+        // 安全上限：
+        //  - 未觉醒：用后手牌 ≤ 10（距爆牌 14 至少留 4 张余量）
+        //  - 已觉醒：用后手牌 ≤ 8（觉醒后不再有额外收益，更保守）
         int handAfter = hand.size() + 2;
-        if (handAfter > 14) {
+        int safetyCap = bot.isKurouAwakened() ? 8 : 10;
+        if (handAfter > safetyCap) {
             return false;
         }
-        // 已觉醒后更保守，避免无意义叠牌
-        int ceiling = bot.isKurouAwakened() ? 9 : 11;
-        if (hand.size() > ceiling) {
+
+        // 已经有炸弹 / 王炸能打出：走普通出牌路线，不浪费节奏刷牌
+        if (bestNormal != null
+                && (bestNormal.kind == PatternKind.BOMB || bestNormal.kind == PatternKind.ROCKET)) {
             return false;
         }
-        // 触发场景：没有好牌打 / 预估需要较多回合才能出完
+
         int currentTurns = estimateTurnsToFinish(hand, cache);
+        long looseSingles = countLooseSingles(hand);
+
+        // 【已觉醒】苦肉只剩"换牌"价值，需要牌型明显碎才值得再消耗一次
+        if (bot.isKurouAwakened()) {
+            if (bestNormal == null) {
+                return looseSingles >= 3 && currentTurns >= 4;
+            }
+            return looseSingles >= 4 && currentTurns >= 5;
+        }
+
+        // 【未觉醒】为"控牌"而用：牌型碎（散牌多 或 预估回合偏长）时主动刷
+        boolean messyHand = looseSingles >= 3 || currentTurns >= hand.size() - 1;
         if (bestNormal == null) {
-            return true;
+            // 连牌都打不出时，也要求手牌不臃肿 + 牌型确实碎，否则越刷越接近爆牌
+            return handAfter <= 9 && messyHand;
         }
-        if (bestNormal.kind == PatternKind.BOMB || bestNormal.kind == PatternKind.ROCKET) {
-            return false;
-        }
-        return currentTurns > 4;
+        return messyHand && currentTurns >= 4;
     }
 
     public List<Card> chooseEmergencyFreeTurnPlay(Player bot) {

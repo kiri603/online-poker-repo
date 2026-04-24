@@ -70,11 +70,14 @@ public class RuleEngine {
 
         // 1. 如果打出的是炸弹
         if (playPattern.type == CardType.BOMB) {
-            if (lastPattern.type != CardType.BOMB) {
-                return true; // 炸弹大过一切非炸弹牌型
-            } else {
-                return playPattern.primaryWeight > lastPattern.primaryWeight; // 都是炸弹，比权重
+            // 王炸是最大牌型，任何炸弹都压不住
+            if (lastPattern.type == CardType.ROCKET) {
+                return false;
             }
+            if (lastPattern.type != CardType.BOMB) {
+                return true; // 炸弹大过一切非炸弹 / 非王炸牌型
+            }
+            return playPattern.primaryWeight > lastPattern.primaryWeight; // 都是炸弹，比权重
         }
 
         // 2. 如果不是炸弹，必须牌型相同，且出牌数量相同
