@@ -755,6 +755,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 "\"success\":" + tieqiSuccess + "," +
                 "\"maxRedWeight\":" + tieqiMaxW + "," +
                 "\"suppressed\":" + suppressedJson + "}"));
+
+        // ====== 【铁骑·压制】：被压制玩家各摸 2 张，必须立即推送其最新手牌 ======
+        // 否则前端 handCards 会停留在旧值，仅 cardCount 更新，造成“手牌数量与显示不一致”的错觉，
+        // 直到被压制玩家下一次要不起 / 出牌 / 其它 SYNC_HAND 触发点才会自愈。
+        for (String suppressedUid : suppressed) {
+            syncPlayerHand(roomId, suppressedUid);
+        }
     }
     // --- 新增：仅向指定玩家定向发送消息（保护手牌隐私） ---
     private void sendToUser(String roomId, String userId, TextMessage message) throws Exception {
