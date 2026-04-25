@@ -22,7 +22,7 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image: url("/images/lobby-bg.jpg");
+  background-image: url("/images/lobby-bg.png");
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -1109,7 +1109,7 @@
 
 @media (max-width: 768px) {
   .lobby-shell::before {
-    background-image: url("/images/lobby-bg-mobile.jpg");
+    background-image: url("/images/lobby-bg-mobile.png");
     /* Pull the character slightly left so she lands inside the dedicated
        hero strip instead of drifting behind the right-aligned content. */
     background-position: 32% top;

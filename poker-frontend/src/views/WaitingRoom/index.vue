@@ -8,6 +8,7 @@ import {
   ownerId,
   isOwner,
   isManager,
+  roomId,
   userId,
   isReady,
   otherPlayers,
@@ -34,6 +35,18 @@ import {
   spectators,
   isSpectator,
   playBGM,
+  // 新增
+  seatSlots,
+  occupiedCount,
+  avatarForPlayer as avatarForPlayerImpl,
+  inviteModalOpen,
+  inviteFocusedSeat,
+  openInviteModal,
+  closeInviteModal,
+  copyRoomId,
+  copyFeedback,
+  addAiAndClose,
+  inviteFromModal,
 } from "./WaitingRoom.js";
 
 const waitingRoomIsOwner = isOwner;
@@ -43,6 +56,7 @@ const waitingRoomActions = waitingActionsClass;
 const canQuickAddFriend = canQuickAddFriendImpl;
 const isFriendPlayer = isFriendPlayerImpl;
 const quickAddFriend = quickAddFriendImpl;
+const avatarForPlayer = avatarForPlayerImpl;
 
 // ====== 【核心防白屏机制】：强制暴露变量，防 Vite 误删 ======
 const _exposeToHtml = {
@@ -54,6 +68,7 @@ const _exposeToHtml = {
   isManager,
   waitingRoomIsOwner,
   waitingRoomIsManager,
+  roomId,
   userId,
   isReady,
   otherPlayers,
@@ -82,6 +97,18 @@ const _exposeToHtml = {
   spectators,
   isSpectator,
   playBGM,
+  // 新增
+  seatSlots,
+  occupiedCount,
+  avatarForPlayer,
+  inviteModalOpen,
+  inviteFocusedSeat,
+  openInviteModal,
+  closeInviteModal,
+  copyRoomId,
+  copyFeedback,
+  addAiAndClose,
+  inviteFromModal,
 };
 </script>
 

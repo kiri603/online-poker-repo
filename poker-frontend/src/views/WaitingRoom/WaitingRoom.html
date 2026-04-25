@@ -1,266 +1,497 @@
-<button
-  class="global-sound-btn"
-  @click="toggleSound"
-  :class="{ 'is-muted': !soundStatus }"
-  :aria-label="soundStatus ? '静音背景音乐' : '开启背景音乐'"
->
-  <!--
-    Inline SVG (not <use href="#icon-soundsize">) because the iconfont.cn
-    sprite hardcodes fill="#000000" on the inner path; that fill can't be
-    overridden from outside the <use> shadow tree, which makes the icon
-    render invisibly dark against our dark themed button.
-  -->
-  <svg
-    v-if="soundStatus"
-    class="sound-icon"
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-  >
-    <path
-      fill="currentColor"
-      d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
-    />
-    <path
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      d="M15.5 8.5a5 5 0 0 1 0 7"
-    />
-    <path
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      d="M19 5a10 10 0 0 1 0 14"
-    />
-  </svg>
-  <svg
-    v-else
-    class="sound-icon"
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-  >
-    <path
-      fill="currentColor"
-      d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
-    />
-    <path
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      d="m15.5 9.5 6 6M21.5 9.5l-6 6"
-    />
-  </svg>
-</button>
-<div class="waiting-room">
-  <div class="top-right-settings">
-    <button class="settings-btn small" @click="showSettings = !showSettings">
-      ⚙️ {{ showSettings ? "收起设置" : "房间设置" }}
-    </button>
+<div class="wh-shell">
+  <!-- 背景图层：纯净三国庭院背景 -->
+  <div class="wh-scene-bg" aria-hidden="true"></div>
+  <div class="wh-vignette" aria-hidden="true"></div>
 
-    <div v-if="showSettings" class="settings-panel">
-      <h3
-        style="
-          margin-top: 0;
-          color: #f1c40f;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-          padding-bottom: 10px;
-          font-size: 16px;
-        "
+  <!-- 樱花粒子（纯 CSS） -->
+  <div class="wh-petals" aria-hidden="true">
+    <span class="wh-petal wh-petal--1"></span>
+    <span class="wh-petal wh-petal--2"></span>
+    <span class="wh-petal wh-petal--3"></span>
+    <span class="wh-petal wh-petal--4"></span>
+    <span class="wh-petal wh-petal--5"></span>
+    <span class="wh-petal wh-petal--6"></span>
+    <span class="wh-petal wh-petal--7"></span>
+  </div>
+
+  <!-- 看板娘独立动态图层 -->
+  <div class="wh-mascot-layer" aria-hidden="true">
+    <img
+      class="wh-mascot-img"
+      src="/images/waiting-mascot.png"
+      alt=""
+      draggable="false"
+    />
+  </div>
+
+  <!-- 顶栏：左房号/ID、右音量/设置 -->
+  <header class="wh-topbar">
+    <div class="wh-topbar-left">
+      <div class="wh-pill wh-pill--accent">
+        <svg class="wh-pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="M7 9h6" />
+          <path d="M7 13h10" />
+        </svg>
+        <span class="wh-pill-label">房间号:</span>
+        <span class="wh-pill-value">{{ roomId }}</span>
+      </div>
+      <div class="wh-pill">
+        <span class="wh-pill-label">我的ID:</span>
+        <span class="wh-pill-value">{{ userId }}</span>
+      </div>
+    </div>
+
+    <div class="wh-topbar-right">
+      <button
+        type="button"
+        class="wh-icon-btn wh-sound-btn"
+        :class="{ 'is-muted': !soundStatus }"
+        @click="toggleSound"
+        :aria-label="soundStatus ? '静音背景音乐' : '开启背景音乐'"
       >
-        房间高级设置
-      </h3>
-
-      <div class="settings-list mini">
-        <label class="setting-item">
-          <span>🀄 经典场 (默认规则)</span>
-          <input type="checkbox" :checked="isClassicMode" disabled />
-        </label>
-
-        <label class="setting-item disabled-item">
-          <span>🃏 启用赖子牌 (开发中)</span>
-          <input
-            type="checkbox"
-            v-model="roomSettings.enableWildcard"
-            disabled
+        <svg
+          v-if="soundStatus"
+          class="wh-sound-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
           />
-        </label>
+          <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.5 8.5a5 5 0 0 1 0 7" />
+          <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M19 5a10 10 0 0 1 0 14" />
+        </svg>
+        <svg
+          v-else
+          class="wh-sound-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
+          />
+          <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="m15.5 9.5 6 6M21.5 9.5l-6 6" />
+        </svg>
+      </button>
 
-        <label class="setting-item">
-          <span>📜 启用锦囊牌</span>
+      <button
+        type="button"
+        class="wh-settings-btn"
+        :class="{ 'is-open': showSettings }"
+        @click="showSettings = !showSettings"
+      >
+        <svg class="wh-settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        <span>{{ showSettings ? "收起设置" : "房间设置" }}</span>
+      </button>
+
+      <button
+        v-if="canUseSocial"
+        type="button"
+        class="wh-friend-drawer-toggle"
+        @click="toggleWaitingFriendDrawer"
+      >
+        {{ socialDrawerOpen ? "收起好友" : "好友邀请" }}
+      </button>
+    </div>
+  </header>
+
+  <!-- 设置浮层（顶栏下方，按钮触发） -->
+  <div v-if="showSettings" class="wh-settings-panel">
+    <h3 class="wh-settings-title">房间高级设置</h3>
+    <ul class="wh-settings-list">
+      <li class="wh-setting-item">
+        <span>🀄 经典场 (默认规则)</span>
+        <label class="wh-switch">
+          <input type="checkbox" :checked="isClassicMode" disabled />
+          <span class="wh-slider"></span>
+        </label>
+      </li>
+      <li class="wh-setting-item is-disabled">
+        <span>🃏 启用赖子牌 (开发中)</span>
+        <label class="wh-switch">
+          <input type="checkbox" v-model="roomSettings.enableWildcard" disabled />
+          <span class="wh-slider"></span>
+        </label>
+      </li>
+      <li class="wh-setting-item">
+        <span>📜 启用锦囊牌</span>
+        <label class="wh-switch">
           <input
             type="checkbox"
             v-model="roomSettings.enableScrollCards"
             :disabled="ownerId !== userId"
             @change="handleScrollCardsChange"
           />
+          <span class="wh-slider"></span>
         </label>
-        <label class="setting-item">
-          <span>⚔️ 启用武将技能</span>
+      </li>
+      <li class="wh-setting-item">
+        <span>⚔️ 启用武将技能</span>
+        <label class="wh-switch">
           <input
             type="checkbox"
             v-model="roomSettings.enableSkills"
             :disabled="ownerId !== userId"
             @change="handleScrollCardsChange"
           />
+          <span class="wh-slider"></span>
         </label>
-      </div>
-
-      <p
-        v-if="ownerId !== userId"
-        class="hint-text"
-        style="color: #e74c3c; font-size: 12px; margin-top: 15px"
-      >
-        （仅房主可修改设置）
-      </p>
-    </div>
-
-    <button
-      v-if="canUseSocial"
-      class="friend-toggle-btn"
-      @click="toggleWaitingFriendDrawer"
-    >
-      {{ socialDrawerOpen ? "收起好友" : "好友邀请" }}
-    </button>
-
-    <div v-if="canUseSocial && socialDrawerOpen" class="friend-drawer">
-      <div class="friend-drawer-title">在线好友</div>
-      <div v-if="waitingRoomFriendList.length === 0" class="friend-drawer-empty">
-        暂时没有在线好友可以邀请
-      </div>
-      <div v-else class="friend-drawer-list">
-        <div
-          v-for="friend in waitingRoomFriendList"
-          :key="friend.userId"
-          class="friend-drawer-item"
-        >
-          <span>{{ friend.userId }}</span>
-          <button class="friend-invite-btn" @click="inviteFriendToRoom(friend.userId)">
-            邀请
-          </button>
-        </div>
-      </div>
-    </div>
+      </li>
+    </ul>
+    <p v-if="ownerId !== userId" class="wh-settings-hint">（仅房主可修改设置）</p>
   </div>
 
-  <h2 class="art-subtitle">等待大厅</h2>
-  <div v-if="ownerId !== userId && !isReady" class="please-ready-hint">
-    ⚠️ 还在等什么？请准备！
-  </div>
-
-  <div class="players-list">
-    <h3>房间内玩家 ({{ waitingRoomPlayers.length }}/4)</h3>
-    <div class="player-rows">
+  <!-- 好友邀请侧抽屉（保留原入口） -->
+  <div v-if="canUseSocial && socialDrawerOpen" class="wh-friend-drawer">
+    <div class="wh-friend-drawer-title">在线好友</div>
+    <div v-if="waitingRoomFriendList.length === 0" class="wh-friend-drawer-empty">
+      暂时没有在线好友可以邀请
+    </div>
+    <div v-else class="wh-friend-drawer-list">
       <div
-        class="player-row"
-        v-for="p in waitingRoomPlayers"
-        :key="p.userId"
-        :class="{ 'is-me': p.isSelf, 'is-owner': ownerId === p.userId }"
+        v-for="friend in waitingRoomFriendList"
+        :key="friend.userId"
+        class="wh-friend-drawer-item"
       >
-        <div class="player-row-main">
-          <span class="player-name">{{ p.userId }}{{ p.isSelf ? " (你)" : "" }}</span>
-          <div class="player-badges">
-            <span v-if="isFriendPlayer(p)" class="status-badge friend-badge">好友</span>
-            <span v-if="ownerId === p.userId" class="status-badge owner-badge">👑房主</span>
-            <span
-              class="status-badge ready-badge"
-              :class="ownerId === p.userId || p.isReady ? 'is-ready' : 'is-not-ready'"
-            >
-              {{ ownerId === p.userId || p.isReady ? "已准备" : "未准备" }}
-            </span>
-          </div>
-        </div>
-        <div class="player-row-actions">
-          <button
-            v-if="canQuickAddFriend(p)"
-            class="add-friend-btn"
-            @click="quickAddFriend(p)"
-          >
-            加好友
-          </button>
-          <button
-            class="kick-btn"
-            v-if="!p.isSelf && (isOwner || isManager)"
-            @click="kickPlayer(p.userId)"
-          >
-            踢出
-          </button>
-        </div>
+        <span class="wh-friend-drawer-name">{{ friend.userId }}</span>
+        <button
+          type="button"
+          class="wh-friend-invite-btn"
+          @click="inviteFriendToRoom(friend.userId)"
+        >
+          邀请
+        </button>
       </div>
     </div>
+  </div>
 
-    <h3 v-if="spectators.length > 0" style="margin-top: 25px; color: #9b59b6">
-      👁️ 旁观者 / 管理员席位
-    </h3>
-    <div class="player-tags" v-if="spectators.length > 0">
-      <div class="player-tags" v-if="spectators.length > 0">
+  <!-- 主内容：标题 + 座位网格 + 操作区 -->
+  <main class="wh-main">
+    <section class="wh-title-area">
+      <div class="wh-title-ornament" aria-hidden="true">
+        <span class="wh-ornament-suit">♠</span>
+        <span class="wh-ornament-suit wh-ornament-suit--heart">♥</span>
+        <span class="wh-ornament-suit wh-ornament-suit--diamond">♦</span>
+        <span class="wh-ornament-suit">♣</span>
+      </div>
+      <h1 class="wh-title">
+        <span class="wh-title-flourish wh-title-flourish--left" aria-hidden="true"></span>
+        <span class="wh-title-text">等待大厅</span>
+        <span class="wh-title-flourish wh-title-flourish--right" aria-hidden="true"></span>
+      </h1>
+      <p class="wh-subtitle">与好友一起，快乐斗地主！</p>
+      <p
+        v-if="ownerId !== userId && !isReady && !isManager && !isSpectator"
+        class="wh-please-ready"
+      >
+        还在等什么？请准备！
+      </p>
+    </section>
+
+    <!-- 4 座位网格 -->
+    <section class="wh-seats">
+      <header class="wh-seats-head">
+        房间内玩家 <span class="wh-seats-count">({{ occupiedCount }}/4)</span>
+      </header>
+
+      <div class="wh-seat-grid">
+        <div
+          v-for="slot in seatSlots"
+          :key="slot.index"
+          class="wh-seat"
+          :class="{
+            'wh-seat--empty': !slot.player,
+            'wh-seat--occupied': !!slot.player,
+            'wh-seat--me': slot.player && slot.player.isSelf,
+            'wh-seat--owner': slot.player && ownerId === slot.player.userId,
+            'wh-seat--bot': slot.player && slot.player.isBot,
+          }"
+          :tabindex="!slot.player ? 0 : -1"
+          :role="!slot.player ? 'button' : undefined"
+          :aria-label="!slot.player ? `第 ${slot.seatNo} 号空位，点击邀请好友或添加 AI` : undefined"
+          @click="!slot.player && openInviteModal(slot.index)"
+          @keyup.enter="!slot.player && openInviteModal(slot.index)"
+          @keyup.space="!slot.player && openInviteModal(slot.index)"
+        >
+          <div class="wh-seat-no">{{ slot.seatNo }}</div>
+
+          <!-- 空位 -->
+          <template v-if="!slot.player">
+            <div class="wh-seat-plus-wrap">
+              <svg class="wh-seat-plus" viewBox="0 0 48 48" aria-hidden="true">
+                <line x1="24" y1="10" x2="24" y2="38" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                <line x1="10" y1="24" x2="38" y2="24" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div class="wh-seat-empty-text">待加入</div>
+            <div class="wh-seat-empty-sub">---</div>
+          </template>
+
+          <!-- 占用 -->
+          <template v-else>
+            <div class="wh-seat-avatar-wrap">
+              <img
+                class="wh-seat-avatar"
+                :src="avatarForPlayer(slot.player, slot.index)"
+                :alt="`${slot.player.userId} 的头像`"
+                draggable="false"
+              />
+              <span
+                v-if="ownerId === slot.player.userId"
+                class="wh-seat-crown"
+                aria-hidden="true"
+                >👑</span
+              >
+            </div>
+
+            <div class="wh-seat-name" :title="slot.player.userId">
+              {{ slot.player.userId }}{{ slot.player.isSelf ? " (你)" : "" }}
+            </div>
+
+            <div class="wh-seat-badges">
+              <span
+                v-if="ownerId === slot.player.userId"
+                class="wh-badge wh-badge--owner"
+                >房主</span
+              >
+              <span
+                v-else-if="slot.player.isBot"
+                class="wh-badge wh-badge--bot"
+                >脚本AI</span
+              >
+              <span
+                v-else-if="isFriendPlayer(slot.player)"
+                class="wh-badge wh-badge--friend"
+                >好友</span
+              >
+              <span
+                class="wh-badge wh-badge--ready"
+                :class="ownerId === slot.player.userId || slot.player.isReady ? 'is-ready' : 'is-not-ready'"
+              >
+                {{ ownerId === slot.player.userId || slot.player.isReady ? "已准备" : "未准备" }}
+              </span>
+            </div>
+
+            <div class="wh-seat-actions">
+              <button
+                v-if="canQuickAddFriend(slot.player)"
+                type="button"
+                class="wh-seat-action wh-seat-action--add"
+                @click.stop="quickAddFriend(slot.player)"
+                title="加好友"
+              >
+                加好友
+              </button>
+              <button
+                v-if="!slot.player.isSelf && (isOwner || isManager)"
+                type="button"
+                class="wh-seat-action wh-seat-action--kick"
+                @click.stop="kickPlayer(slot.player.userId)"
+                title="踢出"
+              >
+                踢出
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <p class="wh-seats-hint">邀请好友或添加AI，至少2人即可开始游戏</p>
+    </section>
+
+    <!-- 旁观者 / 管理员席位 -->
+    <section v-if="spectators.length > 0" class="wh-spectators">
+      <h3 class="wh-spectators-title">👁️ 旁观者 / 管理员席位</h3>
+      <div class="wh-spectator-list">
         <span
-          class="tag"
-          style="background: #8e44ad; border-color: #9b59b6"
           v-for="specId in spectators"
           :key="specId"
+          class="wh-spectator-tag"
         >
-          {{ specId === 'room_manager' ? '🛡️ 系统巡查员' : specId }} {{ specId
-          === userId ? '(你)' : '' }}
-
+          {{ specId === 'room_manager' ? '🛡️ 系统巡查员' : specId }}
+          {{ specId === userId ? '(你)' : '' }}
           <button
-            class="kick-btn"
             v-if="(ownerId === userId || userId === 'room_manager') && specId !== userId && specId !== 'room_manager'"
+            type="button"
+            class="wh-spectator-kick"
             @click="kickPlayer(specId)"
           >
             踢出
           </button>
         </span>
       </div>
+    </section>
+
+    <!-- 底部操作区 -->
+    <footer class="wh-actions" :class="waitingRoomActions">
+      <template v-if="waitingRoomIsManager">
+        <button type="button" class="wh-btn wh-btn--disband" @click="disbandRoom">
+          🚨 强制解散该房间
+        </button>
+      </template>
+
+      <template v-else-if="waitingRoomIsOwner">
+        <button
+          type="button"
+          class="wh-btn wh-btn--ai"
+          @click="addScriptAi"
+          :disabled="waitingRoomPlayers.length >= 4"
+        >
+          <svg class="wh-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="7" width="16" height="12" rx="3" />
+            <path d="M12 3v4" />
+            <circle cx="9" cy="13" r="1.25" fill="currentColor" stroke="none" />
+            <circle cx="15" cy="13" r="1.25" fill="currentColor" stroke="none" />
+            <path d="M9 17h6" />
+            <path d="M2 13h2" />
+            <path d="M20 13h2" />
+          </svg>
+          <span>添加脚本AI</span>
+        </button>
+        <button
+          type="button"
+          class="wh-btn wh-btn--start"
+          :disabled="waitingRoomPlayers.length < 2 || !allReady"
+          @click="startGame"
+        >
+          {{ waitingRoomPlayers.length < 2
+            ? "需要至少2人"
+            : !allReady
+              ? "等待其他玩家准备"
+              : "开始游戏"
+          }}
+        </button>
+      </template>
+
+      <template v-else>
+        <button
+          type="button"
+          class="wh-btn wh-btn--ready"
+          :class="{ 'is-ready': isReady }"
+          @click="toggleReady"
+        >
+          {{ isReady ? "取消准备" : "准备" }}
+        </button>
+      </template>
+
+      <button type="button" class="wh-btn wh-btn--return" @click="returnToLobby">
+        <svg class="wh-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        <span>返回大厅</span>
+      </button>
+    </footer>
+  </main>
+
+  <!-- 邀请好友弹窗（点击空位 + 号触发） -->
+  <div
+    v-if="inviteModalOpen"
+    class="wh-modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="wh-invite-modal-title"
+    @click.self="closeInviteModal"
+  >
+    <div class="wh-modal">
+      <header class="wh-modal-head">
+        <h2 id="wh-invite-modal-title" class="wh-modal-title">邀请加入房间</h2>
+        <button
+          type="button"
+          class="wh-modal-close"
+          aria-label="关闭"
+          @click="closeInviteModal"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6L6 18" />
+            <path d="M6 6l12 12" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="wh-modal-body">
+        <!-- 房号复制区 -->
+        <section class="wh-modal-section wh-modal-section--roomno">
+          <div class="wh-modal-section-label">分享房间号</div>
+          <div class="wh-roomno-row">
+            <div class="wh-roomno-display">
+              <span class="wh-roomno-prefix">房间号</span>
+              <code class="wh-roomno-value">{{ roomId }}</code>
+            </div>
+            <button type="button" class="wh-roomno-copy" @click="copyRoomId">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="11" height="11" rx="2" />
+                <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+              </svg>
+              复制
+            </button>
+          </div>
+          <div v-if="copyFeedback" class="wh-copy-feedback">{{ copyFeedback }}</div>
+        </section>
+
+        <!-- 好友邀请区 -->
+        <section class="wh-modal-section">
+          <div class="wh-modal-section-label">邀请在线好友</div>
+          <div v-if="!canUseSocial" class="wh-guest-hint">
+            <svg class="wh-guest-hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+            <div>
+              <strong>注册账号后可邀请好友一起斗地主</strong>
+              <p>游客模式暂不支持好友系统，你可以复制上方房间号分享给朋友让他们手动加入。</p>
+            </div>
+          </div>
+          <div v-else-if="waitingRoomFriendList.length === 0" class="wh-friend-empty">
+            暂时没有在线好友可以邀请
+          </div>
+          <div v-else class="wh-modal-friend-list">
+            <div
+              v-for="friend in waitingRoomFriendList"
+              :key="friend.userId"
+              class="wh-modal-friend-item"
+            >
+              <div class="wh-modal-friend-name">
+                <span class="wh-modal-friend-dot" aria-hidden="true"></span>
+                {{ friend.userId }}
+              </div>
+              <button
+                type="button"
+                class="wh-modal-friend-invite"
+                @click="inviteFromModal(friend.userId)"
+              >
+                邀请
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI 快捷按钮（仅房主可见） -->
+        <section v-if="isOwner" class="wh-modal-section">
+          <div class="wh-modal-section-label">或添加脚本 AI</div>
+          <button
+            type="button"
+            class="wh-modal-ai-btn"
+            :disabled="waitingRoomPlayers.length >= 4"
+            @click="addAiAndClose"
+          >
+            <svg class="wh-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4" y="7" width="16" height="12" rx="3" />
+              <path d="M12 3v4" />
+              <circle cx="9" cy="13" r="1.25" fill="currentColor" stroke="none" />
+              <circle cx="15" cy="13" r="1.25" fill="currentColor" stroke="none" />
+              <path d="M9 17h6" />
+            </svg>
+            <span>添加脚本AI</span>
+          </button>
+        </section>
+      </div>
     </div>
-  </div>
-
-  <div class="waiting-actions" :class="waitingRoomActions">
-    <template v-if="waitingRoomIsManager">
-      <button
-        class="kick-btn"
-        @click="disbandRoom"
-        style="
-          background: #c0392b;
-          font-size: 18px;
-          padding: 12px 30px;
-          border-radius: 8px;
-        "
-      >
-        🚨 强制解散该房间
-      </button>
-    </template>
-
-    <template v-else-if="waitingRoomIsOwner">
-      <button
-        class="ready-btn"
-        @click="addScriptAi"
-        :disabled="waitingRoomPlayers.length >= 4"
-      >
-        添加脚本AI
-      </button>
-      <button
-        class="start-btn"
-        @click="startGame"
-        :disabled="waitingRoomPlayers.length < 2 || !allReady"
-      >
-        {{ waitingRoomPlayers.length < 2 ? "需要至少2人" : !allReady ?
-        "等待其他玩家准备" : "开始游戏" }}
-      </button>
-    </template>
-
-    <template v-else>
-      <button
-        class="ready-btn"
-        @click="toggleReady"
-        :class="{ 'is-ready': isReady }"
-      >
-        {{ isReady ? "取消准备" : "准备" }}
-      </button>
-    </template>
-
-    <button class="return-btn" @click="returnToLobby">返回大厅</button>
   </div>
 </div>

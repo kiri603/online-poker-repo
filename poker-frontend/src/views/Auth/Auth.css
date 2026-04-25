@@ -17,7 +17,7 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image: url("/images/auth-bg.jpg");
+  background-image: url("/images/auth-bg.png");
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -566,7 +566,7 @@
 
 @media (max-width: 768px) {
   .auth-shell::before {
-    background-image: url("/images/auth-bg-mobile.jpg");
+    background-image: url("/images/auth-bg-mobile.png");
     background-position: center top;
     filter: contrast(1.04) saturate(1.06);
   }

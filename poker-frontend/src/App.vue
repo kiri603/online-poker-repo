@@ -36,7 +36,7 @@
     <Lobby v-else-if="!isConnected" />
 
     <div v-else class="game-table">
-      <div class="header">
+      <div v-if="gameStarted" class="header">
         <span>房间号: {{ roomId }}</span>
         <span>我的ID: {{ userId }}</span>
       </div>
