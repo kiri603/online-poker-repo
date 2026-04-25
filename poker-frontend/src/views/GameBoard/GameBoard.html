@@ -1,4 +1,16 @@
-<div class="game-board">
+<div class="game-board gb-shell">
+  <div class="gb-scene-bg" aria-hidden="true"></div>
+  <div class="gb-vignette" aria-hidden="true"></div>
+  <div class="gb-petals" aria-hidden="true">
+    <span class="gb-petal gb-petal--1"></span>
+    <span class="gb-petal gb-petal--2"></span>
+    <span class="gb-petal gb-petal--3"></span>
+    <span class="gb-petal gb-petal--4"></span>
+    <span class="gb-petal gb-petal--5"></span>
+    <span class="gb-petal gb-petal--6"></span>
+    <span class="gb-petal gb-petal--7"></span>
+  </div>
+
   <div v-if="isShuffling" class="shuffle-overlay">
     <div class="shuffle-cards-container">
       <img src="/images/Background.png" class="shuffle-card card-1" />
@@ -7,11 +19,15 @@
       <div class="shuffle-text">洗牌中...</div>
     </div>
   </div>
-  <div class="other-players-container" v-if="otherPlayers.length > 0">
+
+  <header
+    class="gb-top-seats other-players-container"
+    v-if="otherPlayers.length > 0"
+  >
     <div
       v-for="player in otherPlayers"
       :key="player.userId"
-      class="other-player"
+      class="gb-seat other-player"
       :class="{ 
         'is-turn': currentTurn === player.userId,
         'danger-pulse': warningUserId === player.userId
@@ -28,29 +44,66 @@
         </div>
       </transition>
 
-      <div class="player-name">
-        {{ player.userId }}
+      <div class="gb-seat-avatar-wrap">
+        <div class="gb-seat-avatar">
+          {{ (player.userId || '?').slice(0, 1).toUpperCase() }}
+        </div>
+      </div>
+
+      <div class="gb-seat-name player-name">
+        <span class="gb-seat-name-text">{{ player.userId }}</span>
         <span
-          v-if="currentTurn === player.userId && !currentAoeType"
+          v-if="currentTurn === player.userId && !currentAoeType && player.status !== 'WON' && player.status !== 'LOST'"
           class="turn-badge"
-          :style="jdsrTarget === player.userId ? 'color: #e74c3c; font-weight: bold; text-shadow: 0 0 5px rgba(231,76,60,0.5);' : ''"
+          :style="jdsrTarget === player.userId ? 'color: #ff8080; border-color: rgba(255,128,128,0.7); text-shadow: 0 0 5px rgba(231,76,60,0.5);' : ''"
         >
-          {{ jdsrTarget === player.userId ? '借刀杀人...' : '思考中...' }} ({{
+          {{ jdsrTarget === player.userId ? '借刀杀人...' : '思考中' }} ({{
           countdown }}s)
         </span>
         <span
-          v-if="currentAoeType && pendingAoePlayers.includes(player.userId)"
+          v-else-if="currentAoeType && pendingAoePlayers.includes(player.userId) && player.status !== 'WON' && player.status !== 'LOST'"
           class="turn-badge"
         >
-          {{ currentAoeType === 'GUSHOU_DISCARD' ? '弃牌中...' : '结算中...' }}
+          {{ currentAoeType === 'GUSHOU_DISCARD' ? '弃牌中' : '结算中' }}
           ({{ countdown }}s)
         </span>
-        <span v-if="player.status === 'WON'">🏆获胜</span>
-        <span v-if="player.status === 'LOST'">❌淘汰</span>
+        <span v-else-if="player.status === 'WON'" class="turn-badge">
+          <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8 4h8v4a4 4 0 0 1-8 0V4Zm0 1H5v1a3 3 0 0 0 3 3m8-4h3v1a3 3 0 0 1-3 3M10 16h4l1 4H9l1-4Zm2-4v4"
+            />
+          </svg>
+          获胜
+        </span>
+        <span v-else-if="player.status === 'LOST'" class="turn-badge">
+          <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+            />
+            <path
+              d="m9 9 6 6M15 9l-6 6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          淘汰
+        </span>
+      </div>
 
-        <div v-if="activeEmojis[player.userId]" class="emoji-bubble other">
-          <img :src="`/images/emojis/${activeEmojis[player.userId]}`" />
-        </div>
+      <div v-if="activeEmojis[player.userId]" class="emoji-bubble other">
+        <img :src="`/images/emojis/${activeEmojis[player.userId]}`" />
       </div>
 
       <div class="card-backs">
@@ -61,16 +114,30 @@
           class="card-back"
         />
       </div>
-      <div class="card-count-text">剩余: {{ player.cardCount }} 张</div>
+      <div class="card-count-text gb-seat-count-chip">
+        剩余 {{ player.cardCount }} 张
+      </div>
     </div>
-  </div>
+  </header>
+
   <div
     v-if="jdsrTarget"
     class="jdsr-floating-notification"
     :class="{ 'is-me': jdsrTarget === userId }"
   >
     <div class="jdsr-floating-content">
-      <span class="jdsr-icon">🗡️</span>
+      <span class="jdsr-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m5 3 9 9-2 2-9-9V3h2Zm11 9 5 5-2 2-5-5m-2-2 2 2m4-12h2v2l-8 8-2-2 8-8Z"
+          />
+        </svg>
+      </span>
       <div class="jdsr-info">
         <div class="jdsr-title">
           {{ jdsrInitiator === userId ? '你' : jdsrInitiator }} 对 {{ jdsrTarget
@@ -83,109 +150,148 @@
       </div>
     </div>
   </div>
-  <div class="table-center">
-    <div v-if="currentAoeType === 'GUANXING'" class="played-cards">
-      <p class="table-hint" style="color: #9b59b6; font-size: 18px">
-        ✨ {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
-        }}：使用观星中...
-      </p>
-      <div class="card-display-row">
-        <div
-          v-for="i in 5"
-          :key="'gx-'+i"
-          class="card mini"
-          style="box-shadow: 0 0 10px rgba(155, 89, 182, 0.5)"
-        >
-          <img src="/images/Background.png" />
+
+  <section class="gb-table">
+    <div class="gb-table-frame">
+      <div class="gb-table-felt">
+        <div class="table-center">
+          <div v-if="currentAoeType === 'GUANXING'" class="played-cards">
+            <p class="table-hint" style="color: #d4a7f2; letter-spacing: 2px">
+              {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
+              }}：使用观星中...
+            </p>
+            <div class="card-display-row">
+              <div
+                v-for="i in 5"
+                :key="'gx-'+i"
+                class="card mini"
+                style="box-shadow: 0 0 10px rgba(155, 89, 182, 0.55)"
+              >
+                <img src="/images/Background.png" />
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else-if="currentAoeType === 'GUSHOU_DISCARD'"
+            class="played-cards"
+          >
+            <p class="table-hint art-text-gushou-v2">
+              {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
+              }}：正在弃牌...
+            </p>
+          </div>
+
+          <div
+            v-else-if="currentAoeType === 'KUROU_AWAKEN_DISCARD'"
+            class="played-cards"
+          >
+            <p class="table-hint art-text-kurou">
+              {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
+              }}：正在弃牌...
+            </p>
+          </div>
+
+          <div
+            v-else-if="currentAoeType"
+            class="played-cards aoe-table-display"
+          >
+            <p class="table-hint" style="color: #ff9b8f">{{ aoeInitiator }}:</p>
+            <div class="card-display-row">
+              <div class="card mini aoe-pulse">
+                <img
+                  :src="getCardImageUrl({ suit: 'SCROLL', rank: currentAoeType })"
+                  @error="handleImageError"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="tableCards.length > 0" class="played-cards">
+            <p class="table-hint">上一手出牌 ({{ lastPlayPlayer }})</p>
+            <div
+              class="card-display-row"
+              :class="{ 'stacked': sortedTableCards.length > 6 }"
+            >
+              <div
+                v-for="(card, index) in sortedTableCards"
+                :key="index"
+                class="card mini"
+                :style="{ zIndex: index }"
+              >
+                <img
+                  :src="getCardImageUrl(card)"
+                  :alt="card.suit + card.rank"
+                  @error="handleImageError"
+                />
+                <span class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="empty-table gb-empty-table">等待出牌...</div>
         </div>
       </div>
     </div>
+  </section>
 
-    <div v-else-if="currentAoeType === 'GUSHOU_DISCARD'" class="played-cards">
-      <p class="table-hint art-text-gushou-v2">
-        {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
-        }}：正在弃牌...
-      </p>
-    </div>
-
-    <div
-      v-else-if="currentAoeType === 'KUROU_AWAKEN_DISCARD'"
-      class="played-cards"
-    >
-      <p class="table-hint art-text-kurou">
-        {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
-        }}：正在弃牌...
-      </p>
-    </div>
-
-    <div v-else-if="currentAoeType" class="played-cards aoe-table-display">
-      <p class="table-hint" style="color: #e74c3c">{{ aoeInitiator }}:</p>
-      <div class="card-display-row">
-        <div class="card mini aoe-pulse">
-          <img
-            :src="getCardImageUrl({ suit: 'SCROLL', rank: currentAoeType })"
-            @error="handleImageError"
-          />
-        </div>
-      </div>
-    </div>
-
-    <div v-else-if="tableCards.length > 0" class="played-cards">
-      <p class="table-hint">上一手出牌 ({{ lastPlayPlayer }}):</p>
-      <div
-        class="card-display-row"
-        :class="{ 'stacked': sortedTableCards.length > 6 }"
-      >
-        <div
-          v-for="(card, index) in sortedTableCards"
-          :key="index"
-          class="card mini"
-          :style="{ zIndex: index }"
-        >
-          <img
-            :src="getCardImageUrl(card)"
-            :alt="card.suit + card.rank"
-            @error="handleImageError"
-          />
-          <span class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div v-else class="empty-table">等待出牌...</div>
+  <div
+    v-if="isSpectator || myStatus === 'LOST'"
+    class="spectator-hint gb-spectator-hint"
+  >
+    你正在旁观当前对局...
   </div>
 
-  <div v-if="isSpectator || myStatus === 'LOST'" class="spectator-hint">
-    👁️ 你正在旁观当前对局...
-  </div>
-
-  <div class="action-bar" v-else-if="handCards.length > 0">
+  <div class="action-bar gb-action-bar" v-else-if="handCards.length > 0">
     <template v-if="currentAoeType === 'GUSHOU_DISCARD'">
       <div
         v-if="amIPendingAoe"
         class="aoe-action-bar"
         style="
-          background: rgba(44, 62, 80, 0.9);
-          box-shadow: 0 0 15px rgba(52, 73, 94, 0.8);
+          background: linear-gradient(160deg, rgba(40,20,15,0.88), rgba(20,15,12,0.92));
+          border-color: rgba(255,214,128,0.6);
         "
       >
         <div class="countdown-timer" :class="{ hurry: countdown <= 3 }">
-          ⏰ {{ countdown }}s
+          <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle
+              cx="12"
+              cy="13"
+              r="8"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+            />
+            <path
+              d="M12 9v4l2.5 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+            <path
+              d="M9 3h6M8 5l-2 2m12-2 2 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          {{ countdown }}s
         </div>
         <span class="aoe-hint"
           >固守：请弃置 {{ Math.min(2, handCards.length) }} 张牌</span
         >
         <button
           @click="confirmGushouDiscard"
-          class="play-btn"
-          style="background-color: #e67e22"
+          class="play-btn gb-btn gb-btn--play"
           :disabled="selectedCards.length !== Math.min(2, handCards.length)"
         >
           确认弃牌
         </button>
       </div>
-      <div v-else class="wait-text" style="color: #bdc3c7">
-        ⏳ 正在等待 {{ pendingAoePlayers[0] }} 弃牌...
+      <div v-else class="wait-text">
+        <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 3v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3M7 21v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> 正在等待 {{ pendingAoePlayers[0] }} 弃牌...
       </div>
     </template>
 
@@ -194,21 +300,47 @@
         v-if="amIPendingAoe"
         class="aoe-action-bar"
         style="
-          background: rgba(120, 20, 40, 0.92);
-          box-shadow: 0 0 15px rgba(192, 57, 43, 0.7);
+          background: linear-gradient(160deg, rgba(108,35,38,0.85), rgba(64,18,20,0.92));
+          border-color: rgba(255,130,130,0.55);
         "
       >
         <div class="countdown-timer" :class="{ hurry: countdown <= 3 }">
-          ⏰ {{ countdown }}s
+          <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle
+              cx="12"
+              cy="13"
+              r="8"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+            />
+            <path
+              d="M12 9v4l2.5 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+            <path
+              d="M9 3h6M8 5l-2 2m12-2 2 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          {{ countdown }}s
         </div>
-        <span class="aoe-hint">
-          苦肉·觉醒：可弃置 1 张黑色牌，或跳过
-        </span>
-        <button @click="skipKurouAwakenDiscard" class="pass-btn">跳过</button>
+        <span class="aoe-hint">苦肉·觉醒：可弃置 1 张黑色牌，或跳过</span>
+        <button
+          @click="skipKurouAwakenDiscard"
+          class="pass-btn gb-btn gb-btn--pass"
+        >
+          跳过
+        </button>
         <button
           @click="confirmKurouAwakenDiscard"
-          class="play-btn"
-          style="background-color: #c0392b"
+          class="play-btn gb-btn gb-btn--kurou"
           :disabled="
             selectedCards.length !== 1 ||
             (
@@ -221,55 +353,109 @@
           弃置此黑牌
         </button>
       </div>
-      <div v-else class="wait-text" style="color: #e74c3c">
-        ⏳ 正在等待 {{ pendingAoePlayers[0] }} 弃牌...
+      <div v-else class="wait-text" style="color: #ff9b8f">
+        <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 3v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3M7 21v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> 正在等待 {{ pendingAoePlayers[0] }} 弃牌...
       </div>
     </template>
 
     <template v-else-if="currentAoeType === 'GUANXING'">
-      <div class="wait-text">✨ 观星</div>
+      <div class="wait-text" style="color: #d4a7f2">观星</div>
     </template>
 
     <template v-else-if="currentAoeType === 'WGFD'">
-      <div class="wait-text" style="color: #2ecc71">🌾 五谷丰登结算中...</div>
+      <div class="wait-text" style="color: #7ee0a3">五谷丰登结算中...</div>
     </template>
 
     <template v-else-if="currentAoeType">
       <div v-if="amIPendingAoe" class="aoe-action-bar">
         <div class="countdown-timer" :class="{ hurry: countdown <= 3 }">
-          ⏰ {{ countdown }}s
+          <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle
+              cx="12"
+              cy="13"
+              r="8"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+            />
+            <path
+              d="M12 9v4l2.5 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+            <path
+              d="M9 3h6M8 5l-2 2m12-2 2 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          {{ countdown }}s
         </div>
         <span class="aoe-hint">
           请弃置: {{ luanjianInitiator === userId ? '任意牌' : (currentAoeType
           === 'NMRQ' ? '红色牌' : '黑色牌') }}
         </span>
-        <button @click="respondAoe(null)" class="pass-btn">要不起</button>
+        <button
+          @click="respondAoe(null)"
+          class="pass-btn gb-btn gb-btn--pass"
+        >
+          要不起
+        </button>
         <button
           @click="discardAoe"
-          class="play-btn"
+          class="play-btn gb-btn gb-btn--play"
           :disabled="selectedCards.length !== 1"
         >
           弃牌
         </button>
       </div>
       <div v-else class="wait-text">
-        ⏳ 正在等待他人响应 {{ currentAoeType === 'NMRQ' ? '南蛮入侵' :
+        <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 3v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3M7 21v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> 正在等待他人响应 {{ currentAoeType === 'NMRQ' ? '南蛮入侵' :
         '万箭齐发' }}...
       </div>
     </template>
 
     <template v-else>
       <div v-if="currentTurn !== userId" class="wait-text">
-        ⏳ 正在等待 {{ currentTurn }} 行动...
+        <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 3v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3M7 21v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> 正在等待 {{ currentTurn }} 行动...
       </div>
       <template v-else>
         <div class="countdown-timer" :class="{ hurry: countdown <= 5 }">
-          ⏰ {{ countdown }}s
+          <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle
+              cx="12"
+              cy="13"
+              r="8"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+            />
+            <path
+              d="M12 9v4l2.5 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+            <path
+              d="M9 3h6M8 5l-2 2m12-2 2 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          {{ countdown }}s
         </div>
         <button
           v-if="mySkill !== 'GUANXING' && mySkill !== 'TIEQI' && !(mySkill === 'KUROU' && jdsrTarget === userId)"
           @click="replaceCard"
-          :class="mySkill === 'KUROU' ? 'kurou-btn' : ''"
+          class="gb-btn"
+          :class="mySkill === 'KUROU' ? 'kurou-btn gb-btn--kurou' : 'pass-btn gb-btn--pass'"
           :disabled="
             jdsrTarget === userId ? true :
             mySkill === 'ZHIHENG' ? selectedCards.length !== 1 : 
@@ -288,8 +474,8 @@
         </button>
         <button
           @click="passTurn"
-          class="pass-btn"
-          :style="mySkill === 'GUANXING' ? 'background-color: #8e44ad; box-shadow: 0 0 10px #9b59b6;' : ''"
+          class="pass-btn gb-btn gb-btn--pass"
+          :style="mySkill === 'GUANXING' ? 'background: linear-gradient(180deg,#8e44ad,#6f2c91); border-color: rgba(218,133,245,0.75); box-shadow: 0 0 10px rgba(155,89,182,0.5);' : ''"
           :disabled="tableCards.length === 0 && !onlyHasScrolls"
         >
           {{ (tableCards.length === 0 && !onlyHasScrolls) ? "必须出牌" :
@@ -298,7 +484,7 @@
 
         <button
           @click="playCards"
-          class="play-btn"
+          class="play-btn gb-btn gb-btn--play"
           :disabled="selectedCards.length === 0"
         >
           出牌
@@ -319,7 +505,6 @@
     </div>
   </div>
 
-  <!-- ====== 【铁骑】：判定牌展示层 ====== -->
   <div class="tieqi-judge-layer">
     <div
       v-for="j in tieqiJudgeCards"
@@ -327,7 +512,7 @@
       class="tieqi-judge-card"
       :class="j.success ? 'tieqi-success' : 'tieqi-fail'"
     >
-      <div class="tieqi-judge-banner">🐴 铁骑</div>
+      <div class="tieqi-judge-banner">铁骑</div>
       <img
         :src="getCardImageUrl(j.card)"
         :alt="j.card.suit + j.card.rank"
@@ -341,8 +526,8 @@
     </div>
   </div>
 
-  <div
-    class="hand-cards-container"
+  <section
+    class="hand-cards-container gb-hand"
     :class="{ 'danger-pulse': warningUserId === userId }"
   >
     <div
@@ -375,27 +560,76 @@
     <div v-if="activeEmojis[userId]" class="emoji-bubble me">
       <img :src="`/images/emojis/${activeEmojis[userId]}`" />
     </div>
-    <div class="right-side-controls">
+
+    <div class="right-side-controls gb-right-side-controls">
       <button
-        class="sound-toggle-btn"
+        type="button"
+        class="sound-toggle-btn gb-sound-btn"
         @click="toggleSound"
         :class="{ 'is-muted': !soundStatus }"
+        :aria-label="soundStatus ? '静音背景音乐' : '开启背景音乐'"
+        :title="soundStatus ? '静音背景音乐' : '开启背景音乐'"
       >
-        <svg class="icon" aria-hidden="true" style="width: 20px; height: 20px">
-          <use
-            :xlink:href="soundStatus ? '#icon-soundsize' : '#icon-mute-copy'"
-          ></use>
+        <!--
+          内联 SVG（与 Lobby / WaitingRoom 同步），让图标颜色可继承 currentColor，
+          摆脱 iconfont sprite 内 fill="#000000" 黑屏问题。
+        -->
+        <svg
+          v-if="soundStatus"
+          class="gb-sound-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
+          />
+          <path
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            d="M15.5 8.5a5 5 0 0 1 0 7"
+          />
+          <path
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            d="M19 5a10 10 0 0 1 0 14"
+          />
         </svg>
+        <svg
+          v-else
+          class="gb-sound-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
+          />
+          <path
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            d="m15.5 9.5 6 6M21.5 9.5l-6 6"
+          />
+        </svg>
+        <!-- 静音状态的脉动小红点，提醒用户当前为静音 -->
+        <span class="gb-sound-mute-dot" aria-hidden="true"></span>
       </button>
-      <div class="my-card-count-vertical">
+      <div class="my-card-count-vertical gb-count-chip">
         <span>剩</span>
         <span>余</span>
         <span class="num">{{ handCards.length }}</span>
         <span>张</span>
       </div>
     </div>
-  </div>
-  <div class="emoji-sidebar">
+  </section>
+
+  <aside class="emoji-sidebar gb-emoji-sidebar">
     <div class="emoji-panel" v-show="showEmojiPanel">
       <div
         class="emoji-item"
@@ -410,55 +644,103 @@
         />
       </div>
     </div>
-    <button class="emoji-toggle-btn" @click="toggleEmojiPanel">
-      <svg class="icon" aria-hidden="true" style="font-size: 28px">
-        <use xlink:href="#icon-shengqi"></use>
+    <button
+      class="emoji-toggle-btn gb-emoji-toggle"
+      @click="toggleEmojiPanel"
+      :aria-label="showEmojiPanel ? '关闭表情面板' : '打开表情面板'"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        class="gb-emoji-toggle-icon"
+        aria-hidden="true"
+      >
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+        />
+        <circle cx="9" cy="10" r="1.1" fill="currentColor" />
+        <circle cx="15" cy="10" r="1.1" fill="currentColor" />
+        <path
+          d="M8 14c1.4 1.4 2.7 2 4 2s2.6-.6 4-2"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+        />
       </svg>
     </button>
-  </div>
+  </aside>
 
-  <button @click="exitGame" class="exit-btn">退出房间</button>
+  <button @click="exitGame" class="exit-btn gb-btn--exit">退出房间</button>
 
   <div v-if="winner" class="game-over-modal">
-    <div class="modal-content">
-      <h2 class="bounce-text">🎉 游戏结束 🎉</h2>
-      <p class="winner-text">本局胜者：<span>{{ winner }}</span></p>
+    <div class="gb-gameover-wrap">
+      <div class="modal-content">
+        <h2 class="bounce-text">游戏结束</h2>
+        <p class="winner-text">本局胜者：<span>{{ winner }}</span></p>
 
-      <div
-        v-if="winningCards && winningCards.length > 0"
-        class="winning-display"
-      >
-        <p class="kill-text">{{ killText }}</p>
         <div
-          class="card-display-row"
-          style="justify-content: center; transform: scale(0.9)"
+          v-if="winningCards && winningCards.length > 0"
+          class="winning-display"
         >
+          <p class="kill-text">{{ killText }}</p>
           <div
-            v-for="(card, index) in sortedWinningCards"
-            :key="index"
-            class="card mini"
+            class="card-display-row"
+            style="justify-content: center; transform: scale(0.9)"
           >
-            <img :src="getCardImageUrl(card)" @error="handleImageError" />
-            <span class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
+            <div
+              v-for="(card, index) in sortedWinningCards"
+              :key="index"
+              class="card mini"
+            >
+              <img :src="getCardImageUrl(card)" @error="handleImageError" />
+              <span class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
+            </div>
           </div>
         </div>
+        <button
+          @click="returnToRoom"
+          class="return-room-btn gb-btn gb-btn--play"
+        >
+          返回房间准备
+        </button>
       </div>
-      <button @click="returnToRoom" class="return-room-btn">
-        返回房间准备
-      </button>
+
+      <!-- 看板娘动态图层：胜利欢呼 / 失败叹气，相对于结算框右下角固定 -->
+      <div class="gb-result-mascot-layer" aria-hidden="true">
+        <img
+          v-if="winner === userId"
+          class="gb-result-mascot-img gb-result-mascot--win"
+          src="/images/34c33794_transparent.png"
+          alt=""
+          draggable="false"
+        />
+        <img
+          v-else
+          class="gb-result-mascot-img gb-result-mascot--lose"
+          src="/images/a67392ed_transparent.png"
+          alt=""
+          draggable="false"
+        />
+      </div>
     </div>
   </div>
+
   <div v-if="showSkillSelection" class="game-over-modal skill-overlay">
-    <h2 class="skill-title bounce-text">⚔️ 选择你的武将技能 ⚔️</h2>
+    <h2 class="skill-title bounce-text">选择你的武将技能</h2>
 
     <div class="skills-container">
       <div class="skill-card zhiheng-card" @click="selectSkill('ZHIHENG')">
-        <h3>🔄 制衡</h3>
+        <h3>制衡</h3>
         <p>出牌阶段限一次，弃置 1 张手牌并重新摸 1 张牌。</p>
       </div>
 
       <div class="skill-card luanjian-card" @click="selectSkill('LUANJIAN')">
-        <h3>🏹 乱箭</h3>
+        <h3>乱箭</h3>
         <p>
           出牌阶段限一次，弃置 2
           张黑色手牌当做【万箭齐发】。结算时你可以使用任意牌响应，响应后摸 2
@@ -467,13 +749,13 @@
       </div>
 
       <div class="skill-card guanxing-card" @click="selectSkill('GUANXING')">
-        <h3>✨ 观星</h3>
+        <h3>观星</h3>
         <p>
           代替【要不起】。观看牌堆顶 5 张牌，将其中 2 张加入手牌，其余弃置。
         </p>
       </div>
       <div class="skill-card gushou-card" @click="selectSkill('GUSHOU')">
-        <h3>🛡️ 固守</h3>
+        <h3>固守</h3>
         <p>
           立即结束回合并摸 4 张牌。若下回接牌，则弃置 2
           张牌；若下回依然要不起，则免除摸牌惩罚。
@@ -481,7 +763,7 @@
       </div>
 
       <div class="skill-card kurou-card" @click="selectSkill('KUROU')">
-        <h3>💔 苦肉</h3>
+        <h3>苦肉</h3>
         <p>
           出牌阶段无限次，弃置 2 张手牌并摸 4 张牌。累计使用 3
           次永久觉醒：此后每次主动打出普通牌后，可额外弃置一张黑色牌。
@@ -489,7 +771,7 @@
       </div>
 
       <div class="skill-card tieqi-card" @click="selectSkill('TIEQI')">
-        <h3>🐴 铁骑</h3>
+        <h3>铁骑</h3>
         <p>
           打出含红色牌时，亮出牌堆顶一张判定牌。
           若判定牌为红色且点数严格小于本次出牌最大红色牌，则触发「压制」：其余玩家强制要不起并各罚摸 2 张牌，你继续出牌。
@@ -505,11 +787,12 @@
       <div class="skill-timer-text">{{ skillCountdown }}s</div>
     </div>
   </div>
+
   <div v-if="showGuanxingModal" class="skill-action-overlay">
     <div class="modal-content guanxing-content">
       <h2
         class="wgfd-title breath-text"
-        style="color: #9b59b6; text-shadow: 0 0 10px rgba(155, 89, 182, 0.5)"
+        style="color: #d4a7f2; text-shadow: 2px 2px 0 rgba(46,16,4,0.8), 0 0 12px rgba(155,89,182,0.6)"
       >
         观星
       </h2>
@@ -528,7 +811,7 @@
           <span class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
           <div
             class="selection-overlay"
-            style="background: rgba(155, 89, 182, 0.3); color: #9b59b6"
+            style="background: rgba(155, 89, 182, 0.4); color: #d4a7f2"
             v-if="card.selected"
           >
             ✓
@@ -553,8 +836,10 @@
         :disabled="selectedGuanxingCards.length < 1 || selectedGuanxingCards.length > 2"
         class="return-room-btn wgfd-confirm-btn"
         style="
-          background-color: #8e44ad !important;
-          box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3) !important;
+          background: linear-gradient(180deg, #8e44ad 0%, #6f2c91 55%, #512070 100%) !important;
+          border-color: rgba(218, 133, 245, 0.75) !important;
+          color: #fff !important;
+          box-shadow: 0 8px 22px rgba(142, 68, 173, 0.42) !important;
         "
       >
         确认挑选
@@ -567,10 +852,10 @@
       <h2 class="wgfd-title breath-text">五谷丰登</h2>
 
       <div v-if="amIPendingAoe" class="wgfd-status hurry-text">
-        👉 轮到你挑选了！
+        轮到你挑选了！
       </div>
       <div v-else class="wgfd-status wait-text">
-        ⏳ 正在等待 {{ pendingAoePlayers[0] }} 挑选...
+        <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 3v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3M7 21v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> 正在等待 {{ pendingAoePlayers[0] }} 挑选...
       </div>
 
       <div class="card-display-row wgfd-card-row">

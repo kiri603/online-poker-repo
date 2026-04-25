@@ -146,10 +146,10 @@ const occupiedCount = computed(() => displayPlayers.value.length);
 
 // 默认头像池（暂无头像系统时按座位序号循环使用）
 const DEFAULT_AVATARS = [
-  "/images/emojis/mascot_01_xiao.png",
-  "/images/emojis/mascot_02_kaixin.png",
-  "/images/emojis/mascot_09_deyi.png",
-  "/images/emojis/mascot_07_haixiu.png",
+  "/images/emojis/01_xiao.png",
+  "/images/emojis/02_kaixin.png",
+  "/images/emojis/09_deyi.png",
+  "/images/emojis/07_haixiu.png",
 ];
 
 const avatarForPlayer = (player, seatIndex) => {

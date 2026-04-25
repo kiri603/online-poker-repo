@@ -1,0 +1,527 @@
+<div class="hub-root">
+  <div v-if="authUser" class="account-hub">
+    <button
+      type="button"
+      class="account-trigger"
+      :class="{ 'is-open': socialProfileVisible }"
+      :aria-expanded="socialProfileVisible ? 'true' : 'false'"
+      aria-haspopup="dialog"
+      @click="handleAccountClick"
+    >
+      <span class="account-trigger-avatar" aria-hidden="true">{{ displayInitial }}</span>
+      <span class="account-trigger-name">{{
+        authUser.nickname || authUser.username
+      }}</span>
+      <span class="account-trigger-arrow" aria-hidden="true">
+        <svg viewBox="0 0 12 7" focusable="false">
+          <path
+            d="M1 1l5 5 5-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <span
+        v-if="socialNotificationCount > 0"
+        class="account-trigger-dot"
+        aria-label="有新的社交提醒"
+      ></span>
+    </button>
+  </div>
+
+  <div
+    v-if="socialProfileVisible"
+    class="hub-overlay"
+    @click="closeProfilePanel"
+  >
+    <div
+      class="hub-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hub-title"
+      @click.stop
+    >
+      <header class="hub-header">
+        <div class="hub-header-top">
+          <div class="hub-header-titlebar">
+            <span class="hub-ornament" aria-hidden="true">♠ ♣</span>
+            <h2 id="hub-title" class="hub-title">
+              <span class="hub-title-text">个人详情</span>
+            </h2>
+            <span class="hub-ornament" aria-hidden="true">♥ ♦</span>
+          </div>
+          <button
+            type="button"
+            class="hub-close"
+            aria-label="关闭个人详情"
+            @click="closeProfilePanel"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                d="M6 6l12 12M6 18L18 6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="hub-header-meta">
+          <div class="hub-subtitle">
+            <span class="hub-subtitle-label">账号 ID</span>
+            <span class="hub-subtitle-value">{{
+              profile.userId || authUser?.username
+            }}</span>
+            <span
+              v-if="socialNotificationCount > 0"
+              class="hub-inline-alert"
+            >
+              <span class="inline-dot" aria-hidden="true"></span>
+              <span>有新的社交提醒</span>
+            </span>
+          </div>
+
+          <div class="hub-level">
+            <div class="hub-level-row">
+              <div class="hub-level-title">
+                <span class="hub-level-prefix">Lv.</span>
+                <span class="hub-level-value">{{ profile.level || 1 }}</span>
+                <span v-if="profile.maxLevel" class="hub-level-max">已满级</span>
+              </div>
+              <div class="hub-level-desc">
+                经验 {{ profile.experience || 0 }}
+                <span v-if="!profile.maxLevel">
+                  / 下一等级 {{ profile.nextLevelExp || 0 }}
+                </span>
+              </div>
+            </div>
+            <div class="hub-level-track">
+              <div class="hub-level-fill" :style="levelProgressWidth"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-tabs-bar">
+          <nav class="hub-tabs" role="tablist" aria-label="个人详情分区">
+            <button
+              v-if="isViewingSelf"
+              type="button"
+              class="hub-tab-btn"
+              :class="{ active: socialActiveTab === 'profile' }"
+              role="tab"
+              :aria-selected="socialActiveTab === 'profile' ? 'true' : 'false'"
+              @click="socialActiveTab = 'profile'"
+            >
+              战绩
+            </button>
+            <button
+              v-if="isViewingSelf"
+              type="button"
+              class="hub-tab-btn"
+              :class="{ active: socialActiveTab === 'friends' }"
+              role="tab"
+              :aria-selected="socialActiveTab === 'friends' ? 'true' : 'false'"
+              @click="socialActiveTab = 'friends'"
+            >
+              <span>好友</span>
+              <span
+                v-if="socialFriendNotificationCount > 0"
+                class="hub-tab-dot"
+                aria-hidden="true"
+              ></span>
+            </button>
+          </nav>
+          <button
+            v-if="isViewingSelf"
+            type="button"
+            class="hub-logout"
+            @click="logout"
+          >
+            退出登录
+          </button>
+        </div>
+      </header>
+
+      <div v-if="socialProfileLoading" class="hub-loading">
+        <div class="hub-loading-spinner" aria-hidden="true"></div>
+        <div class="hub-loading-text">正在加载资料...</div>
+      </div>
+
+      <section
+        v-else-if="socialActiveTab === 'profile'"
+        class="hub-body hub-profile"
+        role="tabpanel"
+        aria-labelledby="hub-title"
+      >
+        <div v-if="!isViewingSelf" class="hub-profile-toolbar">
+          <button type="button" class="hub-btn hub-btn-ghost" @click="openSelfProfile">
+            <svg viewBox="0 0 24 24" class="hub-btn-icon" aria-hidden="true" focusable="false">
+              <path
+                d="M15 18l-6-6 6-6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>返回我的战绩</span>
+          </button>
+        </div>
+
+        <div class="hub-summary-grid">
+          <div class="hub-summary-card">
+            <span class="hub-summary-label">注册时间</span>
+            <strong class="hub-summary-value">{{
+              formatTime(profile.registeredAt)
+            }}</strong>
+          </div>
+          <div class="hub-summary-card">
+            <span class="hub-summary-label">对局总数</span>
+            <strong class="hub-summary-value">{{ profile.totalGames || 0 }}</strong>
+          </div>
+          <div class="hub-summary-card">
+            <span class="hub-summary-label">总胜 / 负</span>
+            <strong class="hub-summary-value">
+              <span class="hub-summary-win">{{ profile.wins || 0 }}</span>
+              <span class="hub-summary-sep">/</span>
+              <span class="hub-summary-lose">{{ profile.losses || 0 }}</span>
+            </strong>
+          </div>
+          <div class="hub-summary-card hub-summary-highlight">
+            <span class="hub-summary-label">最近50场胜率</span>
+            <strong class="hub-summary-value hub-summary-accent">
+              {{ profile.recentWinRate || 0 }}
+              <span class="hub-summary-unit">%</span>
+            </strong>
+          </div>
+        </div>
+
+        <div v-if="profile.recentWinRateTip" class="hub-tip">
+          <span class="hub-tip-mark" aria-hidden="true"></span>
+          <span class="hub-tip-text">{{ profile.recentWinRateTip }}</span>
+        </div>
+
+        <div class="hub-records">
+          <div class="hub-section-head">
+            <h3 class="hub-section-title">最近50次战绩</h3>
+            <span class="hub-section-note" v-if="records.length > 0">
+              共 {{ records.length }} 场
+            </span>
+          </div>
+          <div v-if="records.length === 0" class="hub-empty">
+            还没有可统计的真人对局战绩
+          </div>
+          <div v-else class="hub-record-list">
+            <div
+              v-for="(record, index) in records"
+              :key="`${record.roomId}-${index}`"
+              class="hub-record-card"
+              :class="{ win: record.won, lose: !record.won }"
+            >
+              <div class="hub-record-line">
+                <span class="hub-record-mode">{{ record.modeLabel }}</span>
+                <span class="hub-record-time">{{
+                  formatTime(record.startedAt)
+                }}</span>
+                <span
+                  class="hub-record-result"
+                  :class="{ win: record.won, lose: !record.won }"
+                >
+                  {{ record.won ? "胜利" : "失利" }}
+                </span>
+              </div>
+              <div class="hub-record-meta">
+                <span>房间 {{ record.roomId }}</span>
+                <span>{{ record.playerCount }}人场</span>
+                <span>赢家 {{ record.winnerUserId }}</span>
+              </div>
+              <div class="hub-record-players">
+                <span class="hub-record-players-label">对局人ID</span>
+                <span class="hub-record-players-value">{{
+                  (record.participantIds || []).join("、")
+                }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        v-else
+        class="hub-body hub-friends"
+        :data-mobile-view="mobileFriendView"
+        role="tabpanel"
+        aria-labelledby="hub-title"
+      >
+        <div class="hub-friends-list" aria-label="好友列表与搜索">
+          <div class="hub-section-head">
+            <h3 class="hub-section-title">搜索添加好友</h3>
+          </div>
+          <div class="hub-search-row">
+            <input
+              v-model="socialSearchKeyword"
+              class="hub-input"
+              placeholder="输入账号ID搜索"
+              aria-label="搜索账号ID"
+              @keydown.enter.prevent="searchSocialUsers"
+            />
+            <button
+              type="button"
+              class="hub-btn hub-btn-primary"
+              @click="searchSocialUsers"
+            >
+              搜索
+            </button>
+          </div>
+          <div v-if="socialSearchResults.length > 0" class="hub-stack">
+            <div
+              v-for="result in socialSearchResults"
+              :key="result.userId"
+              class="hub-row-card"
+            >
+              <div class="hub-row-main">
+                <strong class="hub-row-id">{{ result.userId }}</strong>
+                <span
+                  class="hub-status-pill"
+                  :class="{ online: result.online }"
+                >
+                  {{ result.online ? "在线" : "离线" }}
+                </span>
+              </div>
+              <button
+                v-if="!result.alreadyFriend && !result.pendingOutgoing"
+                type="button"
+                class="hub-mini-btn primary"
+                @click="sendFriendRequest(result.userId)"
+              >
+                添加
+              </button>
+              <span v-else class="hub-state-hint">{{
+                result.alreadyFriend
+                  ? "已是好友"
+                  : result.pendingOutgoing
+                    ? "已申请"
+                    : result.pendingIncoming
+                      ? "等你处理"
+                      : ""
+              }}</span>
+            </div>
+          </div>
+          <div
+            v-else-if="socialSearchEmptyMessage"
+            class="hub-empty hub-empty-small"
+          >
+            {{ socialSearchEmptyMessage }}
+          </div>
+
+          <div class="hub-section-head">
+            <h3 class="hub-section-title">待处理好友申请</h3>
+            <span v-if="pendingRequests.length > 0" class="hub-section-note">
+              {{ pendingRequests.length }} 条
+            </span>
+          </div>
+          <div v-if="pendingRequests.length === 0" class="hub-empty hub-empty-small">
+            暂无新的好友申请
+          </div>
+          <div v-else class="hub-stack">
+            <div
+              v-for="request in pendingRequests"
+              :key="request.id"
+              class="hub-row-card"
+            >
+              <div class="hub-row-main hub-row-main-col">
+                <strong class="hub-row-id">{{ request.fromUserId }}</strong>
+                <div class="hub-row-meta">{{ formatTime(request.createdAt) }}</div>
+              </div>
+              <div class="hub-row-actions">
+                <button
+                  type="button"
+                  class="hub-mini-btn agree"
+                  @click="respondFriendRequest(request.id, true)"
+                >
+                  接受
+                </button>
+                <button
+                  type="button"
+                  class="hub-mini-btn reject"
+                  @click="respondFriendRequest(request.id, false)"
+                >
+                  拒绝
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="hub-section-head">
+            <h3 class="hub-section-title">好友列表</h3>
+            <span v-if="friends.length > 0" class="hub-section-note">
+              {{ friends.length }} 位
+            </span>
+          </div>
+          <div v-if="friends.length === 0" class="hub-empty hub-empty-small">
+            还没有好友，先去搜索一个吧
+          </div>
+          <div v-else class="hub-stack">
+            <div
+              v-for="friend in friends"
+              :key="friend.userId"
+              class="hub-friend-card"
+              :class="{ active: socialChatFriendId === friend.userId }"
+            >
+              <div class="hub-row-main">
+                <strong class="hub-row-id">{{ friend.userId }}</strong>
+                <span
+                  class="hub-status-pill"
+                  :class="{ online: friend.online }"
+                >
+                  {{ friend.online ? "在线" : "离线" }}
+                </span>
+                <span v-if="friend.unreadCount > 0" class="hub-unread-badge">
+                  {{ friend.unreadCount }}
+                </span>
+              </div>
+              <div class="hub-row-actions">
+                <button
+                  type="button"
+                  class="hub-mini-btn primary"
+                  @click="openFriendConversation(friend.userId)"
+                >
+                  私聊
+                </button>
+                <button
+                  type="button"
+                  class="hub-mini-btn ghost"
+                  @click="openFriendProfile(friend.userId)"
+                >
+                  查看
+                </button>
+                <button
+                  type="button"
+                  class="hub-mini-btn danger"
+                  @click="confirmRemoveFriend(friend.userId)"
+                >
+                  删除
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hub-chat" aria-label="好友私聊窗口">
+          <div class="hub-chat-head">
+            <button
+              type="button"
+              class="hub-chat-back"
+              aria-label="返回好友列表"
+              @click="backToFriendList"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M15 18l-6-6 6-6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span>返回</span>
+            </button>
+            <h3 class="hub-section-title">
+              {{ socialChatFriendId ? "私聊 · " + socialChatFriendId : "私聊窗口" }}
+            </h3>
+            <span
+              v-if="socialChatFriendId"
+              class="hub-status-pill"
+              :class="{ online: activeChatFriend?.online }"
+            >
+              {{ activeChatFriend?.online ? "在线" : "离线" }}
+            </span>
+          </div>
+
+          <div v-if="!socialChatFriendId" class="hub-empty hub-empty-large">
+            从左侧选择一位好友开始聊天
+          </div>
+          <template v-else>
+            <div class="hub-chat-list">
+              <div
+                v-for="(message, index) in socialChatMessages"
+                :key="`${message.createdAt}-${index}`"
+                class="hub-chat-bubble"
+                :class="{ mine: message.mine }"
+              >
+                <div class="hub-chat-content">{{ message.content }}</div>
+                <div class="hub-chat-time">
+                  {{ formatTime(message.createdAt) }}
+                </div>
+              </div>
+            </div>
+            <div class="hub-chat-input-row">
+              <textarea
+                v-model="socialChatDraft"
+                class="hub-chat-input"
+                placeholder="输入私聊内容"
+                aria-label="输入私聊内容"
+              ></textarea>
+              <button
+                type="button"
+                class="hub-btn hub-btn-primary hub-chat-send"
+                @click="sendSocialMessage"
+              >
+                发送
+              </button>
+            </div>
+          </template>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div
+    v-if="socialInvitePrompt"
+    class="hub-invite"
+    role="alertdialog"
+    aria-labelledby="hub-invite-title"
+  >
+    <div class="hub-invite-head">
+      <h4 id="hub-invite-title" class="hub-invite-title">好友房间邀请</h4>
+      <span class="hub-invite-ribbon" aria-hidden="true"></span>
+    </div>
+    <p class="hub-invite-desc">
+      <strong>{{ socialInvitePrompt.fromUserId }}</strong> 邀请你进入房间
+      <strong class="hub-invite-room">{{ socialInvitePrompt.roomId }}</strong>
+    </p>
+    <p class="hub-invite-meta">
+      {{
+        socialInvitePrompt.privateRoom
+          ? "这是一个私密房间，接受后会自动携带邀请码进入。"
+          : "这是一个公开房间，接受后会立即跳转加入。"
+      }}
+    </p>
+    <p class="hub-invite-meta warning">
+      接受邀请会离开你当前所在页面；如果你正在对局中，会按中途退出处理。
+    </p>
+    <div class="hub-invite-actions">
+      <button
+        type="button"
+        class="hub-mini-btn agree"
+        @click="respondRoomInvite(socialInvitePrompt.id, true)"
+      >
+        接受
+      </button>
+      <button
+        type="button"
+        class="hub-mini-btn reject"
+        @click="respondRoomInvite(socialInvitePrompt.id, false)"
+      >
+        拒绝
+      </button>
+    </div>
+  </div>
+</div>

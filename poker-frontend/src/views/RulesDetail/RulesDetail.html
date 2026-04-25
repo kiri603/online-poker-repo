@@ -1,161 +1,359 @@
-<div class="rules-detail-page">
-  <div class="header-bar">
-    <button class="back-btn" @click="goBack">◀ 返回大厅</button>
-    <h1>📜 详细游戏规则</h1>
-    <div style="width: 100px"></div>
-  </div>
+<div class="rules-shell">
+  <div class="rules-bg" aria-hidden="true"></div>
+  <div class="rules-vignette" aria-hidden="true"></div>
 
-  <div class="content-area">
-    <div class="doc-section">
-      <h2>一、基础卡牌与牌型</h2>
-      <p>
-        本游戏使用一副标准的 54 张扑克牌进行（若开启锦囊模式，牌库将增至 59
-        张）。
+  <header class="rules-topbar" role="banner">
+    <button
+      type="button"
+      class="rules-back-btn"
+      @click="goBack"
+      aria-label="返回大厅"
+    >
+      <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5" />
+        <path d="M12 19l-7-7 7-7" />
+      </svg>
+      <span>返回大厅</span>
+    </button>
+
+    <div class="rules-title-seal">
+      <span class="seal-flourish" aria-hidden="true">❖</span>
+      <h1 class="rules-title">详细游戏规则</h1>
+      <span class="seal-flourish" aria-hidden="true">❖</span>
+    </div>
+
+    <div class="rules-topbar-spacer" aria-hidden="true"></div>
+  </header>
+
+  <main class="rules-main" role="main">
+    <!-- Section 1 · 基础卡牌与牌型 -->
+    <section class="rules-section section-basic" aria-labelledby="rules-s1">
+      <header class="section-header">
+        <span class="section-stamp" aria-hidden="true">一</span>
+        <h2 id="rules-s1" class="section-title">基础卡牌与牌型</h2>
+      </header>
+      <p class="section-intro">
+        本游戏使用一副标准的 54 张扑克牌进行（若开启锦囊模式，牌库将增至 59 张）。
       </p>
-      <ul>
+      <ul class="rules-list">
         <li>
-          <strong>单牌大小：</strong>大王 > 小王 > 2 > A > K > Q > J > 10 > 9 >
-          8 > 7 > 6 > 5 > 4 > 3
+          <span class="rules-bullet b-blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3.5" y="5" width="8" height="14" rx="1.5" />
+              <rect x="12.5" y="5" width="8" height="14" rx="1.5" />
+              <path d="M6 8.5h1" />
+              <path d="M6 15.5h1" />
+              <path d="M17 8.5h1" />
+              <path d="M17 15.5h1" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>单牌大小：</strong>大王 &gt; 小王 &gt; 2 &gt; A &gt; K &gt; Q &gt; J &gt; 10 &gt; 9 &gt; 8 &gt; 7 &gt; 6 &gt; 5 &gt; 4 &gt; 3
+          </div>
         </li>
         <li>
-          <strong>合法牌型：</strong
-          >包括单张、对子、三不带、三带一、三带一对、顺子（5张起）、连对（3对起）、<strong>飞机（支持纯飞机、飞机带单、飞机带对）</strong>、炸弹、王炸等经典玩法。
-        </li>
-      </ul>
-    </div>
-
-    <div class="doc-section">
-      <h2>二、核心机制与过牌惩罚</h2>
-      <p>在这个残酷的战场上，避战是要付出代价的：</p>
-      <ul>
-        <li>
-          <strong>被迫过牌：</strong
-          >如果在你的回合，你拿不出比上家更大的牌，系统将自动判你“要不起”。
-        </li>
-        <li>
-          <strong>主动要不起：</strong
-          >即使你有牌，你也可以为了保留实力选择“要不起”。
-        </li>
-        <li>
-          ⚠️
-          <strong>惩罚机制：</strong
-          >常规情况下，任何形式的“要不起”都会触发过牌惩罚，系统将强制向你的手牌中<strong
-            >增加 2 张牌</strong
-          >！
-        </li>
-        <li>
-          <strong>空桌禁令：</strong
-          >当桌面没有任何牌时（即自由出牌回合），你<strong>必须出牌</strong>，不可选择过牌（除非你手里全是被锁定的锦囊牌触发豁免）。
+          <span class="rules-bullet b-gold" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="10" width="4" height="10" rx="1" />
+              <rect x="10" y="4" width="4" height="16" rx="1" />
+              <rect x="17" y="13" width="4" height="7" rx="1" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>合法牌型：</strong>包括单张、对子、三不带、三带一、三带一对、顺子（5张起）、连对（3对起）、<strong>飞机（支持纯飞机、飞机带单、飞机带对）</strong>、炸弹、王炸等经典玩法。
+          </div>
         </li>
       </ul>
-    </div>
+    </section>
 
-    <div class="doc-section" style="border-color: rgba(155, 89, 182, 0.5)">
-      <h2 style="color: #9b59b6">三、武将技能系统</h2>
-      <p>
+    <!-- Section 2 · 核心机制与过牌惩罚 -->
+    <section class="rules-section section-warning" aria-labelledby="rules-s2">
+      <header class="section-header">
+        <span class="section-stamp" aria-hidden="true">二</span>
+        <h2 id="rules-s2" class="section-title">核心机制与过牌惩罚</h2>
+      </header>
+      <p class="section-intro">在这个残酷的战场上，避战是要付出代价的：</p>
+      <ul class="rules-list">
+        <li>
+          <span class="rules-bullet b-blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>被迫过牌：</strong>如果在你的回合，你拿不出比上家更大的牌，系统将自动判你&ldquo;要不起&rdquo;。
+          </div>
+        </li>
+        <li>
+          <span class="rules-bullet b-gold" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M8 12h8" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>主动要不起：</strong>即使你有牌，你也可以为了保留实力选择&ldquo;要不起&rdquo;。
+          </div>
+        </li>
+        <li>
+          <span class="rules-bullet b-rose" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3L22 21H2z" />
+              <path d="M12 10v4" />
+              <circle cx="12" cy="17.5" r=".9" fill="currentColor" stroke="none" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>惩罚机制：</strong>常规情况下，任何形式的&ldquo;要不起&rdquo;都会触发过牌惩罚，系统将强制向你的手牌中<strong>增加 2 张牌</strong>！
+          </div>
+        </li>
+        <li>
+          <span class="rules-bullet b-violet" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M5.5 5.5l13 13" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>空桌禁令：</strong>当桌面没有任何牌时（即自由出牌回合），你<strong>必须出牌</strong>，不可选择过牌（除非你手里全是被锁定的锦囊牌触发豁免）。
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Section 3 · 武将技能系统 -->
+    <section class="rules-section section-skills" aria-labelledby="rules-s3">
+      <header class="section-header">
+        <span class="section-stamp" aria-hidden="true">三</span>
+        <h2 id="rules-s3" class="section-title">武将技能系统</h2>
+      </header>
+      <p class="section-intro">
         如果房主开启了【武将技能】选项，每位玩家在游戏开始时需要选择一项专属技能：
       </p>
-      <ul>
+      <ul class="rules-list">
         <li>
-          🔄 <strong>制衡：</strong>
-          【主动技能】出牌阶段限用 1 次。你可以选择弃置 1 张手牌，并从牌堆重新摸
-          1 张新牌，随后可继续出牌。
-        </li>
-        <li>
-          🏹 <strong>乱箭：</strong> 【主动技能】出牌阶段限用 1 次。你可以弃置 2
-          张<strong>黑色手牌</strong>将其当做【万箭齐发】打出。你也将受到此锦囊波及，但你可以使用<strong>任意牌</strong>响应，响应结束后你将摸
-          2 张牌。
-        </li>
-        <li>
-          ✨ <strong>观星：</strong>
-          【被动技能】改变你的过牌机制。当你无牌可出或主动选择“要不起”时，不再遭受随机摸
-          2 张的惩罚，而是改为：观看牌堆顶的 5 张牌，精心挑选其中 2
-          张加入手牌，其余弃置。
-        </li>
-        <li>
-          🛡️
-          <strong>固守：</strong>
-          【主动技能】代替【要不起】。结束当前回合且<strong>摸 4 张牌</strong
-          >。但在你的下个回合：如果能接上牌，进入弃牌阶段<strong
-            >弃置 2 张牌</strong
-          >（手牌不足则全弃）；如果依然要不起，则免除系统的摸 2 张罚牌惩罚。
-        </li>
-        <li>
-          💔
-          <strong>苦肉：</strong>
-          【主动技能】<strong>回合内可无限次</strong>发动：弃置
-          <strong>2 张手牌</strong>，再从牌堆摸 <strong>4 张</strong>。累计发动3次即
-          <strong style="color: #e74c3c">觉醒</strong>。觉醒后，<strong>每次主动成功打出一手普通牌型</strong>，你可额外选择弃置
-          1 张黑色牌或跳过。
-          <span style="color: #bdc3c7">
-            仅普通出牌触发觉醒弃黑；锦囊牌、作为【借刀杀人】被选中的出牌、响应 AOE（如万箭/南蛮）均不触发。
+          <span class="rules-bullet b-blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v18" />
+              <path d="M5 21h14" />
+              <path d="M6 7L3 14h6z" />
+              <path d="M18 7l-3 7h6z" />
+              <path d="M6 7l6-3 6 3" />
+            </svg>
           </span>
+          <div class="rules-content">
+            <strong>制衡：</strong>
+            【主动技能】出牌阶段限用 1 次。你可以选择弃置 1 张手牌，并从牌堆重新摸 1 张新牌，随后可继续出牌。
+          </div>
         </li>
         <li>
-          🐴
-          <strong>铁骑：</strong>
-          【被动技能】当你主动打出包含<strong>红色牌</strong>时，从牌堆顶亮出
-          <strong>1 张判定牌</strong>。若判定牌同为红色且点数<strong>严格小于</strong>本次出牌中最大红色牌的点数，则判定成功，触发
-          <strong style="color: #e74c3c">「压制」</strong>：其余存活玩家强制「要不起」并各<strong>罚摸 2 张牌</strong>，桌面清空，回合立即回到你手中继续出牌；判定失败则正常轮到下家。
-          <span style="color: #bdc3c7">
-            仅普通出牌触发；锦囊牌、响应 AOE（万箭/南蛮）、作为【借刀杀人】被选中的出牌均不触发。判定牌无论成败都进入弃牌堆。
+          <span class="rules-bullet b-gold" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 20l16-16" />
+              <path d="M16 4h4v4" />
+              <path d="M15 9l-3 3" />
+              <path d="M8 3l-4 4" />
+              <path d="M5 4l3 3" />
+              <path d="M14 19l4 1 1 4" />
+            </svg>
           </span>
+          <div class="rules-content">
+            <strong>乱箭：</strong>
+            【主动技能】出牌阶段限用 1 次。你可以弃置 2 张<strong>黑色手牌</strong>将其当做【万箭齐发】打出。你也将受到此锦囊波及，但你可以使用<strong>任意牌</strong>响应，响应结束后你将摸 2 张牌。
+          </div>
+        </li>
+        <li>
+          <span class="rules-bullet b-emerald" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.5l2.5 6.5 6.5.8-5 4.3 1.5 6.4-5.5-3.8-5.5 3.8 1.5-6.4-5-4.3 6.5-.8z" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>观星：</strong>
+            【被动技能】改变你的过牌机制。当你无牌可出或主动选择&ldquo;要不起&rdquo;时，不再遭受随机摸 2 张的惩罚，而是改为：观看牌堆顶的 5 张牌，精心挑选其中 2 张加入手牌，其余弃置。
+          </div>
+        </li>
+        <li>
+          <span class="rules-bullet b-violet" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.5l8 3.5v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z" />
+              <path d="M9 11l2.2 2.2L15.5 9" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>固守：</strong>
+            【主动技能】代替【要不起】。结束当前回合且<strong>摸 4 张牌</strong>。但在你的下个回合：如果能接上牌，进入弃牌阶段<strong>弃置 2 张牌</strong>（手牌不足则全弃）；如果依然要不起，则免除系统的摸 2 张罚牌惩罚。
+          </div>
+        </li>
+        <li>
+          <span class="rules-bullet b-rose" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20s-7-5-7-11a4 4 0 017-3 4 4 0 017 3c0 6-7 11-7 11z" />
+              <path d="M12 7l-1.5 3 2 2-2 2 1.5 2" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>苦肉：</strong>
+            【主动技能】<strong>回合内可无限次</strong>发动：弃置
+            <strong>2 张手牌</strong>，再从牌堆摸 <strong>4 张</strong>。累计发动3次即
+            <strong class="hl-red">觉醒</strong>。觉醒后，<strong>每次主动成功打出一手普通牌型</strong>，你可额外选择弃置 1 张黑色牌或跳过。
+            <span class="rules-note">
+              仅普通出牌触发觉醒弃黑；锦囊牌、作为【借刀杀人】被选中的出牌、响应 AOE（如万箭/南蛮）均不触发。
+            </span>
+          </div>
+        </li>
+        <li>
+          <span class="rules-bullet b-orange" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 11c0-4 3-8 8-8s8 4 8 8v4a4 4 0 01-4 4h-1v-5h-6v5H8a4 4 0 01-4-4z" />
+              <circle cx="9" cy="10.5" r=".9" fill="currentColor" stroke="none" />
+              <circle cx="15" cy="10.5" r=".9" fill="currentColor" stroke="none" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>铁骑：</strong>
+            【被动技能】当你主动打出包含<strong>红色牌</strong>时，从牌堆顶亮出
+            <strong>1 张判定牌</strong>。若判定牌同为红色且点数<strong>严格小于</strong>本次出牌中最大红色牌的点数，则判定成功，触发
+            <strong class="hl-red">「压制」</strong>：其余存活玩家强制「要不起」并各<strong>罚摸 2 张牌</strong>，桌面清空，回合立即回到你手中继续出牌；判定失败则正常轮到下家。
+            <span class="rules-note">
+              仅普通出牌触发；锦囊牌、响应 AOE（万箭/南蛮）、作为【借刀杀人】被选中的出牌均不触发。判定牌无论成败都进入弃牌堆。
+            </span>
+          </div>
         </li>
       </ul>
-    </div>
+    </section>
 
-    <div class="doc-section warning-section">
-      <h2>四、锦囊牌机制</h2>
-      <p>如果房主开启了【锦囊牌】选项，牌堆将混入 4 张无花色的强力锦囊牌：</p>
-      <ul>
+    <!-- Section 4 · 锦囊牌机制 -->
+    <section class="rules-section section-scroll" aria-labelledby="rules-s4">
+      <header class="section-header">
+        <span class="section-stamp" aria-hidden="true">四</span>
+        <h2 id="rules-s4" class="section-title">锦囊牌机制</h2>
+      </header>
+      <p class="section-intro">
+        如果房主开启了【锦囊牌】选项，牌堆将混入 4 张无花色的强力锦囊牌：
+      </p>
+      <ul class="rules-list">
         <li>
-          🏹
-          <strong>万箭齐发 (1张)：</strong
-          >打出后，全场其余存活玩家必须弃置一张<strong>黑色牌</strong>（或小王），否则强制摸
-          2 张罚牌！
+          <span class="rules-bullet b-blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h10" />
+              <path d="M10 3l3 3-3 3" />
+              <path d="M3 12h14" />
+              <path d="M14 9l3 3-3 3" />
+              <path d="M3 18h10" />
+              <path d="M10 15l3 3-3 3" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>万箭齐发 (1张)：</strong>
+            打出后，全场其余存活玩家必须弃置一张<strong>黑色牌</strong>（或小王），否则强制摸 2 张罚牌！
+          </div>
         </li>
         <li>
-          🐘
-          <strong>南蛮入侵 (1张)：</strong
-          >打出后，全场其余存活玩家必须弃置一张<strong>红色牌</strong>（或大王），否则强制摸
-          2 张罚牌！
+          <span class="rules-bullet b-gold" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 20h18" />
+              <path d="M4.5 20l4.5-10 3 6 3-4 4.5 8" />
+              <circle cx="8" cy="6" r=".8" fill="currentColor" stroke="none" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>南蛮入侵 (1张)：</strong>
+            打出后，全场其余存活玩家必须弃置一张<strong>红色牌</strong>（或大王），否则强制摸 2 张罚牌！
+          </div>
         </li>
         <li>
-          🌾
-          <strong>五谷丰登 (1张)：</strong
-          >打出后，系统将在桌面展示与当前存活人数相等的卡牌。从打出者开始，按顺时针轮流，每位玩家依次从中挑选
-          1 张卡牌加入手牌！
+          <span class="rules-bullet b-emerald" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22V9" />
+              <path d="M12 11c-3 0-5-2-5-5" />
+              <path d="M12 11c3 0 5-2 5-5" />
+              <path d="M12 16c-3 0-5-2-5-5" />
+              <path d="M12 16c3 0 5-2 5-5" />
+              <path d="M12 6c-1.5 0-3-1.5-3-3" />
+              <path d="M12 6c1.5 0 3-1.5 3-3" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>五谷丰登 (1张)：</strong>
+            打出后，系统将在桌面展示与当前存活人数相等的卡牌。从打出者开始，按顺时针轮流，每位玩家依次从中挑选 1 张卡牌加入手牌！
+          </div>
         </li>
         <li>
-          🗡️
-          <strong>借刀杀人 (1张)：</strong
-          >仅限桌面上有其他人打出的牌时使用。强行将回合移交给下一位玩家（限时 10
-          秒，期间不可使用锦囊）。
-          若其打出牌压制桌面，则该牌视为你出的，你结束回合；若其“要不起”，则该玩家惩罚摸
-          1 张牌，<strong style="color: #e74c3c">你继续回合</strong>
+          <span class="rules-bullet b-rose" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.5l3 5.5v10l-3 3-3-3V8z" />
+              <path d="M9 8.5h6" />
+              <path d="M12 18v2.5" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>借刀杀人 (1张)：</strong>
+            仅限桌面上有其他人打出的牌时使用。强行将回合移交给下一位玩家（限时 10 秒，期间不可使用锦囊）。
+            若其打出牌压制桌面，则该牌视为你出的，你结束回合；若其&ldquo;要不起&rdquo;，则该玩家惩罚摸 1 张牌，<strong class="hl-red">你继续回合</strong>
+          </div>
         </li>
       </ul>
-    </div>
+    </section>
 
-    <div class="doc-section">
-      <h2>五、胜负判定与淘汰线</h2>
-      <ul>
+    <!-- Section 5 · 胜负判定与淘汰线 -->
+    <section class="rules-section section-result" aria-labelledby="rules-s5">
+      <header class="section-header">
+        <span class="section-stamp" aria-hidden="true">五</span>
+        <h2 id="rules-s5" class="section-title">胜负判定与淘汰线</h2>
+      </header>
+      <ul class="rules-list">
         <li>
-          🏆
-          <strong>直接获胜：</strong
-          >最先将手中所有牌打光的玩家，直接获得本局游戏的胜利！
+          <span class="rules-bullet b-gold" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 21h8" />
+              <path d="M12 17v4" />
+              <path d="M7 4h10v5a5 5 0 01-10 0z" />
+              <path d="M17 6h3v2a3 3 0 01-3 3" />
+              <path d="M7 6H4v2a3 3 0 003 3" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>直接获胜：</strong>
+            最先将手中所有牌打光的玩家，直接获得本局游戏的胜利！
+          </div>
         </li>
         <li>
-          ❌
-          <strong>爆牌淘汰：</strong>如果因为受罚摸牌，导致你的手牌数量<strong
-            >超过 14 张</strong
-          >，你将被淘汰出局！
+          <span class="rules-bullet b-rose" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9 9l6 6" />
+              <path d="M15 9l-6 6" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>爆牌淘汰：</strong>如果因为受罚摸牌，导致你的手牌数量<strong>超过 14 张</strong>，你将被淘汰出局！
+          </div>
         </li>
         <li>
-          <strong>注意：</strong>如果场上其他玩家全部因为超过 14
-          张被淘汰，最后剩下的那名玩家不战而胜，直接判定获胜。
+          <span class="rules-bullet b-blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v6" />
+              <circle cx="12" cy="8" r=".9" fill="currentColor" stroke="none" />
+            </svg>
+          </span>
+          <div class="rules-content">
+            <strong>注意：</strong>如果场上其他玩家全部因为超过 14 张被淘汰，最后剩下的那名玩家不战而胜，直接判定获胜。
+          </div>
         </li>
       </ul>
+    </section>
+
+    <div class="rules-footer">
+      <button type="button" class="rules-back-main" @click="goBack">
+        <svg class="back-main-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M19 12H5" />
+          <path d="M12 19l-7-7 7-7" />
+        </svg>
+        <span>返回大厅</span>
+      </button>
     </div>
-  </div>
+  </main>
 </div>

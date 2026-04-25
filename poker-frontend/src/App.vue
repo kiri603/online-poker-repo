@@ -3,7 +3,13 @@
     <ErrorToast />
     <RulesDetail v-if="showRuleDetail" />
     <AccountHub
-      v-if="authChecked && isAuthenticated && authUser && !authUser.guest"
+      v-if="
+        authChecked &&
+        isAuthenticated &&
+        authUser &&
+        !authUser.guest &&
+        !showRuleDetail
+      "
     />
 
     <div

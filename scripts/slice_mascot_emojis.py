@@ -45,15 +45,15 @@ DEFAULT_OUT = REPO_ROOT / "poker-frontend" / "public" / "images" / "emojis"
 
 # Order matches the 3x3 grid (left to right, top to bottom).
 SLUGS = [
-    "mascot_01_xiao",
-    "mascot_02_kaixin",
-    "mascot_03_wuyu",
-    "mascot_04_shengqi",
-    "mascot_05_yun",
-    "mascot_06_exin",
-    "mascot_07_haixiu",
-    "mascot_08_shiai",
-    "mascot_09_deyi",
+    "01_xiao",
+    "02_kaixin",
+    "03_wuyu",
+    "04_shengqi",
+    "05_yun",
+    "06_daku",
+    "07_haixiu",
+    "08_shiai",
+    "09_deyi",
 ]
 
 # Keep the top 78% of each grid cell; bottom 22% is the Chinese label ribbon.
