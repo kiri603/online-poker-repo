@@ -11,4 +11,5 @@ public class GameMessage {
     private String roomId;   // 房间号
     private String userId;   // 发送方用户ID
     private Object data;     // 具体的数据载荷（如出牌的列表、替换的卡牌等），可转为 Map 或 List
+    private Long actionStartTime; // 兼容旧客户端省略此字段；新客户端用于拒绝过期行动。
 }

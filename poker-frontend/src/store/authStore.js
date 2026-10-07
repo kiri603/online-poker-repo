@@ -6,6 +6,7 @@ import {
   setTabAuthToken,
 } from "./serverConfig.js";
 import { resetSocialState } from "./socialStore.js";
+import { disconnectWebSocket } from "./gameSocket.js";
 
 const ACTIVE_TAB_PREFIX = "poker:active-tab:";
 const TAB_ID_KEY = "poker:tab-id";
@@ -16,6 +17,7 @@ let activeTabHeartbeat = null;
 let activeTabStorageBound = false;
 let unloadCleanupBound = false;
 let ownedTabUsername = "";
+let sessionVerificationPending = false;
 
 const clearAuthMessages = () => {
   state.authError.value = "";
@@ -165,16 +167,7 @@ const startTabOwnership = (user) => {
 };
 
 const clearClientSessionState = () => {
-  if (state.ws.value) {
-    const currentSocket = state.ws.value;
-    state.ws.value = null;
-    if (
-      currentSocket.readyState === WebSocket.OPEN ||
-      currentSocket.readyState === WebSocket.CONNECTING
-    ) {
-      currentSocket.close();
-    }
-  }
+  disconnectWebSocket();
   state.authUser.value = null;
   state.isAuthenticated.value = false;
   state.userId.value = "";
@@ -326,7 +319,7 @@ export const submitGuestLogin = async () => {
     state.isAuthenticated.value = true;
     state.authChecked.value = true;
     state.userId.value = data.username;
-    clearTabAuthToken();
+    syncTabToken(data);
     syncDailySignInState(data);
     state.authSuccess.value = `已使用 ${data.username} 进入大厅`;
   } catch (error) {
@@ -340,25 +333,33 @@ export const verifyCurrentSession = async () => {
   if (
     !state.isAuthenticated.value ||
     !state.authUser.value ||
-    state.authUser.value.guest
+    state.authUser.value.guest ||
+    sessionVerificationPending
   ) {
     return;
   }
+  const checkedToken = getTabAuthToken();
+  sessionVerificationPending = true;
   try {
     const response = await apiFetch("/api/auth/me", { method: "GET" });
+    if (!state.isAuthenticated.value || getTabAuthToken() !== checkedToken) return;
     if (!response.ok) {
-      throw new Error("UNAUTHORIZED");
+      if (response.status === 401) {
+        await resetAuthState("登录状态已失效，请重新登录");
+      }
+      return;
     }
     const data = await response.json();
+    if (!state.isAuthenticated.value || getTabAuthToken() !== checkedToken) return;
     state.authUser.value = data;
     state.userId.value = data.username;
     syncTabToken(data);
     syncDailySignInState(data);
     startTabOwnership(data);
   } catch (error) {
-    if (error.message === "UNAUTHORIZED") {
-      await resetAuthState("登录状态已失效，请重新登录");
-    }
+    // 临时网络或服务错误不能作为登录失效的依据。
+  } finally {
+    sessionVerificationPending = false;
   }
 };
 

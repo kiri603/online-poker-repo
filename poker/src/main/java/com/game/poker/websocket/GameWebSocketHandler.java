@@ -11,6 +11,7 @@ import com.game.poker.service.GameService;
 import com.game.poker.service.ScriptedAiService;
 import com.game.poker.service.UserService;
 import jakarta.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +40,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private static final long BOT_EMOJI_COOLDOWN_JITTER_MS = 7_000L;
     private static final long BOT_EMOJI_DELAY_MS = 500L;
     private static final long BOT_EMOJI_DELAY_JITTER_MS = 1_200L;
+    private static final long RECONNECT_GRACE_MS = 30_000L;
 
     private static final String EMOJI_SMILE = "image_emoticon.png";
     private static final String EMOJI_LOVING = "image_emoticon2.png";
@@ -81,6 +84,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private UserService userService;
 
     @Autowired
+    private com.game.poker.service.AuthTokenService authTokenService;
+
+    @Autowired
     private GameRecordService gameRecordService;
 
     // JSON 转换工具
@@ -90,7 +96,18 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, CopyOnWriteArraySet<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
     // 记录 SessionID -> 用户ID (用于断开连接时清理)
     private final Map<String, String> sessionUserMap = new ConcurrentHashMap<>();
+    private final Map<String, ConcurrentWebSocketSessionDecorator> sendSessions = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionRoomMap = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, String>> activeSessions = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, String>> seatIdentities = new ConcurrentHashMap<>();
+    // 固定数量的稳定锁同时覆盖创建和删除，避免移除锁后同房间使用不同锁。
+    private final Object[] roomActionLocks = java.util.stream.IntStream.range(0, 256)
+            .mapToObj(i -> new Object()).toArray();
+    private final java.util.Set<String> intentionalCloses = ConcurrentHashMap.newKeySet();
+    private final Map<String, DisconnectLease> disconnectLeases = new ConcurrentHashMap<>();
+    private record DisconnectLease(GameRoom room, String userId, long deadline) {}
     private final ScheduledExecutorService botExecutor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService maintenanceExecutor = Executors.newSingleThreadScheduledExecutor();
     private final Map<String, Long> botScheduleVersion = new ConcurrentHashMap<>();
     private final Map<String, Long> roomEmojiCooldownUntil = new ConcurrentHashMap<>();
     private final Map<String, Long> botEmojiCooldownUntil = new ConcurrentHashMap<>();
@@ -104,13 +121,67 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 sessionUser == null ? "anonymous" : sessionUser.getUsername());
         log.info("新的 WebSocket 连接建立: {}", session.getId());
         if (sessionUser != null && !isSessionCurrent(sessionUser)) {
-            forceLogoutSession(session, "账号已在其他设备登录，请重新登录");
+            forceLogoutSession(session, sessionUser.isGuest() ? "游客会话已失效，请重新进入" : "账号已在其他设备登录，请重新登录");
         }
     }
 
     @PreDestroy
     public void shutdownBotExecutor() {
         botExecutor.shutdownNow();
+        maintenanceExecutor.shutdownNow();
+        sendSessions.clear();
+        disconnectLeases.clear();
+        seatIdentities.clear();
+    }
+
+    @PostConstruct
+    public void startMaintenance() {
+        maintenanceExecutor.scheduleWithFixedDelay(() -> runMaintenance(System.currentTimeMillis()), 500, 500, TimeUnit.MILLISECONDS);
+    }
+
+    private void runMaintenance(long now) {
+        for (Map.Entry<String, DisconnectLease> entry : disconnectLeases.entrySet()) {
+            DisconnectLease lease = entry.getValue();
+            String roomId = lease.room().getRoomId();
+            synchronized (actionLock(roomId)) {
+                if (disconnectLeases.get(entry.getKey()) != lease) continue;
+                if (gameService.getRoom(roomId) != lease.room()) {
+                    disconnectLeases.remove(entry.getKey(), lease);
+                } else if (now >= lease.deadline() && !activeSessions.getOrDefault(roomId, Map.of()).containsKey(lease.userId())) {
+                    finishLeave(roomId, lease.userId());
+                }
+            }
+        }
+        for (GameRoom room : new ArrayList<>(gameService.getRoomMap().values())) {
+            String roomId = room.getRoomId();
+            synchronized (actionLock(roomId)) {
+                if (gameService.getRoom(roomId) != room) continue;
+                Map<String, String> identities = seatIdentities.get(roomId);
+                if (identities != null) identities.keySet().removeIf(user ->
+                        room.getPlayers().stream().noneMatch(p -> user.equals(p.getUserId())) && !room.getSpectators().contains(user));
+                try {
+                    boolean selecting = "SKILL_SELECTION".equals(room.getPhase());
+                    if (!gameService.resolveExpiredAction(roomId, now)) continue;
+                    log.info("game deadline resolved: room={}, phase={}", roomId, room.getPhase());
+                    if (selecting && "PLAYING".equals(room.getPhase())) {
+                        broadcastToRoom(roomId, new TextMessage("{\"event\":\"GAME_STARTED\"}"));
+                    }
+                    syncAllHands(roomId);
+                    if ("GUANXING".equals(room.getCurrentAoeType())) {
+                        for (String pending : List.copyOf(room.getPendingAoePlayers())) syncRecoveredPlayer(roomId, pending);
+                    }
+                    publishWinnerIfNeeded(roomId, List.of());
+                    broadcastGameState(roomId);
+                } catch (Exception e) {
+                    log.error("game maintenance failed: room={}", roomId, e);
+                }
+            }
+        }
+        botScheduleVersion.keySet().removeIf(roomId -> !gameService.getRoomMap().containsKey(roomId));
+    }
+
+    private Object actionLock(String roomId) {
+        return roomActionLocks[Math.floorMod(roomId.hashCode(), roomActionLocks.length)];
     }
 
     @Override
@@ -123,7 +194,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             log.warn("收到非法 JSON 数据，解析失败。内容: {}", payload);
             // 主动向客户端发送错误提示
             if (session.isOpen()) {
-                session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"指令发送失败：JSON 格式不正确，请检查是否有多余的逗号或缺少的括号。\"}"));
+                sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"指令发送失败：JSON 格式不正确，请检查是否有多余的逗号或缺少的括号。\"}"));
             }
             // 直接 return 结束本次处理。由于异常被捕获且没有向外抛出，WebSocket 连接将保持畅通
             return;
@@ -131,13 +202,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         SessionUser sessionUser = getAuthenticatedUser(session);
         if (sessionUser == null) {
             if (session.isOpen()) {
-                session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"未登录或登录已过期，请重新登录\"}"));
+                sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"未登录或登录已过期，请重新登录\"}"));
                 session.close(CloseStatus.POLICY_VIOLATION);
             }
             return;
         }
         if (!isSessionCurrent(sessionUser)) {
-            forceLogoutSession(session, "账号已在其他设备登录，请重新登录");
+            forceLogoutSession(session, sessionUser.isGuest() ? "游客会话已失效，请重新进入" : "账号已在其他设备登录，请重新登录");
             return;
         }
 
@@ -145,13 +216,60 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         String userId = sessionUser.getUsername();
         String type = gameMsg.getType();
 
+        if ("JOIN_ROOM".equals(type) && sessionUser.isGuest()
+                && !(session.getAttributes().get(AuthSessionKeys.GAME_GUEST_ID) instanceof String visitId && !visitId.isBlank())
+                && !(session.getAttributes().get(AuthSessionKeys.GAME_HTTP_SESSION_ID) instanceof String id && !id.isBlank())) {
+            sendSafely(session, new TextMessage("{\"event\":\"ERROR\",\"msg\":\"无法恢复游客会话，请重新进入\"}"));
+            session.close(CloseStatus.POLICY_VIOLATION);
+            return;
+        }
+
         if (gameMsg.getUserId() != null && !gameMsg.getUserId().equals(userId)) {
             log.warn("websocket payload user spoof attempt: payload={}, session={}", gameMsg.getUserId(), userId);
+            forceLogoutSession(session, "页面身份已变化，请重新进入。多个游客请使用各自的页面登录");
+            return; // 在创建房间或替换席位之前拒绝过期页面。
         }
         sessionUserMap.put(session.getId(), userId);
 
+        if (roomId == null || roomId.isBlank() || type == null) {
+            sendSafely(session, new TextMessage("{\"event\":\"ERROR\",\"msg\":\"房间和指令不能为空\"}"));
+            return;
+        }
+        if (!"JOIN_ROOM".equals(type)
+                && !session.getId().equals(activeSessions.getOrDefault(roomId, Map.of()).get(userId))) {
+            return; // 已被替换的连接不能继续操作原席位。
+        }
+        if ("PING".equals(type)) {
+            sendSafely(session, new TextMessage("{\"event\":\"PONG\"}"));
+            return;
+        }
+
+        synchronized (actionLock(roomId)) {
+            if (!session.isOpen() || (!"JOIN_ROOM".equals(type)
+                    && !session.getId().equals(activeSessions.getOrDefault(roomId, Map.of()).get(userId)))) return;
+            handleRoomMessage(session, gameMsg, sessionUser);
+        }
+    }
+
+    private void handleRoomMessage(WebSocketSession session, GameMessage gameMsg, SessionUser sessionUser) throws Exception {
+        String roomId = gameMsg.getRoomId();
+        String userId = sessionUser.getUsername();
+        String type = gameMsg.getType();
         try {
+            GameRoom actionRoom = gameService.getRoom(roomId);
+            if (gameMsg.getActionStartTime() != null && actionRoom != null && isGameAction(type)) {
+                long expectedStart = actionRoom.getCurrentAoeType() == null
+                        ? actionRoom.getCurrentTurnStartTime() : actionRoom.getAoeStartTime();
+                if (gameMsg.getActionStartTime() != expectedStart) {
+                    broadcastGameState(roomId);
+                    return;
+                }
+            }
             switch (type) {
+                case "LEAVE_ROOM":
+                    intentionalCloses.add(session.getId());
+                    session.close(CloseStatus.NORMAL);
+                    break;
                 case "JOIN_ROOM": {
                     // 解析 payload 为 Map
                     Map<String, Object> data = null;
@@ -170,7 +288,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     if (isCreating) {
                         // 1. 如果尝试创建，但房间已被别人抢先创建，报错拦截
                         if (currentRoom != null) {
-                            session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"该房间已被他人创建\"}"));
+                            sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"该房间已被他人创建\"}"));
                             return;
                         }
                         // 2. 正常创建房间并应用前端传来的高级设置
@@ -197,13 +315,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     } else {
                         // 1. 如果是加入已有房间，但房间不存在
                         if (currentRoom == null) {
-                            session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"房间不存在，请返回大厅重新创建\"}"));
+                            sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"房间不存在，请返回大厅重新创建\"}"));
                             return;
                         }
                         // 2. 校验私密房间密码
                         if (currentRoom.isPrivateRoom()) {
                             if (!currentRoom.getPassword().equals(password)) {
-                                session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"密码错误\"}"));
+                                sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"密码错误\"}"));
                                 return;
                             }
                         }
@@ -211,14 +329,28 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
                     // ====== 正常执行加入与广播 ======
                     try {
+                        String identity = sessionUser.isGuest()
+                                ? "guest:" + session.getAttributes().getOrDefault(AuthSessionKeys.GAME_GUEST_ID,
+                                        session.getAttributes().get(AuthSessionKeys.GAME_HTTP_SESSION_ID))
+                                : "account:" + sessionUser.getId();
+                        String previousIdentity = seatIdentities.getOrDefault(roomId, Map.of()).get(userId);
+                        boolean hasSeat = currentRoom.getPlayers().stream().anyMatch(p -> userId.equals(p.getUserId()))
+                                || currentRoom.getSpectators().contains(userId);
+                        if (hasSeat && previousIdentity != null && !previousIdentity.equals(identity)) {
+                            sendSafely(session, new TextMessage("{\"event\":\"ERROR\",\"msg\":\"该席位属于其他会话，请使用原会话恢复\"}"));
+                            intentionalCloses.add(session.getId());
+                            session.close(CloseStatus.POLICY_VIOLATION);
+                            return;
+                        }
                         // 此时房间必定已经存在（要么刚创建，要么已校验），正常执行加入
                         gameService.joinRoom(roomId, userId, isPrivate, password);
-
+                        seatIdentities.computeIfAbsent(roomId, id -> new ConcurrentHashMap<>()).put(userId, identity);
                         addSessionToRoom(roomId, session);
                         broadcastToRoom(roomId, new TextMessage("{\"event\": \"USER_JOINED\", \"userId\": \"" + userId + "\"}"));
+                        syncRecoveredPlayer(roomId, userId);
                         broadcastGameState(roomId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                         try {
                             session.close();
                         } catch (java.io.IOException ignored) {}
@@ -247,7 +379,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                             }
                         }
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     broadcastGameState(roomId);
                     break;
@@ -265,7 +397,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                             sendToUser(roomId, userId, new TextMessage("{\"event\": \"SYNC_HAND\", \"cards\": " + cardsJson + "}"));
                         }
                     } else {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"换牌失败(可能已换过或非你的回合)\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"换牌失败(可能已换过或非你的回合)\"}"));
                     }
                     broadcastGameState(roomId);
                     break;
@@ -286,7 +418,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
                         broadcastGameState(roomId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     break;
 
@@ -308,7 +440,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         publishWinnerIfNeeded(roomId, List.of());
                         broadcastGameState(roomId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     break;
 
@@ -329,13 +461,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
                         broadcastGameState(roomId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     break;
                 case "PLAY_CARD":
 
                     if (gameMsg.getData() == null) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"缺少出牌数据\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"缺少出牌数据\"}"));
                         return;
                     }
                     List<Card> playedCards = objectMapper.convertValue(
@@ -379,11 +511,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                                 publishWinnerIfNeeded(roomId, isAoe ? List.of() : playedCards);
                             }
                         } else {
-                            session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"出牌不符合规则或未大过上一手\"}"));
+                            sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"出牌不符合规则或未大过上一手\"}"));
                         }
                     } catch (Exception e) {
                         // 将后端抛出的“只能使用一次”、“只能自由出牌回合使用”的异常直接发给前端弹窗
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     broadcastGameState(roomId);
                     break;
@@ -419,7 +551,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         publishWinnerIfNeeded(roomId, List.of());
                     } catch (Exception e) {
                         // 如果违反规则（比如自由出牌回合强行不出），给该玩家弹窗报错
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     broadcastGameState(roomId);
                     break;
@@ -439,7 +571,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     try {
                         gameService.addScriptedBot(roomId, userId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     broadcastGameState(roomId);
                     break;
@@ -489,6 +621,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 case "SELECT_SKILL":{
                     String selectedSkill = gameMsg.getData().toString();
                     GameRoom r = gameService.getRoom(roomId);
+                    if (r == null || !"SKILL_SELECTION".equals(r.getPhase())) break;
+                    var selectingPlayer = r.getPlayers().stream().filter(p -> userId.equals(p.getUserId())).findFirst().orElse(null);
+                    if (selectingPlayer == null) break;
                     Map<String, String> skills = (Map<String, String>) r.getSettings().get("skillsSelected");
                     skills.put(userId, selectedSkill);
 
@@ -547,7 +682,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         syncPlayerHand(roomId, userId);// 【核心修复】：无论放什么技能，强刷全场手牌！
                         broadcastGameState(roomId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     break;
                 }
@@ -563,7 +698,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         publishWinnerIfNeeded(roomId, List.of());
                         broadcastGameState(roomId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     break;
                 // ====== 【新增：观星选牌确认】 ======
@@ -583,7 +718,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         publishWinnerIfNeeded(roomId, List.of());
                         broadcastGameState(roomId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     break;
                 case "GUIXIN_DECISION":
@@ -614,7 +749,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         }
                         broadcastGameState(roomId);
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     break;
                 case "KICK_PLAYER":
@@ -653,7 +788,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         broadcastGameState(roomId);
 
                     } catch (Exception e) {
-                        session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
+                        sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"" + e.getMessage() + "\"}"));
                     }
                     break;
                 }
@@ -675,14 +810,23 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     break;
 
                 default:
-                    session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"未知的指令类型: " + type + "\"}"));
+                    sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"未知的指令类型: " + type + "\"}"));
             }
         } catch (Exception e) {
             log.error("处理玩家 [{}] 的请求时发生服务器内部错误", userId, e);
             if (session.isOpen()) {
-                session.sendMessage(new TextMessage("{\"event\": \"ERROR\", \"msg\": \"服务器内部错误，请检查请求参数是否完整\"}"));
+                sendSafely(session, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"服务器内部错误，请检查请求参数是否完整\"}"));
             }
         }
+    }
+
+    private boolean isGameAction(String type) {
+        return switch (type) {
+            case "PLAY_CARD", "PASS", "REPLACE_CARD", "USE_SKILL", "USE_GUSHOU", "SELECT_SKILL",
+                    "RESPOND_AOE", "GUANXING_SELECT", "WGFD_SELECT", "GUSHOU_DISCARD",
+                    "KUROU_AWAKEN_DISCARD", "GUIXIN_DECISION" -> true;
+            default -> false;
+        };
     }
 
     // --- 新增：处理游戏强行中止 ---
@@ -696,58 +840,135 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        String userId = sessionUserMap.remove(session.getId());
-        if (userId != null) {
-            for (Map.Entry<String, CopyOnWriteArraySet<WebSocketSession>> entry : roomSessions.entrySet()) {
-                if (entry.getValue().contains(session)) {
-                    String roomId = entry.getKey();
-                    entry.getValue().remove(session);
+        String sessionId = session.getId();
+        String userId = sessionUserMap.remove(sessionId);
+        String roomId = sessionRoomMap.remove(sessionId);
+        sendSessions.remove(sessionId);
+        boolean intentional = intentionalCloses.remove(sessionId);
+        log.info("websocket closed: sessionId={}, room={}, user={}, code={}, intentional={}",
+                sessionId, roomId, userId, status.getCode(), intentional);
+        if (userId == null || roomId == null) return;
+        synchronized (actionLock(roomId)) {
+            CopyOnWriteArraySet<WebSocketSession> peers = roomSessions.get(roomId);
+            if (peers != null) peers.remove(session);
+            Map<String, String> owners = activeSessions.get(roomId);
+            if (owners == null || !owners.remove(userId, sessionId)) return;
+            GameRoom room = gameService.getRoom(roomId);
+            if (room == null) {
+                roomSessions.remove(roomId);
+                activeSessions.remove(roomId);
+                seatIdentities.remove(roomId);
+                return;
+            }
+            if (intentional || status.getCode() == CloseStatus.POLICY_VIOLATION.getCode()) {
+                finishLeave(roomId, userId);
+                return;
+            }
+            synchronized (room) {
+                room.getPlayers().stream().filter(p -> userId.equals(p.getUserId()))
+                        .findFirst().ifPresent(p -> p.setDisconnected(true));
+            }
+            disconnectLeases.put(leaseKey(roomId, userId), new DisconnectLease(room, userId,
+                    System.currentTimeMillis() + RECONNECT_GRACE_MS));
+            try {
+                broadcastGameState(roomId);
+            } catch (Exception e) {
+                log.error("failed to publish disconnected state for room {}", roomId, e);
+            }
+        }
+    }
 
-                    try {
-                        GameRoom room = gameService.getRoom(roomId);
-                        if (room != null) {
-                            com.game.poker.model.Player p = room.getPlayers().stream().filter(u -> u.getUserId().equals(userId)).findFirst().orElse(null);
-                            boolean isPlaying = room.isStarted() && p != null && "PLAYING".equals(p.getStatus());
+    private String leaseKey(String roomId, String userId) {
+        return roomId + "\u0000" + userId;
+    }
 
-                            gameService.safeLeaveRoom(roomId, userId);
-                            if (gameService.getRoom(roomId) == null) {
-                                roomSessions.remove(roomId);
-                                break;
-                            }
-                            if (isPlaying) {
-                                broadcastToRoom(roomId, new TextMessage("{\"event\": \"ERROR\", \"msg\": \"玩家 [" + userId + "] 中途逃跑，已被自动淘汰！\"}"));
-
-                                com.game.poker.model.Player winner = room.getPlayers().stream()
-                                        .filter(player -> "WON".equals(player.getStatus())).findFirst().orElse(null);
-                                if (winner != null) {
-                                    gameRecordService.recordCompletedGame(room);
-                                    broadcastToRoom(roomId, new TextMessage("{\"event\": \"GAME_OVER\", \"winner\": \"" + winner.getUserId() + "\", \"winningCards\": []}"));
-                                    GameRoom endRoom = gameService.getRoom(roomId);
-                                    if (endRoom != null) {
-                                        endRoom.setStarted(false); // 解锁准备按钮
-                                        endRoom.getPlayers().forEach(player -> player.setReady(false)); // 强行把所有人打回未准备状态
-                                    }
-                                } else if (room.getLastPlayedCards().isEmpty()) {
-                                    // 桌面被清空，通知下一个人自由出牌
-                                    broadcastToRoom(roomId, new TextMessage("{\"event\": \"ROUND_RESET\"}"));
-                                }
-                            }
-
-                            // 恢复旧版，只做基础的状态广播
-                            broadcastGameState(roomId);
-                        }
-                    } catch (Exception e) {
-                        log.error("处理退出失败", e);
-                    }
-                    break;
+    private void finishLeave(String roomId, String userId) {
+        disconnectLeases.remove(leaseKey(roomId, userId));
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null) return;
+        try {
+            boolean wasPlaying;
+            synchronized (room) {
+                wasPlaying = room.isStarted() && room.getPlayers().stream()
+                        .anyMatch(p -> userId.equals(p.getUserId()) && "PLAYING".equals(p.getStatus()));
+                gameService.safeLeaveRoom(roomId, userId);
+            }
+            if (gameService.getRoom(roomId) == null) {
+                roomSessions.remove(roomId);
+                activeSessions.remove(roomId);
+                seatIdentities.remove(roomId);
+                return;
+            }
+            if (wasPlaying) {
+                broadcastToRoom(roomId, new TextMessage("{\"event\":\"ERROR\",\"msg\":\"玩家已离开或恢复连接超时\"}"));
+                if (!publishWinnerIfNeeded(roomId, List.of()) && room.getLastPlayedCards().isEmpty()) {
+                    broadcastToRoom(roomId, new TextMessage("{\"event\":\"ROUND_RESET\"}"));
                 }
             }
+            broadcastGameState(roomId);
+        } catch (Exception e) {
+            log.error("failed to finish departure: room={}, user={}", roomId, userId, e);
         }
     }
 
     // --- 广播辅助方法 ---
     private void addSessionToRoom(String roomId, WebSocketSession session) {
-        roomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArraySet<>()).add(session);
+        String userId = sessionUserMap.get(session.getId());
+        String oldId = activeSessions.computeIfAbsent(roomId, id -> new ConcurrentHashMap<>())
+                .put(userId, session.getId());
+        sessionRoomMap.put(session.getId(), roomId);
+        disconnectLeases.remove(leaseKey(roomId, userId));
+        CopyOnWriteArraySet<WebSocketSession> peers = roomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArraySet<>());
+        peers.add(session);
+        if (oldId != null && !oldId.equals(session.getId())) {
+            for (WebSocketSession old : peers) {
+                if (oldId.equals(old.getId())) {
+                    peers.remove(old);
+                    try {
+                        sendSafely(old, new TextMessage("{\"event\":\"CONNECTION_REPLACED\",\"msg\":\"该身份已在其他页面进入房间，请重新进入\"}"));
+                    } catch (Exception e) {
+                        log.debug("failed to notify replaced websocket {}", oldId, e);
+                    }
+                    try {
+                        old.close(new CloseStatus(4001, "connection replaced"));
+                    } catch (Exception e) {
+                        log.debug("failed to close replaced websocket {}", oldId, e);
+                    }
+                }
+            }
+        }
+    }
+
+    private void syncRecoveredPlayer(String roomId, String userId) throws Exception {
+        GameRoom room = gameService.getRoom(roomId);
+        if (room == null) return;
+        syncPlayerHand(roomId, userId);
+        if ("GUANXING".equals(room.getCurrentAoeType()) && room.getPendingAoePlayers().contains(userId)) {
+            Object cards = room.getSettings().getOrDefault("guanxingCards", List.of());
+            sendToUser(roomId, userId, new TextMessage("{\"event\":\"GUANXING_SHOW\",\"cards\":" + objectMapper.writeValueAsString(cards) + "}"));
+        }
+        var winner = room.getPlayers().stream().filter(p -> "WON".equals(p.getStatus())).findFirst().orElse(null);
+        if (winner != null) {
+            sendToUser(roomId, userId, new TextMessage("{\"event\":\"GAME_OVER\",\"winner\":" + objectMapper.writeValueAsString(winner.getUserId()) + ",\"winningCards\":[]}"));
+        }
+    }
+
+    private boolean sendSafely(WebSocketSession session, TextMessage message) {
+        if (session == null || !session.isOpen()) return false;
+        try {
+            sendSessions.computeIfAbsent(session.getId(), id ->
+                    new ConcurrentWebSocketSessionDecorator(session, 10_000, 512 * 1024))
+                    .sendMessage(message);
+            return true;
+        } catch (Exception e) {
+            log.warn("websocket send failed: sessionId={}, user={}", session.getId(), sessionUserMap.get(session.getId()), e);
+            try {
+                session.close(CloseStatus.SERVER_ERROR);
+            } catch (Exception closeError) {
+                log.debug("failed to close broken websocket {}", session.getId(), closeError);
+            }
+            return false;
+        }
     }
 
     public void forceLogoutUser(String userId, String reason) {
@@ -767,12 +988,24 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    public void forceLogoutGuestVisit(String visitId, String reason) {
+        if (visitId == null || visitId.isBlank()) return;
+        for (CopyOnWriteArraySet<WebSocketSession> sessions : roomSessions.values()) {
+            for (WebSocketSession session : sessions) {
+                SessionUser guest = getAuthenticatedUser(session);
+                if (guest != null && guest.isGuest() && visitId.equals(guest.getSessionVersion())) {
+                    forceLogoutSession(session, reason);
+                }
+            }
+        }
+    }
+
     private void broadcastToRoom(String roomId, TextMessage message) throws Exception {
         CopyOnWriteArraySet<WebSocketSession> sessions = roomSessions.get(roomId);
         if (sessions != null) {
             for (WebSocketSession s : sessions) {
                 if (s.isOpen()) {
-                    s.sendMessage(message);
+                    sendSafely(s, message);
                 }
             }
         }
@@ -842,7 +1075,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             for (WebSocketSession s : sessions) {
                 // 找到该玩家对应的专属连接
                 if (userId.equals(sessionUserMap.get(s.getId())) && s.isOpen()) {
-                    s.sendMessage(message);
+                    sendSafely(s, message);
                 }
             }
         }
@@ -852,20 +1085,21 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         if (room == null) return;
         String warningUserId = null;
         Integer warningCount = null;
+        List<TextMessage> notices = new ArrayList<>();
 
         String jsonPayload; // 将 JSON 字符串的组装提取出来
 
         // ====== 【极限并发优化：房间级原子锁，彻底杜绝 50 人在线时的遍历闪退】 ======
         synchronized (room) {
             if (Boolean.TRUE.equals(room.getSettings().get("justShuffled"))) {
-                broadcastToRoom(roomId, new TextMessage("{\"event\": \"DECK_SHUFFLED\"}"));
+                notices.add(new TextMessage("{\"event\": \"DECK_SHUFFLED\"}"));
                 room.getSettings().remove("justShuffled");
             }
 
             if (room.getSettings().containsKey("cardWarningUserId")) {
                 warningUserId = (String) room.getSettings().get("cardWarningUserId");
                 warningCount = (Integer) room.getSettings().get("cardWarningCount");
-                broadcastToRoom(roomId, new TextMessage(
+                notices.add(new TextMessage(
                         "{\"event\": \"CARD_WARNING\", \"userId\": \"" + warningUserId + "\", \"count\": " + warningCount + "}"
                 ));
                 room.getSettings().remove("cardWarningUserId");
@@ -880,6 +1114,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 pInfo.put("status", p.getStatus());
                 pInfo.put("isReady", p.isReady());
                 pInfo.put("isBot", p.isBot());
+                pInfo.put("disconnected", p.isDisconnected());
                 pInfo.put("skill", p.getSkill());
                 // 【苦肉】对外暴露计数和觉醒态，供前端 UI 展示与禁用
                 pInfo.put("kurouUseCount", p.getKurouUseCount());
@@ -931,6 +1166,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             state.put("players", playersInfo);
             state.put("spectators", room.getSpectators());
             state.put("isStarted", room.isStarted());
+            state.put("phase", room.getPhase());
             state.put("tableCards", room.getLastPlayedCards());
             state.put("lastPlayPlayer", room.getLastPlayPlayerId());
             state.put("currentAoeType", room.getCurrentAoeType());
@@ -944,6 +1180,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
 
         // 【网络优化】：把发送数据的动作放在锁外面，防止阻塞业务逻辑！
+        for (TextMessage notice : notices) broadcastToRoom(roomId, notice);
         broadcastToRoom(roomId, new TextMessage(jsonPayload));
         if (warningUserId != null && warningCount != null) {
             maybeReactToCardWarning(roomId, warningUserId, warningCount);
@@ -964,19 +1201,25 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         long version = botScheduleVersion.merge(roomId, 1L, Long::sum);
         botExecutor.schedule(() -> {
-            Long latestVersion = botScheduleVersion.get(roomId);
-            if (latestVersion == null || latestVersion.longValue() != version) {
-                return;
-            }
-            try {
-                runBotAction(roomId);
-            } catch (Exception e) {
-                log.error("scripted bot action failed for room {}", roomId, e);
+            synchronized (actionLock(roomId)) {
+                Long latestVersion = botScheduleVersion.get(roomId);
+                if (gameService.getRoom(roomId) != room || latestVersion == null || latestVersion.longValue() != version) return;
+                try {
+                    runBotAction(roomId);
+                } catch (Exception e) {
+                    log.error("scripted bot action failed for room {}", roomId, e);
+                }
             }
         }, 2, TimeUnit.SECONDS);
     }
 
     private void runBotAction(String roomId) throws Exception {
+        synchronized (actionLock(roomId)) {
+            runBotActionLocked(roomId);
+        }
+    }
+
+    private void runBotActionLocked(String roomId) throws Exception {
         GameRoom room = gameService.getRoom(roomId);
         if (room == null || !room.isStarted()) {
             botScheduleVersion.remove(roomId);
@@ -1727,6 +1970,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private boolean isSessionCurrent(SessionUser sessionUser) {
+        if (sessionUser.isGuest() && sessionUser.getSessionVersion() != null) {
+            return authTokenService.isGuestSessionActive(sessionUser);
+        }
         return userService.isSessionVersionCurrent(sessionUser);
     }
 
@@ -1734,8 +1980,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         if (session == null || !session.isOpen()) {
             return;
         }
+        intentionalCloses.add(session.getId());
         try {
-            session.sendMessage(new TextMessage("{\"event\": \"FORCE_LOGOUT\", \"msg\": \"" + reason + "\"}"));
+            sendSafely(session, new TextMessage("{\"event\": \"FORCE_LOGOUT\", \"msg\": \"" + reason + "\"}"));
         } catch (Exception e) {
             log.warn("failed to push force logout message to session {}", session.getId(), e);
         }

@@ -1,6 +1,8 @@
 package com.game.poker.service;
 
 import com.game.poker.auth.AuthException;
+import com.game.poker.auth.AuthSessionKeys;
+import com.game.poker.auth.SessionUser;
 import com.game.poker.dto.auth.AuthRequest;
 import com.game.poker.dto.auth.AuthUserResponse;
 import jakarta.servlet.http.Cookie;
@@ -24,6 +26,77 @@ class AuthServiceIntegrationTest {
 
     @Autowired
     private CaptchaService captchaService;
+
+    @Autowired
+    private AuthTokenService authTokenService;
+
+    @Test
+    void twoGuestsSharingCookiesKeepIndependentCredentialsAndTheExistingLogin() {
+        MockHttpSession shared = new MockHttpSession();
+        SessionUser existingLogin = new SessionUser(42L, "account", "account", false, "version");
+        shared.setAttribute(AuthSessionKeys.LOGIN_USER, existingLogin);
+        MockHttpServletResponse firstResponse = new MockHttpServletResponse();
+        AuthUserResponse first = authService.guestLogin(shared, firstResponse, false);
+        AuthUserResponse second = authService.guestLogin(shared, new MockHttpServletResponse(), false);
+
+        assertThat(first.getTabToken()).isNotBlank().isNotEqualTo(second.getTabToken());
+        assertThat(first.getUsername()).isNotEqualTo(second.getUsername());
+        assertThat(shared.getAttribute(AuthSessionKeys.LOGIN_USER)).isSameAs(existingLogin);
+        assertThat(firstResponse.getHeaders("Set-Cookie")).isEmpty();
+        assertThat(authTokenService.resolveUser(first.getTabToken()).getUsername()).isEqualTo(first.getUsername());
+        assertThat(authService.requireAuthenticatedUser(guestRequest(second), shared, true).getUsername())
+                .isEqualTo(second.getUsername());
+        assertThrows(AuthException.class, () -> authService.requireAuthenticatedUser(guestRequest(first), shared, false));
+    }
+
+    @Test
+    void guestLogoutRevokesOnlyItsCredentialAndPreservesSharedCookies() {
+        MockHttpSession shared = new MockHttpSession();
+        SessionUser existingLogin = new SessionUser(42L, "account", "account", false, "version");
+        shared.setAttribute(AuthSessionKeys.LOGIN_USER, existingLogin);
+        AuthUserResponse first = authService.guestLogin(shared, new MockHttpServletResponse(), false);
+        AuthUserResponse second = authService.guestLogin(shared, new MockHttpServletResponse(), false);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        authService.logout(shared, guestRequest(first), response);
+
+        assertThat(authTokenService.resolveUser(first.getTabToken())).isNull();
+        assertThat(authTokenService.resolveUser(second.getTabToken()).getUsername()).isEqualTo(second.getUsername());
+        assertThat(shared.getAttribute(AuthSessionKeys.LOGIN_USER)).isSameAs(existingLogin);
+        assertThat(response.getHeaders("Set-Cookie")).isEmpty();
+    }
+
+    @Test
+    void refreshingOneGuestEndsOnlyThatPageVisit() {
+        MockHttpSession shared = new MockHttpSession();
+        AuthUserResponse first = authService.guestLogin(shared, new MockHttpServletResponse(), false);
+        AuthUserResponse second = authService.guestLogin(shared, new MockHttpServletResponse(), false);
+
+        assertThrows(AuthException.class,
+                () -> authService.getCurrentUser(shared, guestRequest(first), new MockHttpServletResponse()));
+
+        assertThat(authTokenService.resolveUser(first.getTabToken())).isNull();
+        assertThat(authTokenService.resolveUser(second.getTabToken()).getUsername()).isEqualTo(second.getUsername());
+        assertThat(authService.requireAuthenticatedUser(guestRequest(second), shared, true).getUsername())
+                .isEqualTo(second.getUsername());
+    }
+
+    @Test
+    void invalidPageCredentialCannotFallBackToAnotherCookieIdentity() {
+        MockHttpSession shared = new MockHttpSession();
+        shared.setAttribute(AuthSessionKeys.LOGIN_USER, SessionUser.guest("cookie-guest"));
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Poker-Auth-Token", "invalid-page-credential");
+
+        assertThrows(AuthException.class, () -> authService.requireAuthenticatedUser(request, shared, true));
+        assertThat(shared.getAttribute(AuthSessionKeys.LOGIN_USER)).isNotNull();
+    }
+
+    private MockHttpServletRequest guestRequest(AuthUserResponse guest) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        if (guest.getTabToken() != null) request.addHeader("X-Poker-Auth-Token", guest.getTabToken());
+        return request;
+    }
 
     @Test
     void rememberCookieRestoresLoginUntilLogout() {

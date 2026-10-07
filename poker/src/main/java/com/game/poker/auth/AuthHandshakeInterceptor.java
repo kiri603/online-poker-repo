@@ -29,6 +29,13 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
         if (queryToken != null) {
             SessionUser tokenUser = authService.resolveTabAuthenticatedUser(queryToken);
             if (tokenUser != null) {
+                if (tokenUser.isGuest()) {
+                    if (tokenUser.getSessionVersion() == null || tokenUser.getSessionVersion().isBlank()) {
+                        response.setStatusCode(HttpStatus.UNAUTHORIZED);
+                        return false;
+                    }
+                    attributes.put(AuthSessionKeys.GAME_GUEST_ID, tokenUser.getSessionVersion());
+                }
                 attributes.put(AuthSessionKeys.LOGIN_USER, tokenUser);
                 return true;
             }
@@ -55,6 +62,7 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
         }
 
         attributes.put(AuthSessionKeys.LOGIN_USER, sessionUser);
+        attributes.put(AuthSessionKeys.GAME_HTTP_SESSION_ID, httpSession.getId());
         return true;
     }
 

@@ -14,7 +14,7 @@ import {
   isSpectator,
 } from "@/store/gameState.js";
 import { soundStatus, toggleSound, playBGM } from "@/store/audioManager.js";
-import { sendMsg, ws } from "@/store/gameSocket.js";
+import { sendMsg, disconnectWebSocket } from "@/store/gameSocket.js";
 import {
   canUseSocial,
   inviteFriendToRoom,
@@ -122,7 +122,7 @@ const toggleReady = () => sendMsg("READY", null);
 const addScriptAi = () => sendMsg("ADD_SCRIPT_AI", null);
 
 const returnToLobby = () => {
-  if (ws.value) ws.value.close();
+  disconnectWebSocket();
 };
 
 // ====== 【等待大厅新版 UI 状态 & 逻辑】 ======

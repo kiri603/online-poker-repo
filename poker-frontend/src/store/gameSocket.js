@@ -23,6 +23,14 @@ let isTimeoutTriggered = false;
 let lastTickSecond = -1;
 // 苦肉音效延播句柄：若紧随其后收到 SKILL_AWAKEN，则取消普通语音，避免两段语音撞车
 let pendingKurouSfxTimeout = null;
+let recoveryTimer = null;
+let connectionTimer = null;
+let heartbeatTimer = null;
+let recoveryStarted = 0;
+let recoveryAttempt = 0;
+let roomJoined = false;
+let lastMessageTime = 0;
+const RECOVERY_WINDOW_MS = 30_000;
 
 // ==========================================
 // 2. 基础通信与动作封装
@@ -30,16 +38,94 @@ let pendingKurouSfxTimeout = null;
 
 // 核心：发送消息方法
 export const sendMsg = (type, data) => {
-  if (ws.value && ws.value.readyState === WebSocket.OPEN) {
+  if (ws.value && ws.value.readyState === WebSocket.OPEN &&
+      (roomJoined || type === "JOIN_ROOM" || type === "PING" || type === "LEAVE_ROOM")) {
+    try {
     ws.value.send(
       JSON.stringify({
         type,
         roomId: state.roomId.value,
         userId: state.userId.value,
+        actionStartTime: state.currentAoeType.value ? state.aoeStartTime.value : state.currentTurnStartTime.value,
         data,
       }),
     );
+    return true;
+    } catch (error) {
+      showError("消息发送失败，正在恢复连接");
+      ws.value.close();
+      return false;
+    }
   }
+  showError("连接尚未恢复，请稍后操作");
+  return false;
+};
+
+const stopConnectionTimers = () => {
+  if (globalTimer) clearInterval(globalTimer);
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  if (connectionTimer) clearTimeout(connectionTimer);
+  globalTimer = heartbeatTimer = connectionTimer = null;
+  if (state.skillTimer.value) clearInterval(state.skillTimer.value);
+  state.skillTimer.value = null;
+  stopCountdownAudio();
+  isTimeoutTriggered = false;
+  lastTickSecond = -1;
+};
+
+const clearRoomState = () => {
+  state.isConnected.value = false;
+  state.isReconnecting.value = false;
+  state.gameStarted.value = false;
+  state.gamePhase.value = "WAITING";
+  state.winner.value = "";
+  state.handCards.value = [];
+  state.tableCards.value = [];
+  state.otherPlayers.value = [];
+  state.spectators.value = [];
+  state.currentTurn.value = "";
+  state.lastPlayPlayer.value = "";
+  state.currentAoeType.value = null;
+  state.pendingAoePlayers.value = [];
+  state.showSkillSelection.value = false;
+  state.showGuanxingModal.value = false;
+  state.showWgfdModal.value = false;
+  state.roomSettings.value = { enableWildcard: false, enableScrollCards: false, enableSkills: false };
+  state.guixinDisabled.value = false;
+  state.guixinPendingOwner.value = "";
+  state.guixinPendingPasser.value = "";
+};
+
+export const disconnectWebSocket = ({ leaveRoom = true } = {}) => {
+  if (recoveryTimer) clearTimeout(recoveryTimer);
+  recoveryTimer = null;
+  recoveryStarted = recoveryAttempt = 0;
+  stopConnectionTimers();
+  if (leaveRoom && ws.value?.readyState === WebSocket.OPEN) sendMsg("LEAVE_ROOM", null);
+  const socket = ws.value;
+  ws.value = null;
+  roomJoined = false;
+  socket?.close();
+  clearRoomState();
+};
+
+const scheduleRecovery = () => {
+  if (!state.isAuthenticated.value) return disconnectWebSocket({ leaveRoom: false });
+  if (!recoveryStarted) recoveryStarted = Date.now();
+  const remaining = RECOVERY_WINDOW_MS - (Date.now() - recoveryStarted);
+  if (remaining <= 0) {
+    disconnectWebSocket({ leaveRoom: false });
+    showError("连接恢复超时，请重新进入房间");
+    return;
+  }
+  state.isReconnecting.value = true;
+  if (recoveryTimer) clearTimeout(recoveryTimer);
+  const delay = Math.min(500 * 2 ** Math.min(recoveryAttempt++, 4), 5000, remaining);
+  recoveryTimer = setTimeout(() => {
+    recoveryTimer = null;
+    if (Date.now() - recoveryStarted >= RECOVERY_WINDOW_MS) return scheduleRecovery();
+    connectWebSocket(false, true);
+  }, delay);
 };
 
 // 全局错误提示弹窗
@@ -68,14 +154,15 @@ export const passTurn = () => sendMsg("PASS", null);
 
 // 倒计时结束：自动托管出牌
 export const handleTimeout = () => {
-  if (state.tableCards.value.length === 0) {
+  if (state.jdsrTarget.value !== state.userId.value &&
+      (state.tableCards.value.length === 0 || state.lastPlayPlayer.value === state.userId.value)) {
     // 自由出牌回合，强行帮忙出一张最小的普通牌
     // ====== 【核心修复】：必须使用 state.handCards.value，不能用 sortedHandCards ======
     if (state.handCards.value.length > 0) {
       let cardToPlay = state.handCards.value.find((c) => c.suit !== "SCROLL");
-      if (!cardToPlay) cardToPlay = state.handCards.value[0];
+      if (!cardToPlay) return passTurn();
 
-      sendMsg("PLAY_CARD", [
+      return sendMsg("PLAY_CARD", [
         {
           suit: cardToPlay.suit,
           rank: cardToPlay.rank,
@@ -85,14 +172,15 @@ export const handleTimeout = () => {
     }
   } else {
     // 否则直接要不起
-    passTurn();
+    return passTurn();
   }
+  return false;
 };
 
 // ==========================================
 // 3. 核心 WebSocket 连接与分发器
 // ==========================================
-export const connectWebSocket = (isCreating = false) => {
+export const connectWebSocket = (isCreating = false, isRecovery = false) => {
   if (!state.roomId.value || !state.userId.value)
     return alert("请输入完整信息");
   if (state.isPrivate.value && state.roomPassword.value.length !== 4) {
@@ -103,10 +191,19 @@ export const connectWebSocket = (isCreating = false) => {
   const wsUrl = tabToken
     ? `${getWsBaseUrl()}/ws/game?authToken=${encodeURIComponent(tabToken)}`
     : `${getWsBaseUrl()}/ws/game`;
-  ws.value = new WebSocket(wsUrl);
+  const previous = ws.value;
+  const socket = new WebSocket(wsUrl);
+  ws.value = socket;
+  roomJoined = false;
+  if (previous && previous.readyState < 2) previous.close();
+  if (connectionTimer) clearTimeout(connectionTimer);
+  connectionTimer = setTimeout(() => {
+    if (ws.value === socket && !roomJoined) socket.close();
+  }, 5000);
   // ==============================================
   // 【连接成功钩子】
-  ws.value.onopen = () => {
+  socket.onopen = () => {
+    if (ws.value !== socket) return;
     state.isConnected.value = true;
     sendMsg("JOIN_ROOM", {
       isPrivate: state.isPrivate.value,
@@ -114,12 +211,37 @@ export const connectWebSocket = (isCreating = false) => {
       isCreating: isCreating, // 告诉后端我是来创建的还是加入的
       settings: state.roomSettings.value, // 创建时直接把规则带给后端
     });
+    lastMessageTime = Date.now();
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(() => {
+      if (ws.value !== socket || !roomJoined) return;
+      if (Date.now() - lastMessageTime > 25_000) socket.close();
+      else sendMsg("PING", null);
+    }, 10_000);
 
     // 建立连接后，启动全局绝对时间倒计时驱动器！
     if (globalTimer) clearInterval(globalTimer);
     globalTimer = setInterval(() => {
-      if (state.gameStarted.value && !state.winner.value) {
+      if (roomJoined && state.isConnected.value && state.gameStarted.value && !state.winner.value) {
         const nowServerTime = Date.now() - state.serverTimeOffset.value;
+
+        if (state.gamePhase.value === "SKILL_SELECTION") {
+          const remain = Math.max(0, 20 - Math.floor((nowServerTime - state.currentTurnStartTime.value) / 1000));
+          state.skillCountdown.value = remain;
+          if (remain <= 5 && remain > 0 && lastTickSecond !== remain) {
+            playAudio("countdown");
+            lastTickSecond = remain;
+          } else if (remain > 5 || remain === 0) {
+            stopCountdownAudio();
+            lastTickSecond = -1;
+          }
+          if (remain === 0 && state.showSkillSelection.value && !isTimeoutTriggered) {
+            isTimeoutTriggered = sendMsg("SELECT_SKILL", "ZHIHENG");
+            if (isTimeoutTriggered) state.showSkillSelection.value = false;
+          }
+          if (remain > 0) isTimeoutTriggered = false;
+          return;
+        }
 
         // 模式A：正在进行锦囊牌结算
         if (
@@ -143,7 +265,7 @@ export const connectWebSocket = (isCreating = false) => {
             lastTickSecond = -1; // 重置标记
           }
           if (remain === 0 && !isTimeoutTriggered) {
-            isTimeoutTriggered = true;
+            let sent = false;
             if (state.currentAoeType.value === "GUANXING") {
               // ====== 【核心修复】：倒计时自动提交时也必须清洗数据 ======
               const cleanCards = state.guanxingCards.value
@@ -153,37 +275,35 @@ export const connectWebSocket = (isCreating = false) => {
                   rank: c.rank,
                   weight: c.weight,
                 }));
-              sendMsg("GUANXING_SELECT", cleanCards);
-              state.showGuanxingModal.value = false;
+              sent = sendMsg("GUANXING_SELECT", cleanCards);
+              if (sent) state.showGuanxingModal.value = false;
             } else if (state.currentAoeType.value === "WGFD") {
               // ====== 【新增：五谷丰登超时随机自动拿第一张】 ======
-              const cleanCard = {
-                suit: state.wgfdCards.value[0].suit,
-                rank: state.wgfdCards.value[0].rank,
-                weight: state.wgfdCards.value[0].weight,
-              };
-              sendMsg("WGFD_SELECT", cleanCard);
-              state.showWgfdModal.value = false;
+              const first = state.wgfdCards.value[0];
+              const cleanCard = first ? { suit: first.suit, rank: first.rank, weight: first.weight } : null;
+              sent = sendMsg("WGFD_SELECT", cleanCard);
+              if (sent) state.showWgfdModal.value = false;
             } else if (state.currentAoeType.value === "GUSHOU_DISCARD") {
               const required = Math.min(2, state.handCards.value.length);
               const cleanCards = state.handCards.value
                 .slice(0, required)
                 .map((c) => ({ suit: c.suit, rank: c.rank, weight: c.weight }));
-              sendMsg("GUSHOU_DISCARD", cleanCards);
+              sent = sendMsg("GUSHOU_DISCARD", cleanCards);
             } else if (state.currentAoeType.value === "KUROU_AWAKEN_DISCARD") {
               // 【苦肉·觉醒】：超时自动跳过额外弃置
-              sendMsg("KUROU_AWAKEN_DISCARD", null);
+              sent = sendMsg("KUROU_AWAKEN_DISCARD", null);
             } else if (state.currentAoeType.value === "GUIXIN_DECISION") {
-              sendMsg("GUIXIN_DECISION", { accept: false });
+              sent = sendMsg("GUIXIN_DECISION", { accept: false });
             } else {
-              sendMsg("RESPOND_AOE", null);
+              sent = sendMsg("RESPOND_AOE", null);
             } // 超时自动要不起
+            isTimeoutTriggered = sent;
           }
           if (remain > 0) isTimeoutTriggered = false;
         }
         // 模式B：正常的出牌回合
         else if (
-          !state.currentAoeType.value &&
+          state.gamePhase.value !== "SKILL_SELECTION" && !state.currentAoeType.value &&
           state.currentTurn.value &&
           state.currentTurnStartTime.value
         ) {
@@ -215,8 +335,7 @@ export const connectWebSocket = (isCreating = false) => {
             state.currentTurn.value === state.userId.value &&
             !isTimeoutTriggered
           ) {
-            isTimeoutTriggered = true;
-            handleTimeout();
+            isTimeoutTriggered = handleTimeout();
           }
           if (remain > 0) isTimeoutTriggered = false;
         }
@@ -225,15 +344,38 @@ export const connectWebSocket = (isCreating = false) => {
   };
 
   // 【消息接收拦截器】
-  ws.value.onmessage = async (event) => {
-    const res = JSON.parse(event.data);
+  socket.onmessage = async (event) => {
+    if (ws.value !== socket) return;
+    lastMessageTime = Date.now();
+    let res;
+    try { res = JSON.parse(event.data); } catch (error) {
+      showError("收到无效游戏消息，正在重新同步");
+      socket.close();
+      return;
+    }
 
     switch (res.event) {
+      case "PONG":
+        break;
       case "SYNC_STATE":
+        roomJoined = true;
+        state.isConnected.value = true;
+        state.isReconnecting.value = false;
+        recoveryStarted = recoveryAttempt = 0;
+        if (recoveryTimer) clearTimeout(recoveryTimer);
+        if (connectionTimer) clearTimeout(connectionTimer);
+        recoveryTimer = connectionTimer = null;
+        state.gamePhase.value = res.phase || "PLAYING";
+        if (res.phase === "SKILL_SELECTION") {
+          state.showSkillSelection.value = !res.spectators?.includes(state.userId.value) &&
+            !res.settings?.skillsSelected?.[state.userId.value];
+        } else if (res.phase) {
+          state.showSkillSelection.value = false;
+        }
         state.currentTurn.value = res.currentTurn;
         state.currentAoeType.value = res.currentAoeType;
         if (res.tableCards) state.tableCards.value = res.tableCards;
-        if (res.lastPlayPlayer) state.lastPlayPlayer.value = res.lastPlayPlayer;
+        state.lastPlayPlayer.value = res.lastPlayPlayer || "";
 
         state.pendingAoePlayers.value = res.pendingAoePlayers || [];
         state.aoeInitiator.value = res.aoeInitiator || "";
@@ -375,44 +517,16 @@ export const connectWebSocket = (isCreating = false) => {
       case "KICKED":
         if (res.targetId === state.userId.value) {
           alert("你已被房主踢出房间！");
-          if (ws.value) ws.value.close();
+          disconnectWebSocket({ leaveRoom: false });
           state.isConnected.value = false;
         }
         break;
       case "START_SKILL_SELECTION":
         state.gameStarted.value = true;
+        state.gamePhase.value = "SKILL_SELECTION";
         state.showSkillSelection.value = true;
 
-        // ====== 【新增：20秒倒计时与进度条驱动】 ======
         state.skillCountdown.value = 20;
-        if (state.skillTimer.value) clearInterval(state.skillTimer.value);
-
-        state.skillTimer.value = setInterval(() => {
-          state.skillCountdown.value--;
-
-          // 最后 5 秒，并且如果玩家还没选将（弹窗还在），播放倒数音效
-          if (
-            state.showSkillSelection.value &&
-            state.skillCountdown.value <= 5 &&
-            state.skillCountdown.value > 0
-          ) {
-            playAudio("countdown");
-          }
-
-          // 时间到 0
-          if (state.skillCountdown.value <= 0) {
-            clearInterval(state.skillTimer.value);
-            stopCountdownAudio();
-
-            // 如果时间到了玩家还没选，自动帮他选“制衡”
-            if (state.showSkillSelection.value) {
-              sendMsg("SELECT_SKILL", "ZHIHENG");
-              state.mySkill.value = "ZHIHENG";
-              state.showSkillSelection.value = false;
-            }
-          }
-        }, 1000);
-        // ==========================================
         break;
       case "GUANXING_SHOW":
         state.guanxingCards.value = res.cards.map((c) => ({
@@ -434,6 +548,7 @@ export const connectWebSocket = (isCreating = false) => {
         state.showSkillSelection.value = false;
 
         state.gameStarted.value = true;
+        state.gamePhase.value = "PLAYING";
         state.winner.value = "";
         state.tableCards.value = [];
         state.lastPlayPlayer.value = "";
@@ -529,7 +644,7 @@ export const connectWebSocket = (isCreating = false) => {
         if (res.msg === "REQUIRE_PASSWORD" || res.msg === "密码错误") {
           showError(res.msg);
           state.roomPassword.value = ""; // 【核心】：清空携带的错误密码
-          if (ws.value) ws.value.close(); // 断开失败的连接
+          disconnectWebSocket({ leaveRoom: false }); // 断开失败的连接
 
           setTimeout(() => {
             const pwd = prompt(
@@ -543,18 +658,13 @@ export const connectWebSocket = (isCreating = false) => {
         } else if (res.msg === "该房间已被他人创建") {
           alert(res.msg);
           state.showCreateModal.value = false; // 关闭创建面板，退回大厅
-          if (ws.value) ws.value.close();
+          disconnectWebSocket({ leaveRoom: false });
         } else {
           // ... 原有的其他报错处理逻辑保持不变 ...
           showError(res.msg);
           state.handCards.value.forEach((c) => (c.selected = false));
 
-          // 如果是倒计时触发的自动出牌报错，为了防止卡死在 0s，1.5秒后强制要不起
-          if (state.countdown.value === 0 && isTimeoutTriggered) {
-            setTimeout(() => {
-              passTurn();
-            }, 1500);
-          }
+          // 由服务端兜底到期行动，不能向新阶段延迟发送旧 PASS。
         }
         break;
       case "CARD_WARNING":
@@ -579,7 +689,12 @@ export const connectWebSocket = (isCreating = false) => {
           delete state.activeEmojis.value[res.userId];
         }, 3000);
         break;
+      case "CONNECTION_REPLACED":
+        showError(res.msg || "该身份已在其他页面进入房间，请重新进入");
+        await resetAuthState(res.msg || "该身份已在其他页面进入房间，请重新进入");
+        break;
       case "FORCE_LOGOUT":
+        showError(res.msg || "登录状态已失效，请重新登录");
         await resetAuthState(
           res.msg || "账号已在其他设备登录，请重新登录",
           { refreshCaptcha: true },
@@ -643,21 +758,19 @@ export const connectWebSocket = (isCreating = false) => {
   };
 
   // 【断开连接钩子】
-  ws.value.onclose = () => {
+  socket.onclose = (event) => {
+    if (ws.value !== socket) return;
+    if (event.code === 4001) {
+      disconnectWebSocket({ leaveRoom: false });
+      showError("该身份已在其他页面进入房间，请重新进入");
+      void resetAuthState("该身份已在其他页面进入房间，请重新进入");
+      return;
+    }
+    const canRecover = roomJoined || isRecovery;
+    roomJoined = false;
     state.isConnected.value = false;
-    state.gameStarted.value = false;
-    state.winner.value = "";
-    state.handCards.value = [];
-    state.tableCards.value = [];
-    state.otherPlayers.value = [];
-    // 彻底重置残留的房间设置
-    state.roomSettings.value = {
-      enableWildcard: false,
-      enableScrollCards: false,
-    };
-    state.guixinDisabled.value = false;
-    state.guixinPendingOwner.value = "";
-    state.guixinPendingPasser.value = "";
-    if (globalTimer) clearInterval(globalTimer);
+    stopConnectionTimers();
+    if (canRecover && event.code !== 1008) scheduleRecovery();
+    else disconnectWebSocket({ leaveRoom: false });
   };
 };

@@ -114,8 +114,12 @@ public class GameService {
         boolean isSpectator = room.getSpectators().contains(userId);
 
         if (isPlayer || isSpectator) {
-            // 直接抛出异常拒绝加入
-            throw new RuntimeException("昵称 [" + userId + "] 已被占用，请换一个名字！");
+            // 身份和席位归属由 WebSocket 入口校验，在此恢复原席位。
+            synchronized (room) {
+                Player existing = getPlayer(room, userId);
+                if (existing != null) existing.setDisconnected(false);
+                return room;
+            }
         }
         // 检查玩家是否已经在房间内
         if (room.isStarted()) {
@@ -180,6 +184,7 @@ public class GameService {
         if (Boolean.TRUE.equals(room.getSettings().get("enableSkills"))) {
             room.setStarted(true); // <--- 致命遗漏点！不加这句前端会被瞬间闪退回大厅！
             room.setPhase("SKILL_SELECTION");
+            room.setCurrentTurnStartTime(System.currentTimeMillis());
             room.getSettings().put("skillsSelected", new ConcurrentHashMap<String, String>());
             return;
         }
@@ -663,13 +668,9 @@ public class GameService {
             if (!room.getPendingAoePlayers().contains(userId) || !"GUANXING".equals(room.getCurrentAoeType())) return;
 
             // ====== 【核心修复：防止网络卡顿双击导致的 NullPointerException 闪退】 ======
-            List<Card> fourCards = (List<Card>) room.getSettings().get("guanxingCards");
-            if (fourCards == null) {
-                log.warn("观星请求已失效或已被处理，丢弃重复请求。");
-                return;
-            }
+            List<Card> fourCards = (List<Card>) room.getSettings().getOrDefault("guanxingCards", List.of());
 
-            if (selected.size() != 2) throw new RuntimeException("观星必须选择 2 张牌！");
+            if (selected.size() != Math.min(2, fourCards.size())) throw new RuntimeException("观星必须选择 2 张牌！");
 
             List<Card> discardCards = new ArrayList<>(fourCards);
             for (Card sel : selected) {
@@ -1189,6 +1190,66 @@ public class GameService {
     public GameRoom getRoom(String roomId) {
         return roomMap.get(roomId);
     }
+
+    @SuppressWarnings("unchecked")
+    public boolean resolveExpiredAction(String roomId, long now) {
+        GameRoom room = getRoom(roomId);
+        if (room == null) return false;
+        synchronized (room) {
+            if (!room.isStarted() || hasWinner(room)) return false;
+            if ("SKILL_SELECTION".equals(room.getPhase())) {
+                if (now - room.getCurrentTurnStartTime() < 20_000) return false;
+                Map<String, String> skills = (Map<String, String>) room.getSettings().get("skillsSelected");
+                for (Player player : room.getPlayers()) {
+                    String skill = skills.computeIfAbsent(player.getUserId(), id -> "ZHIHENG");
+                    player.setSkill(skill);
+                }
+                doStartGame(room);
+                return true;
+            }
+            String aoe = room.getCurrentAoeType();
+            if (aoe != null) {
+                if (now - room.getAoeStartTime() < 10_000) return false;
+                for (String userId : List.copyOf(room.getPendingAoePlayers())) {
+                    if (!aoe.equals(room.getCurrentAoeType()) || hasWinner(room)) break;
+                    Player player = getPlayer(room, userId);
+                    if (player == null || !"PLAYING".equals(player.getStatus())) {
+                        room.getPendingAoePlayers().remove(userId);
+                        continue;
+                    }
+                    switch (aoe) {
+                        case "GUANXING" -> {
+                            List<Card> cards = (List<Card>) room.getSettings().getOrDefault("guanxingCards", List.of());
+                            resolveGuanxing(roomId, userId, new ArrayList<>(cards.subList(0, Math.min(2, cards.size()))));
+                        }
+                        case "WGFD" -> resolveWgfd(roomId, userId, null);
+                        case "GUSHOU_DISCARD" -> discardGushou(roomId, userId,
+                                new ArrayList<>(player.getHandCards().subList(0, Math.min(2, player.getHandCards().size()))));
+                        case "KUROU_AWAKEN_DISCARD" -> kurouAwakenDiscard(roomId, userId, null);
+                        case GUIXIN_DECISION -> resolveGuixinDecision(roomId, userId, false);
+                        default -> respondAoe(roomId, userId, null);
+                    }
+                }
+                // 候选牌耗尽不能让房间永久保持待响应状态。
+                if (aoe.equals(room.getCurrentAoeType()) && room.getPendingAoePlayers().isEmpty()) endAoePhase(room);
+                return true;
+            }
+            if (room.getPlayers().isEmpty()) return false;
+            Player player = room.getPlayers().get(room.getCurrentTurnIndex());
+            long limit = player.getUserId().equals(room.getSettings().get("jdsr_target")) ? 10_000 : 20_000;
+            if (now - room.getCurrentTurnStartTime() < limit) return false;
+            boolean borrowedTurn = player.getUserId().equals(room.getSettings().get("jdsr_target"));
+            if (!borrowedTurn && (room.getLastPlayedCards().isEmpty() || player.getUserId().equals(room.getLastPlayPlayerId()))) {
+                Card card = player.getHandCards().stream().filter(c -> !"SCROLL".equals(c.getSuit()))
+                        .min(java.util.Comparator.comparingInt(Card::getWeight)).orElse(null);
+                if (card != null) playCards(roomId, player.getUserId(), List.of(card));
+                else passTurn(roomId, player.getUserId());
+            } else {
+                passTurn(roomId, player.getUserId());
+            }
+            return true;
+        }
+    }
     // --- 新增：智能抽牌（牌堆为空时自动洗牌） ---
     // --- 新增：智能抽牌（牌堆为空时自动洗牌） ---
     private Card drawCard(GameRoom room) {
@@ -1475,11 +1536,13 @@ public class GameService {
             // ====== 【核心修复 2：彻底消灭幽灵房间】 ======
             // 只要房间里没有任何存活状态的人（全部是 disconnected），立刻销毁房间释放内存！
             boolean hasAlivePlayer = room.getPlayers().stream().anyMatch(player -> !player.isDisconnected());
-            if (hasAlivePlayer && !hasActiveHumanPlayers(room) && room.getSpectators().isEmpty()) {
+            boolean hasRecoveringPlayer = room.getPlayers().stream()
+                    .anyMatch(player -> player.isDisconnected() && "PLAYING".equals(player.getStatus()));
+            if (hasAlivePlayer && !hasActiveHumanPlayers(room) && !hasRecoveringPlayer && room.getSpectators().isEmpty()) {
                 roomMap.remove(roomId);
                 return;
             }
-            if (!hasAlivePlayer && room.getSpectators().isEmpty()) {
+            if (!hasAlivePlayer && !hasRecoveringPlayer && room.getSpectators().isEmpty()) {
                 log.info("♻️ 房间 [{}] 已无真实活人，系统已彻底清空并销毁该幽灵房间！", roomId);
                 roomMap.remove(roomId);
             }
@@ -1578,12 +1641,21 @@ public class GameService {
     // ====== 【新增：处理五谷丰登选牌与队列传递】 ======
     public void resolveWgfd(String roomId, String userId, Card selectedCard) {
         GameRoom room = getRoom(roomId);
+        if (room == null) return;
+        synchronized (room) {
         Player p = getPlayer(room, userId);
-        if (!room.getPendingAoePlayers().contains(userId) || !"WGFD".equals(room.getCurrentAoeType())) return;
+        if (p == null || !room.getPendingAoePlayers().contains(userId) || !"WGFD".equals(room.getCurrentAoeType())) return;
 
         List<Card> wgfdCards = (List<Card>) room.getSettings().get("wgfdCards");
         List<String> wgfdQueue = (List<String>) room.getSettings().get("wgfdQueue");
-        if (wgfdCards == null || wgfdQueue == null) return;
+        if (wgfdCards == null || wgfdQueue == null || wgfdCards.isEmpty()) {
+            if (wgfdCards != null) room.getDiscardPile().addAll(wgfdCards);
+            room.getSettings().remove("wgfdCards");
+            room.getSettings().remove("wgfdQueue");
+            endAoePhase(room);
+            return;
+        }
+        if (selectedCard == null) selectedCard = wgfdCards.get(0);
 
         // 1. 拿走选择的牌
         boolean found = false;
@@ -1623,6 +1695,7 @@ public class GameService {
             room.getPendingAoePlayers().clear();
             room.getPendingAoePlayers().add(wgfdQueue.get(0));
             room.setAoeStartTime(System.currentTimeMillis()); // 重置下一个人的 10 秒倒计时！
+        }
         }
     }
     public void discardGushou(String roomId, String userId, List<Card> cards) {

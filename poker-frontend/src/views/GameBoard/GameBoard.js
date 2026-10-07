@@ -50,7 +50,7 @@ import {
 import { computed } from "vue";
 import { soundStatus, toggleSound, playBGM } from "@/store/audioManager.js";
 
-import { ws, sendMsg, passTurn } from "@/store/gameSocket.js";
+import { disconnectWebSocket, sendMsg, passTurn } from "@/store/gameSocket.js";
 
 // ====== 卡牌图片与交互逻辑 ======
 const getCardImageUrl = (card) => {
@@ -192,7 +192,7 @@ const sendEmoji = (emoji) => {
 // ====== 房间控制 ======
 const exitGame = () => {
   if (confirm("确定要退出当前房间吗？(游戏中退出会导致对局中止)")) {
-    if (ws.value) ws.value.close();
+    disconnectWebSocket();
   }
 };
 const returnToRoom = () => sendMsg("RETURN_TO_ROOM", null);

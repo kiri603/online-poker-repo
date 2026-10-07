@@ -40,7 +40,7 @@
     </div>
 
     <AuthView v-if="!authChecked || !isAuthenticated" />
-    <Lobby v-else-if="!isConnected" />
+    <Lobby v-else-if="!isConnected && !isReconnecting" />
 
     <div v-else class="game-table">
       <div v-if="gameStarted" class="header">
@@ -50,6 +50,13 @@
 
       <WaitingRoom v-if="!gameStarted" />
       <GameBoard v-else />
+    </div>
+    <div v-if="isReconnecting" class="connection-recovery" role="status" aria-live="polite">
+      <div>
+        <p>连接中断，正在恢复...</p>
+        <p>已保留对局，最多等待 30 秒</p>
+        <button @click="disconnectWebSocket()">返回大厅</button>
+      </div>
     </div>
   </div>
 </template>
@@ -62,6 +69,7 @@ import {
   verifyCurrentSession,
 } from "@/store/authStore.js";
 import { fetchSocialOverview, resetSocialState } from "@/store/socialStore.js";
+import { disconnectWebSocket } from "@/store/gameSocket.js";
 import {
   authChecked,
   authUser,
@@ -71,6 +79,7 @@ import {
   gameStarted,
   isAuthenticated,
   isConnected,
+  isReconnecting,
   roomId,
   showRuleDetail,
   userId,
@@ -141,6 +150,25 @@ watch(
 </script>
 
 <style>
+.connection-recovery {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 8, 8, 0.88);
+  color: #fff5e6;
+  text-align: center;
+}
+.connection-recovery button {
+  padding: 10px 24px;
+  border: 1px solid #d6ae64;
+  border-radius: 8px;
+  background: #6d2020;
+  color: #fff5e6;
+  cursor: pointer;
+}
 html,
 body,
 #app {

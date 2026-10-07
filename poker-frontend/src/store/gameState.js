@@ -2,6 +2,8 @@ import { computed, ref } from "vue";
 
 export const ws = ref(null);
 export const isConnected = ref(false);
+export const isReconnecting = ref(false);
+export const gamePhase = ref("WAITING");
 export const roomId = ref("101");
 export const userId = ref("");
 export const isPrivate = ref(false);

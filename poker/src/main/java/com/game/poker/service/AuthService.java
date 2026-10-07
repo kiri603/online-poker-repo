@@ -133,15 +133,14 @@ public class AuthService {
         return AuthUserResponse.from(user, authTokenService.issueToken(SessionUser.from(user)), userService.hasDailySignInAvailable(user.getId()));
     }
 
-    public AuthUserResponse guestLogin(HttpSession session, HttpServletResponse response, boolean secureCookie) {
-        releaseGuestIfNeeded(session);
-        loginSessionRegistry.unregister(session);
-        clearRememberCookie(response, secureCookie);
+    public synchronized AuthUserResponse guestLogin(HttpSession session, HttpServletResponse response, boolean secureCookie) {
+        // Cookie 属于整个浏览器；游客访问凭据只属于当前页面。
+        activeGuestUsernames.clear();
+        activeGuestUsernames.addAll(authTokenService.getActiveGuestUsernames());
         String username = generateGuestUsername();
         activeGuestUsernames.add(username);
-        SessionUser guestUser = SessionUser.guest(username);
-        session.setAttribute(AuthSessionKeys.LOGIN_USER, guestUser);
-        return AuthUserResponse.from(guestUser, null, false);
+        SessionUser guestUser = new SessionUser(null, username, username, true, generateRawToken());
+        return AuthUserResponse.from(guestUser, authTokenService.issueToken(guestUser), false);
     }
 
     @Transactional
@@ -149,6 +148,7 @@ public class AuthService {
         SessionUser headerUser = authenticateByTabToken(readTabAuthToken(request));
         if (headerUser != null) {
             if (headerUser.isGuest()) {
+                endGuestVisit(headerUser, readTabAuthToken(request));
                 throw new AuthException(HttpStatus.UNAUTHORIZED, "游客登录仅当前访问有效，请重新进入");
             }
             return AuthUserResponse.from(headerUser, authTokenService.issueToken(headerUser), userService.hasDailySignInAvailable(headerUser.getId()));
@@ -195,7 +195,8 @@ public class AuthService {
     public void logout(HttpSession session, HttpServletRequest request, HttpServletResponse response) {
         SessionUser headerUser = authenticateByTabToken(readTabAuthToken(request));
         if (headerUser != null && headerUser.isGuest()) {
-            releaseGuestUsername(headerUser.getUsername());
+            endGuestVisit(headerUser, readTabAuthToken(request));
+            return; // 不注销共享 Cookie 中的正式账号或其他页面。
         }
         authTokenService.revokeToken(readTabAuthToken(request));
         releaseGuestIfNeeded(session);
@@ -263,7 +264,11 @@ public class AuthService {
     }
 
     public SessionUser resolveTabAuthenticatedUser(String token) {
-        return authenticateByTabToken(token);
+        try {
+            return authenticateByTabToken(token);
+        } catch (AuthException ignored) {
+            return null;
+        }
     }
 
     private void validateUsername(String username) {
@@ -334,18 +339,25 @@ public class AuthService {
     }
 
     private SessionUser authenticateByTabToken(String token) {
+        if (token == null || token.isBlank()) return null;
         SessionUser tokenUser = authTokenService.resolveUser(token);
         if (tokenUser == null) {
-            return null;
+            throw new AuthException(HttpStatus.UNAUTHORIZED, "页面登录状态已失效，请重新进入");
         }
         if (tokenUser.isGuest()) {
             return tokenUser;
         }
         if (!userService.isSessionVersionCurrent(tokenUser)) {
             authTokenService.revokeToken(token);
-            return null;
+            throw new AuthException(HttpStatus.UNAUTHORIZED, "账号已在其他设备登录，请重新登录");
         }
         return tokenUser;
+    }
+
+    private void endGuestVisit(SessionUser guest, String token) {
+        authTokenService.revokeToken(token);
+        releaseGuestUsername(guest.getUsername());
+        gameWebSocketHandler.forceLogoutGuestVisit(guest.getSessionVersion(), "游客会话已结束，请重新进入");
     }
 
     private void ensureActiveSession(SessionUser sessionUser, HttpSession session, HttpServletResponse response, boolean secureCookie) {
