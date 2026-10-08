@@ -460,7 +460,7 @@ export async function createBattleRenderer(host, getScene, getQuality, getOrigin
         const particle = addSprite(container, textures.glow, { width: 8, tint: color });
         addUpdate((p) => { const t = ease(p + i * .035); particle.position.set(origin.x + (cx - origin.x) * t, origin.y + (cy - origin.y) * t); particle.alpha = (1 - p) * .5; });
       }
-    } else if (effect.kind === "judgement") ring(80);
+    } // Judgement cards are drawn and flipped by the DOM layer, including fallback mode.
     return { container, update: (p, elapsed) => { container.alpha = alpha(p); updates.forEach((fn) => fn(p, elapsed)); }, destroy: () => { container.destroy({ children: true }); } };
   }
 

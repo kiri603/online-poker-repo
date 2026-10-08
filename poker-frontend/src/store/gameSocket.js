@@ -384,7 +384,7 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
     if (["GAME_STARTED", "ROOM_RESET", "GAME_ABORTED", "GAME_OVER"].includes(res.event)) {
       clearRoomPresentation();
     }
-    handleBattleFeedback(res);
+    if (res.event !== "TIEQI_JUDGE") handleBattleFeedback(res);
     switch (res.event) {
       case "PONG":
         break;
@@ -520,29 +520,9 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
 
       // ====== 【铁骑】：展示判定牌与语音；成功冲锋由战斗演出层播放，给被压制玩家显示提示 ======
       case "TIEQI_JUDGE": {
-        const entry = {
-          id: Date.now() + Math.random(),
-          userId: res.userId,
-          card: res.card,
-          success: res.success === true,
-          maxRedWeight: res.maxRedWeight,
-        };
-        state.tieqiJudgeCards.value.push(entry);
-        showActionText(res.userId, "铁骑", "skill");
-        playAudio("action_tieqi");
-        if (entry.success) {
-          const suppressed = Array.isArray(res.suppressed) ? res.suppressed : [];
-          suppressed.forEach((uid, i) => {
-            schedulePresentation(() => showActionText(uid, "压制", "skill"), 300 + i * 120);
-          });
-        }
-        const ttl = entry.success ? 4000 : 3000;
-        schedulePresentation(() => {
-          const idx = state.tieqiJudgeCards.value.findIndex(
-            (x) => x.id === entry.id,
-          );
-          if (idx >= 0) state.tieqiJudgeCards.value.splice(idx, 1);
-        }, ttl);
+        handleBattleFeedback(res, (effect) => {
+          if (effect.success) effect.suppressed.forEach((uid) => showActionText(uid, "压制", "skill"));
+        });
         break;
       }
 

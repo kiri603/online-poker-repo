@@ -17,6 +17,7 @@ export const audioLevels = reactive(readLevels());
 const activeSounds = new Set();
 let voiceAudio = null;
 let voiceQueue = [];
+let voiceDelay = null;
 let lastAudioName = "";
 let lastAudioTime = 0;
 const updateMusicVolume = () => {
@@ -30,14 +31,17 @@ watch(audioLevels, () => {
 }, { deep: true });
 setBattleSoundVolume(audioLevels.effects);
 
-export const stopGameAudio = () => {
-  voiceQueue = [];
+export const stopGameAudio = ({ preservePresentations = false } = {}) => {
+  if (voiceDelay) clearTimeout(voiceDelay);
+  voiceDelay = null;
+  voiceQueue = preservePresentations ? voiceQueue.filter((entry) => entry.onStart) : [];
   for (const audio of activeSounds) { audio.pause(); audio.currentTime = 0; }
   activeSounds.clear();
   voiceAudio = null;
   stopCountdownAudio();
   stopBattleSounds();
   updateMusicVolume();
+  if (preservePresentations) playNextVoice();
 };
 
 // ====== 1. 导出全局统一的声音状态与控制方法 ======
@@ -60,7 +64,7 @@ export const stopCountdownAudio = () => {
 
 // 监听全局声音开关：用户随时可以暂停/恢复 BGM
 watch(isSoundOn, (newVal) => {
-  if (!newVal) stopGameAudio();
+  if (!newVal) stopGameAudio({ preservePresentations: true });
   if (currentBGM) {
     if (newVal) {
       currentBGM.play().catch((e) => console.warn("恢复BGM失败:", e));
@@ -117,13 +121,20 @@ export const playBGM = (filename, loop = true) => {
 
 // ====== 3. 音效播放与智能解析器 ======
 const playNextVoice = () => {
-  if (!isSoundOn.value || voiceAudio) return;
+  if (voiceAudio || voiceDelay) return;
   let next;
   while (voiceQueue.length) {
     const candidate = voiceQueue.shift();
-    if (Date.now() - candidate.at < 1500) { next = candidate; break; }
+    if (candidate.onStart || (isSoundOn.value && Date.now() - candidate.at < 1500)) { next = candidate; break; }
   }
   if (!next) return;
+  if (next.notBefore > Date.now()) {
+    voiceQueue.unshift(next);
+    voiceDelay = setTimeout(() => { voiceDelay = null; playNextVoice(); }, next.notBefore - Date.now());
+    return;
+  }
+  next.onStart?.();
+  if (!isSoundOn.value) { playNextVoice(); return; }
   const audio = new Audio(`/audios/${next.filename}.mp3`);
   voiceAudio = audio;
   activeSounds.add(audio);
@@ -139,6 +150,13 @@ const playNextVoice = () => {
   audio.onended = finish;
   audio.onerror = finish;
   audio.play().catch(finish);
+};
+
+// Reserve a skill's presentation in the same queue as card speech. Muting skips
+// audio but preserves visual stages; leaving the room cancels the reservation.
+export const playVoicePresentation = (filename, onStart, notBefore = 0) => {
+  voiceQueue.push({ filename, onStart, notBefore, at: Date.now() });
+  playNextVoice();
 };
 
 export const playAudio = (filename) => {
@@ -159,7 +177,8 @@ export const playAudio = (filename) => {
   lastAudioTime = now;
   if (filename !== "shuffle" && filename !== "skill_tieqi_horse") {
     voiceQueue.push({ filename, at: now });
-    voiceQueue = voiceQueue.slice(-3);
+    const ordinary = voiceQueue.filter((entry) => !entry.onStart).slice(-3);
+    voiceQueue = voiceQueue.filter((entry) => entry.onStart || ordinary.includes(entry));
     playNextVoice();
   } else {
     const audio = new Audio(`/audios/${filename}.mp3`);

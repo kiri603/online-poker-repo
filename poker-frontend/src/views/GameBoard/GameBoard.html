@@ -503,27 +503,6 @@
     </div>
   </div>
 
-  <div class="tieqi-judge-layer">
-    <div
-      v-for="j in tieqiJudgeCards"
-      :key="j.id"
-      class="tieqi-judge-card"
-      :class="j.success ? 'tieqi-success' : 'tieqi-fail'"
-    >
-      <div class="tieqi-judge-banner">铁骑</div>
-      <img
-        :src="getCardImageUrl(j.card)"
-        :alt="j.card.suit + j.card.rank"
-        class="tieqi-judge-img"
-        @error="handleImageError"
-      />
-      <div class="tieqi-judge-fallback">
-        {{ j.card.suit }}{{ j.card.rank }}
-      </div>
-      <div class="tieqi-judge-label">{{ j.success ? '判定成功' : '判定未命中' }}</div>
-    </div>
-  </div>
-
   <section
     class="hand-cards-container gb-hand"
     :data-seat-user="userId"

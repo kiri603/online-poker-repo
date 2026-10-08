@@ -97,7 +97,7 @@ const WebSocketOpen = 1;
 test("leaving a room cancels delayed cavalry audio and removes transient judgement cards", () => {
   const t = setup();
   t.socket.onmessage({ data: JSON.stringify({ event: "TIEQI_JUDGE", userId: "p1", card: { suit: "♥", rank: "3" }, success: true, suppressed: ["p2"] }) });
-  assert.equal(t.state.tieqiJudgeCards.value.length, 1);
+  assert.equal(t.state.tieqiJudgeCards.value.length, 0);
   t.context.api.disconnectWebSocket();
   for (const { fn } of [...t.timeouts.values()]) fn();
   assert.equal(t.state.tieqiJudgeCards.value.length, 0);

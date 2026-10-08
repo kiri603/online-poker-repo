@@ -1,6 +1,7 @@
 import { isSoundOn } from "./gameState.js";
+import { CAVALRY_TIMING } from "./battleFeedback.js";
 
-const KINDS = ["cavalry", "invasion", "arrows", "stars", "shield", "blood", "awakening", "unity", "balance", "harvest", "sword", "airplane", "bomb", "rocket", "straight", "straight-pair", "card", "judgement"];
+const KINDS = ["cavalry", "cavalry-shout", "invasion", "arrows", "stars", "shield", "blood", "awakening", "unity", "balance", "harvest", "sword", "airplane", "bomb", "rocket", "straight", "straight-pair", "card", "judgement"];
 const data = new Map();
 const buffers = new Map();
 const loading = new Map();
@@ -68,13 +69,17 @@ export const stopBattleSounds = () => {
   sources.clear();
 };
 
-export const playBattleSound = (kind) => {
+export const playBattleSound = (kind, { delayMs = 0, durationMs } = {}) => {
   if (!KINDS.includes(kind) || !isSoundOn.value || !context || soundVolume === 0) return;
   const ticket = generation;
   const requested = Date.now();
+  const scheduled = requested + Math.max(0, delayMs);
   const play = (buffer) => {
     // Never replay a cast after leaving the room, muting, or a slow first download.
-    if (!buffer || ticket !== generation || !isSoundOn.value || context.state !== "running" || Date.now() - requested > 350 || sources.size >= 8) return;
+    if (!buffer || ticket !== generation || !isSoundOn.value || context.state !== "running" || Date.now() - scheduled > 350 || sources.size >= 8) return;
+    const lateMs = Math.max(0, Date.now() - scheduled);
+    const duration = durationMs === undefined ? buffer.duration : Math.min(buffer.duration - lateMs / 1000, (durationMs - lateMs) / 1000);
+    if (duration <= 0) return;
     const source = context.createBufferSource();
     const gain = context.createGain();
     source.buffer = buffer;
@@ -83,8 +88,19 @@ export const playBattleSound = (kind) => {
     gain.connect(master);
     sources.add(source);
     source.onended = () => { sources.delete(source); source.disconnect(); gain.disconnect(); };
-    source.start();
+    source.start(context.currentTime + Math.max(0, scheduled - Date.now()) / 1000, lateMs / 1000, duration);
   };
   if (buffers.has(kind)) play(buffers.get(kind));
   else load(kind).then(play);
+};
+
+export const playCavalrySounds = (duration = CAVALRY_TIMING.duration) => {
+  playBattleSound("cavalry-shout", {
+    delayMs: duration * CAVALRY_TIMING.swingStart,
+    durationMs: duration * (1 - CAVALRY_TIMING.swingStart),
+  });
+  playBattleSound("cavalry", {
+    delayMs: duration * CAVALRY_TIMING.chargeStart,
+    durationMs: duration * (1 - CAVALRY_TIMING.chargeStart),
+  });
 };

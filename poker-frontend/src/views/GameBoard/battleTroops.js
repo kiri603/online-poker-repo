@@ -1,4 +1,5 @@
 import { Container, Graphics } from "pixi.js";
+import { CAVALRY_TIMING } from "../../store/battleFeedback.js";
 
 const INK = 0xffdfb3;
 const clamp = (n) => Math.max(0, Math.min(1, n));
@@ -33,8 +34,8 @@ const RIDERS = [
 
 // The drawing and table movement share the same order, stance and charge timing.
 export function getCavalryMotion(progress, index = 0) {
-  const start = .43 + RIDERS[index % RIDERS.length].delay;
-  const swing = smooth((progress - .17) / .20);
+  const start = CAVALRY_TIMING.chargeStart + RIDERS[index % RIDERS.length].delay;
+  const swing = smooth((progress - CAVALRY_TIMING.swingStart) / CAVALRY_TIMING.swingDuration);
   const charge = clamp((progress - start) / (1 - start));
   const lean = smooth((progress - start + .035) / .08);
   return { swing, charge, lean, travel: charge ** 1.65 * 1.75, start };

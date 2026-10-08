@@ -7,7 +7,9 @@ const cards = (ranks) => ranks.map((rank) => ({ rank, suit: "♠", weight: Numbe
 test("cavalry charge only follows a successful server judgement", () => {
   const direct = createFeedbackDirector();
   assert.equal(direct({ event: "TIEQI_JUDGE", userId: "p1", success: false }).kind, "judgement");
-  assert.equal(direct({ event: "TIEQI_JUDGE", userId: "p1", success: true }).kind, "cavalry");
+  const judgement = direct({ event: "TIEQI_JUDGE", userId: "p1", success: true });
+  assert.equal(judgement.kind, "judgement");
+  assert.equal(judgement.success, true);
   assert.equal(direct({ event: "SYNC_STATE", settings: { tieqiJudgeSuccess: true } }), null);
 });
 

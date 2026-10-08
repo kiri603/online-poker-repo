@@ -1,4 +1,5 @@
 // Presentation only. The server remains the authority for card and skill rules.
+export const CAVALRY_TIMING = Object.freeze({ swingStart: .17, swingDuration: .20, chargeStart: .43, duration: 3200 });
 const SKILLS = {
   LUANJIAN: { kind: "arrows", title: "乱箭", tone: "gold", duration: 2400 },
   GUANXING: { kind: "stars", title: "观星", tone: "jade", duration: 2400 },
@@ -52,9 +53,7 @@ export function createFeedbackDirector(now = Date.now) {
     if (["ROOM_RESET", "GAME_STARTED", "GAME_ABORTED"].includes(event)) previous.clear();
     let effect = null;
     if (event === "TIEQI_JUDGE") {
-      effect = message.success === true
-        ? { kind: "cavalry", title: "铁骑", tone: "gold", duration: 3200 }
-        : { kind: "judgement", title: "铁骑", tone: "muted", duration: 1100 };
+      effect = { kind: "judgement", title: "铁骑", tone: "gold", duration: 1900, success: message.success === true, maxRedWeight: message.maxRedWeight };
     } else if (event === "SKILL_USED") effect = SKILLS[message.skillName];
     else if (event === "SKILL_AWAKEN" && message.skillName === "KUROU") {
       effect = { kind: "awakening", title: "苦肉 · 觉醒", tone: "crimson", duration: 2600, replaces: "blood" };

@@ -45,9 +45,7 @@ if (new URLSearchParams(location.search).get("stage") === "1") {
   state.handCards.value = ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q"].map((rank, i) => ({ rank, suit: ["♠", "♥", "♣", "♦"][i % 4], weight: i + 1, selected: false }));
   state.otherPlayers.value = ["赵云", "诸葛亮", "孙策"].map((userId, i) => ({ userId, cardCount: 6 + i, status: "PLAYING", skill: ["GUSHOU", "GUANXING", "KUROU"][i] }));
   state.countdown.value = 16;
-  let judgeTimeout;
   const showScenario = (name, mode = "live") => {
-    clearTimeout(judgeTimeout);
     clearBattleEffects();
     stopGameAudio();
     state.handCards.value = state.handCards.value.map((card) => ({ ...card, selected: false }));
@@ -64,11 +62,19 @@ if (new URLSearchParams(location.search).get("stage") === "1") {
     state.currentAoeType.value = null;
     state.tieqiJudgeCards.value = [];
     const message = { ...examples[name], userId: "关羽" };
-    if (name === "铁骑" || name === "铁骑未命中") {
-      state.tieqiJudgeCards.value = [{ ...message, id: Date.now() }];
-      judgeTimeout = setTimeout(() => { state.tieqiJudgeCards.value = []; }, 2800);
+    const tieqi = message.event === "TIEQI_JUDGE";
+    if (tieqi && mode === "live") {
+      const cards = [{ suit: "♥", rank: "7", weight: 5 }];
+      state.tableCards.value = cards;
+      state.lastPlayPlayer.value = "关羽";
+      playAudio("single_7");
+      handleBattleFeedback({ event: "CARDS_PLAYED", userId: "关羽", cards });
     }
-    handleBattleFeedback(message);
+    if (tieqi && mode !== "live") {
+      battleEffects.value = [{ kind: message.success ? "cavalry" : "judgement", title: "铁骑", tone: "gold", duration: 3200, id: Date.now(), startedAt: Date.now(), ...message }];
+    } else {
+      handleBattleFeedback(message);
+    }
     if (mode !== "live") {
       const impacts = { cavalry: .57, invasion: .57, bomb: .39, rocket: .59, airplane: .48, stars: .45 };
       const now = Date.now();
@@ -78,7 +84,7 @@ if (new URLSearchParams(location.search).get("stage") === "1") {
         return { ...effect, previewProgress: progress, previewDuration: effect.duration, duration: 600000, startedAt: now - progress * 600000 };
       });
     }
-    playAudio(voices[name]);
+    if (!tieqi) playAudio(voices[name]);
   };
   window.addEventListener("message", (event) => {
     if (event.origin === location.origin && event.source === window.parent) showScenario(event.data?.scenario);

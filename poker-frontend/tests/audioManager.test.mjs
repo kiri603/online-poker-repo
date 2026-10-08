@@ -9,7 +9,7 @@ function setup() {
   const watchers = [];
   const sound = { value: true };
   const context = vm.createContext({
-    isSoundOn: sound, getCardFeedback, console, Date,
+    isSoundOn: sound, getCardFeedback, console, Date, setTimeout, clearTimeout,
     computed: (fn) => ({ get value() { return fn(); } }), reactive: (value) => value,
     watch: (source, cb) => watchers.push({ source, cb }),
     setBattleSoundVolume: () => {}, stopBattleSounds: () => {},
@@ -23,7 +23,7 @@ function setup() {
   });
   const source = readFileSync(new URL("../src/store/audioManager.js", import.meta.url), "utf8");
   const clean = source.replace(/^import[\s\S]*?from\s+"[^"]+";\r?\n/gm, "").replace(/export const /g, "const ");
-  vm.runInContext(`${clean}\nglobalThis.api = { playBGM, playAudio, playCardAudio, stopGameAudio, audioLevels };`, context);
+  vm.runInContext(`${clean}\nglobalThis.api = { playBGM, playAudio, playCardAudio, playVoicePresentation, stopGameAudio, audioLevels };`, context);
   return { audios, api: context.api, mute: () => { sound.value = false; watchers.find((w) => w.source === sound).cb(false); } };
 }
 
@@ -69,4 +69,29 @@ test("airplane with four-card groups uses the airplane voice rather than bomb vo
   const t = setup();
   t.api.playCardAudio(["3", "3", "3", "3", "4", "4", "4", "4"].map((rank) => ({ suit: "♠", rank })));
   assert.equal(t.audios[0].src, "/audios/combo_plane.mp3");
+});
+
+test("judgement starts with skill speech only after the played-card speech ends", () => {
+  const t = setup();
+  const stages = [];
+  t.api.playCardAudio([{ suit: "♥", rank: "7" }]);
+  t.api.playVoicePresentation("action_tieqi", () => stages.push("judge"));
+  assert.deepEqual(stages, []);
+  assert.equal(t.audios.length, 1);
+  t.audios[0].onended();
+  assert.deepEqual(stages, ["judge"]);
+  assert.equal(t.audios[1].src, "/audios/action_tieqi.mp3");
+});
+
+test("room exit cancels pending judgement, whereas mute still shows it silently", () => {
+  for (const leave of [true, false]) {
+    const t = setup();
+    const stages = [];
+    t.api.playAudio("single_7");
+    t.api.playVoicePresentation("action_tieqi", () => stages.push("judge"));
+    if (leave) t.api.stopGameAudio(); else t.mute();
+    t.audios[0].onended();
+    assert.deepEqual(stages, leave ? [] : ["judge"]);
+    assert.equal(t.audios.length, 1);
+  }
 });
