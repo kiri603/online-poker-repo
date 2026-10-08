@@ -17,6 +17,7 @@ poker/data/*.trace.db
 stackedit-export/
 tmp_pdf_pages/
 tmp_pdf_pages_2/
+temp-screenshots/
 *.log
 **/__pycache__/
 

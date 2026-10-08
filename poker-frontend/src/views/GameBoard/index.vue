@@ -1,8 +1,14 @@
 <template src="./GameBoard.html"></template>
 
 <script setup>
+import BattleEffectsLayer from "./BattleEffectsLayer.vue";
+import BattlePhaseNotice from "./BattlePhaseNotice.vue";
 // 【核心修复 1】：移除了 onMounted 中的 playBGM("Normal")。
 import {
+  phaseNotice,
+  effectsSettingsOpen,
+  effectsQuality,
+  audioLevels,
   userId,
   otherPlayers,
   currentTurn,
@@ -78,6 +84,10 @@ import {
 
 // ====== 【核心修复 2：防脱发防白屏机制】 ======
 const _exposeToHtml = {
+  phaseNotice,
+  effectsSettingsOpen,
+  effectsQuality,
+  audioLevels,
   userId,
   otherPlayers,
   currentTurn,

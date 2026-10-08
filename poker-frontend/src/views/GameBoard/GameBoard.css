@@ -141,7 +141,7 @@
    ============================================================ */
 .gb-top-seats {
   position: relative;
-  z-index: 10;
+  z-index: 30;
   padding: clamp(12px, 2vh, 20px) clamp(12px, 2vw, 24px) 6px;
   display: flex;
   justify-content: center;
@@ -490,7 +490,7 @@
 .gb-hand,
 .hand-cards-container {
   position: relative;
-  z-index: 6;
+  z-index: 35;
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -759,7 +759,7 @@
 .action-bar,
 .gb-action-bar {
   position: relative;
-  z-index: 20;
+  z-index: 40;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1116,12 +1116,12 @@
 
 .tieqi-judge-card {
   position: absolute;
-  top: 42%;
-  left: 50%;
-  width: 160px;
-  min-height: 220px;
-  padding: 14px 12px;
-  border-radius: 16px;
+  top: 44%;
+  left: 77%;
+  width: 104px;
+  min-height: 150px;
+  padding: 10px;
+  border-radius: 8px;
   transform: translate(-50%, -50%) scale(0);
   opacity: 0;
   background: linear-gradient(
@@ -1132,7 +1132,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   animation: tieqiJudgeReveal 2.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
   perspective: 800px;
 }
@@ -1411,23 +1411,22 @@
 }
 
 .floating-action-text.skill {
-  color: #ffe194;
-  text-shadow:
-    2px 2px 0 #8a3610,
-    -1px -1px 0 #8a3610,
-    1px -1px 0 #8a3610,
-    -1px 1px 0 #8a3610,
-    0 0 18px rgba(255, 210, 110, 0.8);
+  color: #ffe4ad;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 5px #150a06;
+  padding: 4px 12px;
+  border: 1px solid #d9ad6355;
+  border-radius: 4px;
+  background: #231911e6;
+  white-space: nowrap;
 }
 
 .floating-action-text.pass {
-  color: #ecf0f1;
-  text-shadow:
-    2px 2px 0 #7f8c8d,
-    -1px -1px 0 #7f8c8d,
-    1px -1px 0 #7f8c8d,
-    -1px 1px 0 #7f8c8d,
-    0 0 10px #bdc3c7;
+  color: #ede2cc;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px #18100a;
 }
 
 /* ============================================================
@@ -2194,48 +2193,50 @@
 }
 
 /* ============================================================
-   固守 / 苦肉觉醒 文字艺术
+   对局状态与反馈设置
    ============================================================ */
-.art-text-gushou-v2 {
-  font-family: "Ma Shan Zheng", "KaiTi", cursive !important;
-  font-size: 32px !important;
-  font-weight: 900 !important;
-  color: var(--gb-gold-bright) !important;
-  letter-spacing: 3px;
-  text-shadow:
-    2px 2px 0 #8a3610,
-    -1px -1px 0 #8a3610,
-    1px -1px 0 #8a3610,
-    -1px 1px 0 #8a3610,
-    0 0 15px rgba(255, 210, 110, 0.85) !important;
+.gb-phase-display { gap: 16px; }
+.gb-action-bar.has-phase-notice .countdown-timer,
+.gb-action-bar.has-phase-notice .aoe-hint,
+.gb-action-bar.has-phase-notice > .wait-text { display: none; }
+.gb-action-bar.has-phase-notice .aoe-action-bar { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.gb-phase-cards { margin-top: 15px; }
+.gb-phase-cards .card.mini { width: 44px; height: 62px; opacity: .85; box-shadow: 0 4px 12px #10090455; }
+.gb-played-owner { display: inline-flex; align-items: center; gap: 10px; font: 12px/1.5 "Noto Sans SC", sans-serif; letter-spacing: 1px; color: #eee0c9; }
+.gb-played-owner span { color: #c6ad86; padding-right: 10px; border-right: 1px solid #c6ad8644; font-size: 10px; }
+.gb-empty-table { display: flex; flex-direction: column; align-items: center; gap: 14px; font-size: 12px; color: #d9c1a0; text-shadow: none; opacity: .65; }
+.gb-table-seal { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #c7ab7466; font: 23px "Noto Serif SC", serif; letter-spacing: 0; transform: rotate(45deg); border-radius: 4px; }
+.gb-feedback-settings-btn { width: 38px; height: 38px; padding: 10px; display: grid; place-items: center; color: #ebc98c; background: #201813e8; border: 1px solid #c6a46d88; border-radius: 50%; cursor: pointer; }
+.gb-feedback-settings-btn svg { width: 19px; height: 19px; }
+.gb-feedback-settings-btn:focus-visible, .gb-feedback-settings :focus-visible { outline: 2px solid #ffe5ae; outline-offset: 3px; }
+.gb-feedback-settings { position: absolute; bottom: 66px; right: 52px; width: 232px; border: 1px solid #c6a46d77; border-radius: 8px; background: #211a16f5; padding: 17px; color: #e8dac4; box-shadow: 0 10px 40px #10090088; }
+.gb-feedback-settings-heading { display: flex; align-items: center; justify-content: space-between; font: 14px "Noto Serif SC", serif; letter-spacing: 2px; padding-bottom: 13px; margin-bottom: 13px; border-bottom: 1px solid #c6a46d33; }
+.gb-feedback-settings-heading button { width: 28px; height: 28px; color: #ead6b7; border: 0; background: transparent; font-size: 22px; cursor: pointer; }
+.gb-feedback-settings label { display: grid; grid-template-columns: 54px minmax(0, 1fr); align-items: center; gap: 10px; white-space: nowrap; font-size: 11px; margin: 13px 0; }
+.gb-feedback-settings input { width: 100%; min-width: 0; accent-color: #d3ad6c; }
+.gb-feedback-quality select { width: 100%; min-width: 0; padding: 5px; color: #ead6b7; border: 1px solid #c6a46d55; border-radius: 4px; background: #181310; font-size: 11px; }
+.gb-action-bar .wait-text { font-family: "Noto Sans SC", sans-serif; font-size: 12px; letter-spacing: 1px; color: #e1cfb3; padding: 9px 18px; border: 1px solid #c9aa7044; border-radius: 5px; background: #201811c9; text-shadow: none; }
+.gb-action-bar .aoe-action-bar { border-radius: 7px; box-shadow: 0 6px 18px #17090345; }
+.gb-action-bar .aoe-hint { font: 12px/1.6 "Noto Sans SC", sans-serif; letter-spacing: .5px; text-shadow: none; }
+.gb-feedback-credits { display: block; margin-top: 14px; padding-top: 9px; border-top: 1px solid #c9aa7033; color: #baa88b; font: 10px/1.5 "Microsoft YaHei", sans-serif; text-align: right; }
+.gb-action-bar .countdown-timer { font-size: 16px; border-radius: 5px; letter-spacing: 0; border-color: #d8c09266; color: #efd9aa; font-variant-numeric: tabular-nums; }
+.gb-action-bar .countdown-timer.hurry { border-color: #e98e7188; color: #ffc8ab; animation: none; }
+.tieqi-judge-card.tieqi-success { border: 1px solid #e9c37a99; box-shadow: 0 6px 28px #14090588; }
+.tieqi-judge-card.tieqi-fail { border: 1px solid #b4a38a66; box-shadow: 0 6px 24px #14090566; }
+.tieqi-judge-img { width: 61px; height: 86px; border-radius: 4px; }
+.tieqi-judge-label { font: 10px/1.6 "Noto Sans SC", sans-serif; letter-spacing: .5px; padding: 3px 5px; color: #ecd1a1; }
+.tieqi-judge-card.tieqi-success .tieqi-judge-label { background: #c08c3d22; }
+.tieqi-judge-card.tieqi-fail .tieqi-judge-label { background: #8d806022; }
+@media (max-width: 600px) {
+  .gb-feedback-settings { right: 44px; bottom: 48px; width: 215px; padding: 13px; }
+  .gb-feedback-settings-btn { width: 31px; height: 31px; padding: 6px; }
+  .gb-action-bar .aoe-hint { font-size: 11px; }
+  .gb-phase-cards { margin-top: 9px; gap: 6px; }
+  .gb-phase-cards .card.mini { width: 32px; height: 44px; }
 }
-
-.art-text-kurou {
-  font-family: "Ma Shan Zheng", "KaiTi", cursive !important;
-  font-size: 32px !important;
-  font-weight: 900 !important;
-  color: #fff1f1 !important;
-  letter-spacing: 3px;
-  text-shadow:
-    2px 2px 0 #6e1616,
-    -1px -1px 0 #6e1616,
-    1px -1px 0 #6e1616,
-    -1px 1px 0 #6e1616,
-    0 0 15px rgba(231, 76, 60, 0.85) !important;
-}
-
-.art-text-guixin {
-  font-family: "Ma Shan Zheng", "KaiTi", cursive !important;
-  font-size: 32px !important;
-  font-weight: 900 !important;
-  color: #d9fff2 !important;
-  letter-spacing: 3px;
-  text-shadow:
-    2px 2px 0 #14574c,
-    -1px -1px 0 #14574c,
-    1px -1px 0 #14574c,
-    -1px 1px 0 #14574c,
-    0 0 15px rgba(47, 191, 159, 0.82) !important;
+@media (prefers-reduced-motion: reduce) {
+  .tieqi-judge-card { animation: none; transform: translate(-50%, -50%); opacity: 1; }
+  .floating-action-text, .card, .float-text-enter-active, .float-text-leave-active { transition: none; }
 }
 
 /* ============================================================

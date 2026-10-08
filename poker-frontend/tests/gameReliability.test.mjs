@@ -14,6 +14,7 @@ function setup() {
   const storage = new Map();
   storage.set("poker:tab-auth-token", "token");
   const listeners = new Map();
+  const playedAudio = [];
   const sessionStorage = {
     getItem: (key) => storage.get(key) || null,
     setItem: (key, value) => storage.set(key, value),
@@ -35,7 +36,8 @@ function setup() {
     clearTabAuthToken: () => storage.delete("poker:tab-auth-token"),
     setTabAuthToken: (value) => storage.set("poker:tab-auth-token", value),
     resetSocialState: () => {}, resetAuthState: async () => {},
-    playAudio: () => {}, playCardAudio: () => {}, playBGM: () => {}, stopCountdownAudio: () => {},
+    playAudio: (name) => playedAudio.push(name), playCardAudio: () => {}, playBGM: () => {}, stopCountdownAudio: () => {},
+    clearBattleEffects: () => {}, handleBattleFeedback: () => {}, stopGameAudio: () => {},
     setInterval: (fn, ms) => { intervals.set(++timerId, { fn, ms }); return timerId; },
     clearInterval: (id) => intervals.delete(id),
     setTimeout: (fn, ms) => { timeouts.set(++timerId, { fn, ms }); return timerId; },
@@ -79,7 +81,7 @@ function setup() {
     vm.runInContext(`(() => { ${stripImports(source).replace(/export const /g, "const ")}\nglobalThis.authApi = {verifyCurrentSession, resetAuthState, bootstrapAuth, submitGuestLogin}; })()`, context);
     context.resetAuthState = context.authApi.resetAuthState;
   }
-  return { context, state, sockets, socket, intervals, timeouts, loadAuth };
+  return { context, state, sockets, socket, intervals, timeouts, loadAuth, playedAudio };
 }
 
 test("temporary auth HTTP 503 retains the authenticated game", async () => {
@@ -91,6 +93,17 @@ test("temporary auth HTTP 503 retains the authenticated game", async () => {
   assert.equal(t.socket.readyState, WebSocketOpen);
 });
 const WebSocketOpen = 1;
+
+test("leaving a room cancels delayed cavalry audio and removes transient judgement cards", () => {
+  const t = setup();
+  t.socket.onmessage({ data: JSON.stringify({ event: "TIEQI_JUDGE", userId: "p1", card: { suit: "♥", rank: "3" }, success: true, suppressed: ["p2"] }) });
+  assert.equal(t.state.tieqiJudgeCards.value.length, 1);
+  t.context.api.disconnectWebSocket();
+  for (const { fn } of [...t.timeouts.values()]) fn();
+  assert.equal(t.state.tieqiJudgeCards.value.length, 0);
+  assert.equal(t.playedAudio.includes("skill_tieqi_horse"), false);
+  assert.equal(Object.keys(t.state.activeActionTexts.value).length, 0);
+});
 
 test("real auth HTTP 401 still ends the authenticated session", async () => {
   const t = setup();

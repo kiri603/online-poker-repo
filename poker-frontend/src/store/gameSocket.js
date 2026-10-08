@@ -5,9 +5,11 @@ import {
   playCardAudio,
   playBGM,
   stopCountdownAudio,
+  stopGameAudio,
 } from "./audioManager.js";
 import { resetAuthState } from "./authStore.js";
 import { getTabAuthToken, getWsBaseUrl } from "./serverConfig.js";
+import { clearBattleEffects, handleBattleFeedback } from "./battleEffects.js";
 
 // 导出全局 WebSocket 实例
 export const ws = state.ws;
@@ -31,6 +33,30 @@ let recoveryAttempt = 0;
 let roomJoined = false;
 let lastMessageTime = 0;
 const RECOVERY_WINDOW_MS = 30_000;
+const presentationTimeouts = new Set();
+const schedulePresentation = (fn, delay) => {
+  const timer = setTimeout(() => { presentationTimeouts.delete(timer); fn(); }, delay);
+  presentationTimeouts.add(timer);
+  return timer;
+};
+const clearRoomPresentation = () => {
+  for (const timer of presentationTimeouts) clearTimeout(timer);
+  presentationTimeouts.clear();
+  for (const timer of Object.values(actionTextTimeouts)) clearTimeout(timer);
+  for (const timer of Object.values(emojiTimeouts)) clearTimeout(timer);
+  actionTextTimeouts = {};
+  emojiTimeouts = {};
+  if (pendingKurouSfxTimeout) clearTimeout(pendingKurouSfxTimeout);
+  pendingKurouSfxTimeout = null;
+  state.activeActionTexts.value = {};
+  state.activeEmojis.value = {};
+  state.tieqiJudgeCards.value = [];
+  state.aoeAnimCards.value = [];
+  state.warningUserId.value = "";
+  state.isShuffling.value = false;
+  clearBattleEffects();
+  stopGameAudio();
+};
 
 // ==========================================
 // 2. 基础通信与动作封装
@@ -74,6 +100,7 @@ const stopConnectionTimers = () => {
 };
 
 const clearRoomState = () => {
+  clearRoomPresentation();
   state.isConnected.value = false;
   state.isReconnecting.value = false;
   state.gameStarted.value = false;
@@ -354,6 +381,10 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
       return;
     }
 
+    if (["GAME_STARTED", "ROOM_RESET", "GAME_ABORTED", "GAME_OVER"].includes(res.event)) {
+      clearRoomPresentation();
+    }
+    handleBattleFeedback(res);
     switch (res.event) {
       case "PONG":
         break;
@@ -474,18 +505,20 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
         }
         break;
 
-      case "AOE_ANIMATION":
-        state.aoeAnimCards.value.push({
+      case "AOE_ANIMATION": {
+        const entry = {
           id: Date.now() + Math.random(),
           userId: res.userId,
           card: res.card,
-        });
-        setTimeout(() => {
-          state.aoeAnimCards.value.shift();
+        };
+        state.aoeAnimCards.value.push(entry);
+        schedulePresentation(() => {
+          state.aoeAnimCards.value = state.aoeAnimCards.value.filter((card) => card.id !== entry.id);
         }, 1000); // 1秒后清除DOM
         break;
+      }
 
-      // ====== 【铁骑】：展示判定牌 + 播放语音；成功则 500ms 后叠加马嘶声 + 给被压制玩家飘"压制" ======
+      // ====== 【铁骑】：展示判定牌与语音；成功冲锋由战斗演出层播放，给被压制玩家显示提示 ======
       case "TIEQI_JUDGE": {
         const entry = {
           id: Date.now() + Math.random(),
@@ -498,14 +531,13 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
         showActionText(res.userId, "铁骑", "skill");
         playAudio("action_tieqi");
         if (entry.success) {
-          setTimeout(() => playAudio("skill_tieqi_horse"), 500);
           const suppressed = Array.isArray(res.suppressed) ? res.suppressed : [];
           suppressed.forEach((uid, i) => {
-            setTimeout(() => showActionText(uid, "压制", "skill"), 300 + i * 120);
+            schedulePresentation(() => showActionText(uid, "压制", "skill"), 300 + i * 120);
           });
         }
         const ttl = entry.success ? 4000 : 3000;
-        setTimeout(() => {
+        schedulePresentation(() => {
           const idx = state.tieqiJudgeCards.value.findIndex(
             (x) => x.id === entry.id,
           );
@@ -561,7 +593,7 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
         state.guixinPendingPasser.value = "";
         playAudio("shuffle");
         state.isShuffling.value = true;
-        setTimeout(() => {
+        schedulePresentation(() => {
           state.isShuffling.value = false;
         }, 1200);
         playBGM("Normal");
@@ -569,7 +601,7 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
       case "DECK_SHUFFLED":
         playAudio("shuffle");
         state.isShuffling.value = true;
-        setTimeout(() => {
+        schedulePresentation(() => {
           state.isShuffling.value = false;
         }, 1200);
         break;
@@ -675,7 +707,7 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
         state.warningUserId.value = res.userId;
 
         // 3. 1秒后自动关闭发光特效
-        setTimeout(() => {
+        schedulePresentation(() => {
           if (state.warningUserId.value === res.userId) {
             state.warningUserId.value = "";
           }

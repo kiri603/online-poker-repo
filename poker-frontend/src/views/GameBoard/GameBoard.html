@@ -1,4 +1,5 @@
 <div class="game-board gb-shell">
+  <BattleEffectsLayer />
   <div class="gb-scene-bg" aria-hidden="true"></div>
   <div class="gb-vignette" aria-hidden="true"></div>
   <div class="gb-petals" aria-hidden="true">
@@ -28,6 +29,7 @@
       v-for="player in otherPlayers"
       :key="player.userId"
       class="gb-seat other-player"
+      :data-seat-user="player.userId"
       :class="{ 
         'is-turn': currentTurn === player.userId,
         'danger-pulse': warningUserId === player.userId
@@ -155,60 +157,20 @@
     <div class="gb-table-frame">
       <div class="gb-table-felt">
         <div class="table-center">
-          <div v-if="currentAoeType === 'GUANXING'" class="played-cards">
-            <p class="table-hint" style="color: #d4a7f2; letter-spacing: 2px">
-              {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
-              }}：使用观星中...
-            </p>
-            <div class="card-display-row">
+          <div v-if="phaseNotice" class="played-cards gb-phase-display">
+            <BattlePhaseNotice :notice="phaseNotice" :countdown="countdown" />
+            <div v-if="currentAoeType === 'GUANXING'" class="card-display-row gb-phase-cards">
               <div
                 v-for="i in 5"
                 :key="'gx-'+i"
                 class="card mini"
-                style="box-shadow: 0 0 10px rgba(155, 89, 182, 0.55)"
               >
                 <img src="/images/Background.png" />
               </div>
             </div>
-          </div>
 
-          <div
-            v-else-if="currentAoeType === 'GUSHOU_DISCARD'"
-            class="played-cards"
-          >
-            <p class="table-hint art-text-gushou-v2">
-              {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
-              }}：正在弃牌...
-            </p>
-          </div>
-
-          <div
-            v-else-if="currentAoeType === 'KUROU_AWAKEN_DISCARD'"
-            class="played-cards"
-          >
-            <p class="table-hint art-text-kurou">
-              {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
-              }}：正在弃牌...
-            </p>
-          </div>
-
-          <div
-            v-else-if="currentAoeType === 'GUIXIN_DECISION'"
-            class="played-cards"
-          >
-            <p class="table-hint art-text-guixin">
-              {{ pendingAoePlayers[0] === userId ? '你' : pendingAoePlayers[0]
-              }}：正在抉择归心...
-            </p>
-          </div>
-
-          <div
-            v-else-if="currentAoeType"
-            class="played-cards aoe-table-display"
-          >
-            <p class="table-hint" style="color: #ff9b8f">{{ aoeInitiator }}:</p>
-            <div class="card-display-row">
-              <div class="card mini aoe-pulse">
+            <div v-else-if="['WJQF', 'NMRQ'].includes(currentAoeType)" class="card-display-row gb-phase-cards">
+              <div class="card mini">
                 <img
                   :src="getCardImageUrl({ suit: 'SCROLL', rank: currentAoeType })"
                   @error="handleImageError"
@@ -218,7 +180,7 @@
           </div>
 
           <div v-else-if="tableCards.length > 0" class="played-cards">
-            <p class="table-hint">上一手出牌 ({{ lastPlayPlayer }})</p>
+            <p class="table-hint gb-played-owner"><span>上一手</span>{{ lastPlayPlayer }}</p>
             <div
               class="card-display-row"
               :class="{ 'stacked': sortedTableCards.length > 6 }"
@@ -239,7 +201,7 @@
             </div>
           </div>
 
-          <div v-else class="empty-table gb-empty-table">等待出牌...</div>
+          <div v-else class="empty-table gb-empty-table"><span class="gb-table-seal" aria-hidden="true">战</span><span>等待出牌</span></div>
         </div>
       </div>
     </div>
@@ -252,7 +214,7 @@
     你正在旁观当前对局...
   </div>
 
-  <div class="action-bar gb-action-bar" v-else-if="handCards.length > 0">
+  <div class="action-bar gb-action-bar" :class="{ 'has-phase-notice': phaseNotice }" v-else-if="handCards.length > 0">
     <template v-if="currentAoeType === 'GUIXIN_DECISION'">
       <div
         v-if="showGuixinModal"
@@ -289,10 +251,6 @@
       <div
         v-if="amIPendingAoe"
         class="aoe-action-bar"
-        style="
-          background: linear-gradient(160deg, rgba(40,20,15,0.88), rgba(20,15,12,0.92));
-          border-color: rgba(255,214,128,0.6);
-        "
       >
         <div class="countdown-timer" :class="{ hurry: countdown <= 3 }">
           <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -341,10 +299,6 @@
       <div
         v-if="amIPendingAoe"
         class="aoe-action-bar"
-        style="
-          background: linear-gradient(160deg, rgba(108,35,38,0.85), rgba(64,18,20,0.92));
-          border-color: rgba(255,130,130,0.55);
-        "
       >
         <div class="countdown-timer" :class="{ hurry: countdown <= 3 }">
           <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -566,12 +520,13 @@
       <div class="tieqi-judge-fallback">
         {{ j.card.suit }}{{ j.card.rank }}
       </div>
-      <div v-if="j.success" class="tieqi-judge-label">强制要不起！</div>
+      <div class="tieqi-judge-label">{{ j.success ? '判定成功' : '判定未命中' }}</div>
     </div>
   </div>
 
   <section
     class="hand-cards-container gb-hand"
+    :data-seat-user="userId"
     :class="{ 'danger-pulse': warningUserId === userId }"
     :style="{ '--hand-count': sortedHandCards.length }"
   >
@@ -613,8 +568,9 @@
       class="sound-toggle-btn gb-sound-btn"
       @click="toggleSound"
       :class="{ 'is-muted': !soundStatus }"
-      :aria-label="soundStatus ? '静音背景音乐' : '开启背景音乐'"
-      :title="soundStatus ? '静音背景音乐' : '开启背景音乐'"
+      :aria-label="soundStatus ? '关闭所有声音' : '开启所有声音'"
+      :title="soundStatus ? '关闭所有声音' : '开启所有声音'"
+      :aria-pressed="!soundStatus"
     >
       <!--
         内联 SVG（与 Lobby / WaitingRoom 同步），让图标颜色可继承 currentColor，
@@ -666,6 +622,17 @@
       <!-- 静音状态的脉动小红点，提醒用户当前为静音 -->
       <span class="gb-sound-mute-dot" aria-hidden="true"></span>
     </button>
+    <button type="button" class="gb-feedback-settings-btn" @click="effectsSettingsOpen = !effectsSettingsOpen" :aria-expanded="effectsSettingsOpen" aria-controls="gb-feedback-settings" aria-label="音效与特效设置" title="音效与特效设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 3v18M12 3v18M19 3v18"/><path d="M2 8h6M9 16h6M16 7h6" stroke-width="3" stroke-linecap="round"/></svg>
+    </button>
+    <div v-if="effectsSettingsOpen" id="gb-feedback-settings" class="gb-feedback-settings" @keydown.esc="effectsSettingsOpen = false">
+      <div class="gb-feedback-settings-heading"><span>声音与画面</span><button type="button" @click="effectsSettingsOpen = false" aria-label="关闭设置">×</button></div>
+      <label>背景音乐 <input type="range" min="0" max="1" step="0.05" v-model.number="audioLevels.music" /></label>
+      <label>语音 <input type="range" min="0" max="1" step="0.05" v-model.number="audioLevels.voice" /></label>
+      <label>音效 <input type="range" min="0" max="1" step="0.05" v-model.number="audioLevels.effects" /></label>
+      <label class="gb-feedback-quality">特效 <select v-model="effectsQuality"><option value="full">完整演出</option><option value="lite">轻量演出</option></select></label>
+      <a class="gb-feedback-credits" href="/effects/CREDITS.md" target="_blank" rel="noopener">音效来源与署名</a>
+    </div>
     <div class="my-card-count-vertical gb-count-chip">
       <span>剩</span>
       <span>余</span>

@@ -47,10 +47,31 @@ import {
   showGuixinModal,
   tieqiJudgeCards,
 } from "@/store/gameState.js";
-import { computed } from "vue";
-import { soundStatus, toggleSound, playBGM } from "@/store/audioManager.js";
+import { computed, ref } from "vue";
+import { audioLevels, soundStatus, toggleSound, playBGM } from "@/store/audioManager.js";
+import { effectsQuality } from "@/store/battleEffects.js";
 
 import { disconnectWebSocket, sendMsg, passTurn } from "@/store/gameSocket.js";
+
+const effectsSettingsOpen = ref(false);
+const phaseNotice = computed(() => {
+  const phase = currentAoeType.value;
+  if (!phase) return null;
+  const isMe = pendingAoePlayers.value.includes(userId.value);
+  const owner = pendingAoePlayers.value[0] === userId.value ? "你" : pendingAoePlayers.value[0] || aoeInitiator.value || "对手";
+  const base = { owner, stage: isMe ? "等待你的行动" : "等待响应", selected: selectedCards.value.length, required: 0, tone: "gold", symbol: "shield" };
+  if (phase === "GUSHOU_DISCARD") return { ...base, title: "固守弃牌", instruction: isMe ? `请选择 ${Math.min(2, handCards.value.length)} 张手牌` : "等待弃牌", required: isMe ? Math.min(2, handCards.value.length) : 0 };
+  if (phase === "KUROU_AWAKEN_DISCARD") return { ...base, title: "苦肉 · 觉醒", tone: "crimson", symbol: "flame", instruction: isMe ? "弃置 1 张黑色牌，或选择跳过" : "正在决定是否弃置黑色牌", required: isMe ? 1 : 0 };
+  if (phase === "GUIXIN_DECISION") return { ...base, title: "归心", tone: "jade", symbol: "heart", instruction: isMe ? `是否令 ${guixinPendingPasser.value} 本次不摸牌？` : "等待选择" };
+  if (phase === "GUANXING") return { ...base, title: "观星", tone: "jade", symbol: "star", instruction: isMe ? "从 5 张牌中选择 2 张加入手牌" : "正在观星选牌" };
+  if (phase === "WGFD") return { ...base, title: "五谷丰登", tone: "jade", symbol: "grain", instruction: "依次选择一张牌加入手牌" };
+  if (phase === "NMRQ" || phase === "WJQF") {
+    const anyCard = phase === "WJQF" && luanjianInitiator.value === userId.value;
+    const color = phase === "NMRQ" ? "红色牌或大王" : "黑色牌或小王";
+    return { ...base, title: phase === "NMRQ" ? "南蛮入侵" : "万箭齐发", tone: phase === "NMRQ" ? "crimson" : "gold", symbol: "arrow", instruction: isMe ? `弃置 1 张${anyCard ? "任意手牌" : color}` : "等待其他玩家响应", required: isMe ? 1 : 0 };
+  }
+  return null;
+});
 
 // ====== 卡牌图片与交互逻辑 ======
 const getCardImageUrl = (card) => {
@@ -121,7 +142,7 @@ const replaceCard = () => {
     c.selected = false;
     // =======================================================
   } else if (mySkill.value === "LUANJIAN") {
-    if (selectedCards.value.length !== 2) return alert("乱箭只能选择 1 张牌");
+    if (selectedCards.value.length !== 2) return alert("乱箭需要选择 2 张黑色牌");
     const isBlack = selectedCards.value.every(
       (c) => c.suit === "♠" || c.suit === "♣",
     );
@@ -247,6 +268,10 @@ const confirmGuixinDecision = (accept) => {
   sendMsg("GUIXIN_DECISION", { accept });
 };
 export {
+  phaseNotice,
+  effectsSettingsOpen,
+  effectsQuality,
+  audioLevels,
   userId,
   otherPlayers,
   currentTurn,
