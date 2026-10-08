@@ -1,5 +1,5 @@
-<div class="game-board gb-shell">
-  <BattleEffectsLayer />
+<div class="game-board gb-shell" :class="{ 'gb-tutorial': tutorialMode }" :data-tutorial-phase="tutorialPhase">
+  <BattleEffectsLayer :session="battleSession" />
   <div class="gb-scene-bg" aria-hidden="true"></div>
   <div class="gb-vignette" aria-hidden="true"></div>
   <div class="gb-petals" aria-hidden="true">
@@ -60,7 +60,7 @@
           :style="jdsrTarget === player.userId ? 'color: #ff8080; border-color: rgba(255,128,128,0.7); text-shadow: 0 0 5px rgba(231,76,60,0.5);' : ''"
         >
           {{ jdsrTarget === player.userId ? '借刀杀人...' : '思考中' }} ({{
-          countdown }}s)
+          tutorialMode ? '∞' : countdown + 's' }})
         </span>
         <span
           v-else-if="currentAoeType && pendingAoePlayers.includes(player.userId) && player.status !== 'WON' && player.status !== 'LOST'"
@@ -179,7 +179,7 @@
             </div>
           </div>
 
-          <div v-else-if="tableCards.length > 0" class="played-cards">
+          <div v-else-if="tableCards.length > 0" class="played-cards" data-tutorial-target="table">
             <p class="table-hint gb-played-owner"><span>上一手</span>{{ lastPlayPlayer }}</p>
             <div
               class="card-display-row"
@@ -420,7 +420,7 @@
         <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 3v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3M7 21v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> 正在等待 {{ currentTurn }} 行动...
       </div>
       <template v-else>
-        <div class="countdown-timer" :class="{ hurry: countdown <= 5 }">
+        <div class="countdown-timer" :class="{ hurry: !tutorialMode && countdown <= 5 }" :aria-label="tutorialMode ? '教学时间无限制' : undefined">
           <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle
               cx="12"
@@ -445,15 +445,18 @@
               stroke-linecap="round"
             />
           </svg>
-          {{ countdown }}s
+          {{ tutorialMode ? '∞' : countdown + 's' }}
         </div>
         <button
           v-if="mySkill !== 'GUANXING' && mySkill !== 'TIEQI' && !(mySkill === 'KUROU' && jdsrTarget === userId)"
           @click="replaceCard"
           class="gb-btn"
+          data-tutorial-target="replace"
+          :aria-label="tutorialMode ? '制衡' : undefined"
+          :data-tutorial-highlight="actionIsTarget('replace') || undefined"
           :class="mySkill === 'KUROU' ? 'kurou-btn gb-btn--kurou' : mySkill === 'GUIXIN' ? 'guixin-btn gb-btn--guixin' : 'pass-btn gb-btn--pass'"
           :disabled="
-            jdsrTarget === userId ? true :
+            !canBoardAction('replace') ? true : jdsrTarget === userId ? true :
             mySkill === 'ZHIHENG' ? selectedCards.length !== 1 : 
             mySkill === 'LUANJIAN' ? selectedCards.length !== 2 :
             mySkill === 'GUSHOU' ? (tableCards.length === 0 && !onlyHasScrolls) : 
@@ -473,8 +476,10 @@
         <button
           @click="passTurn"
           class="pass-btn gb-btn gb-btn--pass"
+          data-tutorial-target="pass"
+          :data-tutorial-highlight="actionIsTarget('pass') || undefined"
           :style="mySkill === 'GUANXING' ? 'background: linear-gradient(180deg,#8e44ad,#6f2c91); border-color: rgba(218,133,245,0.75); box-shadow: 0 0 10px rgba(155,89,182,0.5);' : ''"
-          :disabled="tableCards.length === 0 && !onlyHasScrolls"
+          :disabled="!canBoardAction('pass') || (tableCards.length === 0 && !onlyHasScrolls)"
         >
           {{ (tableCards.length === 0 && !onlyHasScrolls) ? "必须出牌" :
           (mySkill === 'GUANXING' ? "观星" : "要不起") }}
@@ -483,7 +488,9 @@
         <button
           @click="playCards"
           class="play-btn gb-btn gb-btn--play"
-          :disabled="selectedCards.length === 0"
+          data-tutorial-target="play"
+          :data-tutorial-highlight="actionIsTarget('play') || undefined"
+          :disabled="!canBoardAction('play') || selectedCards.length === 0"
         >
           出牌
         </button>
@@ -514,6 +521,15 @@
       :key="card.suit + card.rank + index"
       class="card"
       :class="{ selected: card.selected }"
+      :data-tutorial-target="'card:' + boardCardId(card)"
+      :data-tutorial-highlight="cardIsTarget(card) || undefined"
+      :role="tutorialMode ? 'button' : undefined"
+      :aria-label="tutorialMode ? '选择 ' + card.suit + card.rank : undefined"
+      :aria-pressed="tutorialMode ? card.selected : undefined"
+      :aria-disabled="tutorialMode ? !cardIsSelectable(card) : undefined"
+      :tabindex="tutorialMode && cardIsSelectable(card) ? 0 : undefined"
+      @keydown.enter.prevent="tutorialMode && toggleSelect(card)"
+      @keydown.space.prevent="tutorialMode && toggleSelect(card)"
       @click="toggleSelect(card)"
       :style="{ zIndex: index }"
     >
@@ -601,7 +617,7 @@
       <!-- 静音状态的脉动小红点，提醒用户当前为静音 -->
       <span class="gb-sound-mute-dot" aria-hidden="true"></span>
     </button>
-    <button type="button" class="gb-feedback-settings-btn" @click="effectsSettingsOpen = !effectsSettingsOpen" :aria-expanded="effectsSettingsOpen" aria-controls="gb-feedback-settings" aria-label="音效与特效设置" title="音效与特效设置">
+    <button v-if="!tutorialMode" type="button" class="gb-feedback-settings-btn" @click="effectsSettingsOpen = !effectsSettingsOpen" :aria-expanded="effectsSettingsOpen" aria-controls="gb-feedback-settings" aria-label="音效与特效设置" title="音效与特效设置">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 3v18M12 3v18M19 3v18"/><path d="M2 8h6M9 16h6M16 7h6" stroke-width="3" stroke-linecap="round"/></svg>
     </button>
     <div v-if="effectsSettingsOpen" id="gb-feedback-settings" class="gb-feedback-settings" @keydown.esc="effectsSettingsOpen = false">
@@ -612,7 +628,7 @@
       <label class="gb-feedback-quality">特效 <select v-model="effectsQuality"><option value="full">完整演出</option><option value="lite">轻量演出</option></select></label>
       <a class="gb-feedback-credits" href="/effects/CREDITS.md" target="_blank" rel="noopener">音效来源与署名</a>
     </div>
-    <div class="my-card-count-vertical gb-count-chip">
+    <div class="my-card-count-vertical gb-count-chip" data-tutorial-target="count">
       <span>剩</span>
       <span>余</span>
       <span class="num">{{ handCards.length }}</span>
@@ -620,7 +636,7 @@
     </div>
   </div>
 
-  <aside class="emoji-sidebar gb-emoji-sidebar">
+  <aside v-if="!tutorialMode" class="emoji-sidebar gb-emoji-sidebar">
     <div class="emoji-panel" v-show="showEmojiPanel">
       <div
         class="emoji-item"
@@ -666,9 +682,9 @@
     </button>
   </aside>
 
-  <button @click="exitGame" class="exit-btn gb-btn--exit">退出房间</button>
+  <button v-if="!tutorialMode" @click="exitGame" class="exit-btn gb-btn--exit">退出房间</button>
 
-  <div v-if="winner" class="game-over-modal">
+  <div v-if="winner && !tutorialMode" class="game-over-modal">
     <div class="gb-gameover-wrap">
       <div class="modal-content">
         <h2 class="bounce-text">游戏结束</h2>

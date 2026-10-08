@@ -9,7 +9,7 @@
         authUser &&
         !authUser.guest &&
         !showRuleDetail &&
-        !gameStarted
+        !gameStarted && !showTutorial
       "
     />
 
@@ -19,7 +19,7 @@
         isAuthenticated &&
         authUser &&
         !authUser.guest &&
-        dailySignInVisible
+        dailySignInVisible && !showTutorial
       "
       class="daily-signin-overlay"
     >
@@ -40,6 +40,7 @@
     </div>
 
     <AuthView v-if="!authChecked || !isAuthenticated" />
+    <TutorialView v-else-if="showTutorial && !isConnected && !isReconnecting" @exit="closeTutorial" />
     <Lobby v-else-if="!isConnected && !isReconnecting" />
 
     <div v-else class="game-table">
@@ -92,6 +93,8 @@ import WaitingRoom from "@/views/WaitingRoom/index.vue";
 import GameBoard from "@/views/GameBoard/index.vue";
 import RulesDetail from "@/views/RulesDetail/index.vue";
 import AccountHub from "@/views/Social/AccountHub.vue";
+import TutorialView from "@/views/Tutorial/index.vue";
+import { showTutorial, closeTutorial } from "@/store/tutorialState.js";
 
 let authHeartbeat = null;
 let socialHeartbeat = null;
@@ -139,6 +142,7 @@ onUnmounted(() => {
 watch(
   () => [isAuthenticated.value, authUser.value?.guest],
   ([authed, guest]) => {
+    if (!authed) closeTutorial();
     if (authed && !guest) {
       fetchSocialOverview();
       return;

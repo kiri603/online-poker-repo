@@ -20,8 +20,13 @@ let voiceQueue = [];
 let voiceDelay = null;
 let lastAudioName = "";
 let lastAudioTime = 0;
+const musicDuckingSources = new Set();
 const updateMusicVolume = () => {
-  if (currentBGM) currentBGM.volume = audioLevels.music * (voiceAudio ? 0.38 : 1);
+  if (currentBGM) currentBGM.volume = audioLevels.music * Math.min(voiceAudio ? 0.38 : 1, musicDuckingSources.size ? 0.45 : 1);
+};
+export const setMusicDucking = (source, enabled) => {
+  if (enabled) musicDuckingSources.add(source); else musicDuckingSources.delete(source);
+  updateMusicVolume();
 };
 watch(audioLevels, () => {
   try { window.localStorage.setItem("poker:audio-levels", JSON.stringify(audioLevels)); } catch { /* Storage may be disabled. */ }

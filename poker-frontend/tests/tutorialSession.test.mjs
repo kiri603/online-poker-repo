@@ -1,0 +1,148 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import vm from "node:vm";
+import { readFileSync } from "node:fs";
+import { computed, ref, shallowRef, watch, effectScope } from "vue";
+import { createTutorialController } from "../src/tutorial/tutorialController.js";
+import { cardId } from "../src/tutorial/tutorialMatch.js";
+import { TUTORIAL_NAMES, TUTORIAL_STEPS } from "../src/tutorial/tutorialScript.js";
+import { CAVALRY_TIMING, createFeedbackDirector } from "../src/store/battleFeedback.js";
+
+function setup() {
+  const timers = new Map(), delays = new Map(), listeners = new Map(), mounted = [], unmounted = [], ducking = [], music = [];
+  let timerId = 0, now = 0;
+  const scope = effectScope();
+  const document = { hidden: false, addEventListener: (name, fn) => listeners.set(name, fn),
+    removeEventListener: (name) => listeners.delete(name) };
+  const context = vm.createContext({ computed, ref, shallowRef, watch, createTutorialController,
+    cardId, TUTORIAL_NAMES, TUTORIAL_STEPS, document,
+    onMounted: (fn) => mounted.push(fn), onUnmounted: (fn) => unmounted.push(fn),
+    Date: { now: () => now }, CAVALRY_TIMING, createFeedbackDirector: () => createFeedbackDirector(() => now),
+    playBattleSound: () => {}, playCavalrySounds: () => {}, stopBattleSounds: () => {}, playVoicePresentation: () => {},
+    setTimeout: (fn, delay) => { timers.set(++timerId, fn); delays.set(timerId, delay); return timerId; }, clearTimeout: (id) => { timers.delete(id); delays.delete(id); },
+    getCardImageUrl: () => "card.png", handleImageError: () => {}, soundStatus: ref(true), toggleSound: () => {},
+    playAudio: () => {}, playCardAudio: () => {}, playBGM: (name) => music.push(name), stopGameAudio: () => {},
+    setMusicDucking: (source, active) => ducking.push({ source, active }),
+  });
+  const effectsSource = readFileSync(new URL("../src/store/battleEffects.js", import.meta.url), "utf8")
+    .replace(/^import[^\n]*\r?\n/gm, "").replace(/export const /g, "const ");
+  vm.runInContext(effectsSource, context);
+  const source = readFileSync(new URL("../src/tutorial/useTutorialSession.js", import.meta.url), "utf8")
+    .replace(/^import .*;\r?\n/gm, "").replace("export function", "function");
+  vm.runInContext(`${source}\nglobalThis.createSession = useTutorialSession;`, context);
+  const session = scope.run(() => context.createSession());
+  mounted.forEach((fn) => fn());
+  const tick = () => {
+    const [id, fn] = timers.entries().next().value;
+    now += delays.get(id); timers.delete(id); delays.delete(id); fn();
+  };
+  return { session, timers, delays, listeners, document, ducking, music, tick,
+    close: () => { unmounted.forEach((fn) => fn()); scope.stop(); } };
+}
+function firstAction(session) {
+  while (session.phase.value === "dialogue") session.controller.continueDialogue();
+  session.bindings.toggleSelect({ suit: "♠", rank: "3" });
+  assert.equal(session.bindings.playCards(), true);
+}
+
+test("visibility and exit confirmation cancel scheduled opponents without advancing the match", () => {
+  const t = setup();
+  try {
+    firstAction(t.session);
+    assert.equal(t.timers.size, 1);
+    const stale = [...t.timers.values()][0];
+    const before = JSON.stringify(t.session.snapshot.value.match);
+    t.document.hidden = true; t.listeners.get("visibilitychange")();
+    assert.equal(t.timers.size, 0);
+    stale();
+    assert.equal(JSON.stringify(t.session.snapshot.value.match), before);
+    t.session.bindings.exitGame();
+    t.document.hidden = false; t.listeners.get("visibilitychange")();
+    assert.equal(t.timers.size, 0);
+    t.session.cancelExit();
+    assert.equal(t.timers.size, 1);
+    t.tick();
+    assert.equal(t.session.snapshot.value.match.turn, "tortoise");
+    assert.equal(t.timers.size, 1);
+  } finally { t.close(); }
+});
+
+test("restart and unmount clear timers and prevent stale callbacks from progressing", () => {
+  const t = setup();
+  firstAction(t.session);
+  const stale = [...t.timers.values()][0];
+  t.session.restart();
+  assert.equal(t.timers.size, 0);
+  stale();
+  assert.equal(t.session.snapshot.value.stepIndex, 0);
+  assert.equal(t.session.bindings.handCards.value.length, 8);
+  firstAction(t.session);
+  const freshMatch = JSON.stringify(t.session.snapshot.value.match);
+  stale();
+  assert.equal(JSON.stringify(t.session.snapshot.value.match), freshMatch);
+  assert.equal(t.timers.size, 1);
+  const afterExit = [...t.timers.values()][0];
+  t.close();
+  assert.equal(t.timers.size, 0);
+  assert.equal(t.listeners.size, 0);
+  assert.deepEqual(t.ducking.at(-1), { source: "tutorial", active: false });
+  const before = JSON.stringify(t.session.snapshot.value);
+  afterExit();
+  assert.equal(JSON.stringify(t.session.snapshot.value), before);
+});
+
+test("the board bindings derive cards and turn from their own tutorial session", () => {
+  const first = setup(), second = setup();
+  try {
+    firstAction(first.session);
+    assert.equal(first.session.bindings.handCards.value.length, 7);
+    assert.equal(first.session.bindings.currentTurn.value, "青龙");
+    assert.equal(first.session.bindings.tableCards.value[0].rank, "3");
+    assert.equal(second.session.bindings.handCards.value.length, 8);
+    assert.equal(second.session.bindings.currentTurn.value, "你");
+    assert.equal(second.session.bindings.tableCards.value.length, 0);
+    assert.equal(second.session.bindings.countdown.value, 0);
+    assert.equal(second.session.bindings.showSkillSelection.value, false);
+  } finally { first.close(); second.close(); }
+});
+
+test("selecting the full target set moves the highlight from cards to the required button", () => {
+  const t = setup();
+  try {
+    const card = { suit: "♠", rank: "3" };
+    while (t.session.phase.value === "dialogue") t.session.controller.continueDialogue();
+    assert.equal(t.session.policy.isTarget(card), true);
+    assert.equal(t.session.policy.isActionTarget("play"), false);
+    t.session.bindings.toggleSelect(card);
+    assert.equal(t.session.policy.isTarget(card), false);
+    assert.equal(t.session.policy.isActionTarget("play"), true);
+    assert.equal(t.session.policy.canAction("pass"), false);
+    t.session.bindings.toggleSelect(card);
+    assert.equal(t.session.policy.isTarget(card), true);
+    assert.equal(t.session.policy.isActionTarget("play"), false);
+  } finally { t.close(); }
+});
+
+test("tutorial balance and straight use formal effects and finish before the next lecture", () => {
+  const t = setup();
+  try {
+    for (let i = 0; i < 6; i++) {
+      const step = TUTORIAL_STEPS[i];
+      while (t.session.phase.value === "dialogue") t.session.controller.continueDialogue();
+      for (const id of step.cards) t.session.controller.toggleCard(id);
+      assert.equal(t.session.controller.execute(step.action), true);
+      if (i === 4 || i === 5) {
+        const effect = t.session.battleSession.battleEffects.value.at(-1);
+        assert.equal(effect.kind, i === 4 ? "balance" : "straight");
+        assert.ok([...t.delays.values()][0] >= effect.duration);
+        assert.equal(t.session.bindings.activeActionTexts.value["你"]?.text, i === 4 ? "制衡" : undefined);
+      }
+      while (t.session.phase.value === "demo") t.tick();
+    }
+    assert.equal(t.session.phase.value, "complete");
+    assert.equal(t.music.at(-1), "Win");
+    t.session.restart();
+    assert.equal(t.music.at(-1), "Normal");
+    assert.equal(t.session.battleSession.battleEffects.value.length, 0);
+  } finally { t.close(); }
+});

@@ -23,7 +23,7 @@ function setup() {
   });
   const source = readFileSync(new URL("../src/store/audioManager.js", import.meta.url), "utf8");
   const clean = source.replace(/^import[\s\S]*?from\s+"[^"]+";\r?\n/gm, "").replace(/export const /g, "const ");
-  vm.runInContext(`${clean}\nglobalThis.api = { playBGM, playAudio, playCardAudio, playVoicePresentation, stopGameAudio, audioLevels };`, context);
+  vm.runInContext(`${clean}\nglobalThis.api = { playBGM, playAudio, playCardAudio, playVoicePresentation, stopGameAudio, audioLevels, setMusicDucking };`, context);
   return { audios, api: context.api, mute: () => { sound.value = false; watchers.find((w) => w.source === sound).cb(false); } };
 }
 
@@ -37,6 +37,19 @@ test("skill speech ducks music and restores its level when speech ends", () => {
   assert.equal(t.audios[1].volume, .9);
   t.audios[1].onended();
   assert.equal(bgm.volume, .3);
+});
+
+test("tutorial dialogue ducking survives speech completion and restores the user's music level", () => {
+  const t = setup();
+  t.api.playBGM("Normal");
+  t.api.setMusicDucking("tutorial", true);
+  assert.equal(t.audios[0].volume, .3 * .45);
+  t.api.playAudio("single_3");
+  assert.equal(t.audios[0].volume, .3 * .38);
+  t.audios[1].onended();
+  assert.equal(t.audios[0].volume, .3 * .45);
+  t.api.setMusicDucking("tutorial", false);
+  assert.equal(t.audios[0].volume, .3);
 });
 
 test("mute stops current speech, queued speech, effects and countdown immediately", () => {

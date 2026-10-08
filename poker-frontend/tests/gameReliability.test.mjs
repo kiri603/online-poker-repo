@@ -15,6 +15,7 @@ function setup() {
   storage.set("poker:tab-auth-token", "token");
   const listeners = new Map();
   const playedAudio = [];
+  const tutorialInvitations = [];
   const sessionStorage = {
     getItem: (key) => storage.get(key) || null,
     setItem: (key, value) => storage.set(key, value),
@@ -35,7 +36,7 @@ function setup() {
     getTabAuthToken: () => storage.get("poker:tab-auth-token") || "", getWsBaseUrl: () => "ws://localhost",
     clearTabAuthToken: () => storage.delete("poker:tab-auth-token"),
     setTabAuthToken: (value) => storage.set("poker:tab-auth-token", value),
-    resetSocialState: () => {}, resetAuthState: async () => {},
+    resetSocialState: () => {}, resetAuthState: async () => {}, queueTutorialInvitation: (user) => tutorialInvitations.push(user),
     playAudio: (name) => playedAudio.push(name), playCardAudio: () => {}, playBGM: () => {}, stopCountdownAudio: () => {},
     clearBattleEffects: () => {}, handleBattleFeedback: () => {}, stopGameAudio: () => {},
     setInterval: (fn, ms) => { intervals.set(++timerId, { fn, ms }); return timerId; },
@@ -78,10 +79,10 @@ function setup() {
       ? { ok: status === 200, status, json: async () => ({ username: "p1", guest: false, tabToken: "token" }) }
       : { ok: true, json: async () => ({}) };
     const source = read("authStore");
-    vm.runInContext(`(() => { ${stripImports(source).replace(/export const /g, "const ")}\nglobalThis.authApi = {verifyCurrentSession, resetAuthState, bootstrapAuth, submitGuestLogin}; })()`, context);
+    vm.runInContext(`(() => { ${stripImports(source).replace(/export const /g, "const ")}\nglobalThis.authApi = {verifyCurrentSession, resetAuthState, bootstrapAuth, submitAuth, submitGuestLogin}; })()`, context);
     context.resetAuthState = context.authApi.resetAuthState;
   }
-  return { context, state, sockets, socket, intervals, timeouts, loadAuth, playedAudio };
+  return { context, state, sockets, socket, intervals, timeouts, loadAuth, playedAudio, tutorialInvitations };
 }
 
 test("temporary auth HTTP 503 retains the authenticated game", async () => {
@@ -121,6 +122,54 @@ test("initial session bootstrap still restores a valid login", async () => {
   await t.context.authApi.bootstrapAuth();
   assert.equal(t.state.authChecked.value, true);
   assert.equal(t.state.isAuthenticated.value, true);
+  assert.equal(t.tutorialInvitations.length, 0);
+});
+
+test("successful registration queues an invitation before the lobby receives the account", async () => {
+  const t = setup();
+  t.loadAuth(200);
+  t.state.authMode.value = "register";
+  const user = { id: 42, username: "new_account", guest: false };
+  let accountAtQueue = null;
+  t.context.queueTutorialInvitation = (data) => {
+    accountAtQueue = t.state.authUser.value;
+    t.tutorialInvitations.push(data);
+  };
+  t.context.apiFetch = async () => ({ ok: true, json: async () => user });
+  await t.context.authApi.submitAuth();
+  assert.deepEqual(t.tutorialInvitations, [user]);
+  assert.equal(accountAtQueue.username, "p1");
+  assert.equal(t.state.authUser.value, user);
+});
+
+test("changing the auth tab during registration cannot suppress its invitation", async () => {
+  const t = setup();
+  t.loadAuth(200);
+  t.state.authMode.value = "register";
+  let finish;
+  const pending = new Promise((resolve) => { finish = resolve; });
+  t.context.apiFetch = async (endpoint) => {
+    assert.equal(endpoint, "/api/auth/register");
+    await pending;
+    return { ok: true, json: async () => ({ id: 43, username: "new_account", guest: false }) };
+  };
+  const registration = t.context.authApi.submitAuth();
+  t.state.authMode.value = "login";
+  finish();
+  await registration;
+  assert.equal(t.tutorialInvitations.length, 1);
+});
+
+test("existing account login and failed registration never queue invitations", async () => {
+  const t = setup();
+  t.loadAuth(200);
+  t.state.authMode.value = "login";
+  t.context.apiFetch = async () => ({ ok: true, json: async () => ({ id: 44, username: "existing", guest: false }) });
+  await t.context.authApi.submitAuth();
+  t.state.authMode.value = "register";
+  t.context.apiFetch = async () => ({ ok: false, json: async () => ({ message: "test registration rejected" }) });
+  await t.context.authApi.submitAuth();
+  assert.equal(t.tutorialInvitations.length, 0);
 });
 
 test("abnormal disconnect preserves the game and schedules recovery", () => {

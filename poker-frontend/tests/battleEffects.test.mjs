@@ -20,7 +20,7 @@ function setup() {
   });
   const source = readFileSync(new URL("../src/store/battleEffects.js", import.meta.url), "utf8")
     .replace(/^import[^\n]*\r?\n/gm, "").replace(/export const /g, "const ");
-  vm.runInContext(`${source}\nglobalThis.api = { battleEffects, handleBattleFeedback, clearBattleEffects };`, context);
+  vm.runInContext(`${source}\nglobalThis.api = { battleEffects, handleBattleFeedback, clearBattleEffects, createBattleEffectsSession };`, context);
   return { ...context.api, sounds, voices, timers, setTime: (value) => { now = value; } };
 }
 
@@ -61,4 +61,26 @@ test("reset cancels both queued judgement and its delayed cavalry result", () =>
     assert.equal(t.sounds.includes("cavalry"), false);
     assert.equal(t.timers.size, 0);
   }
+});
+
+test("independent effects sessions use the formal presentation without clearing each other", () => {
+  const t = setup();
+  const tutorial = t.createBattleEffectsSession();
+  t.handleBattleFeedback({ event: "CARDS_PLAYED", userId: "live", cards: [{ suit: "♠", rank: "3" }] });
+  tutorial.handleBattleFeedback({ event: "PLAYER_REPLACED", userId: "你" });
+  assert.equal(t.battleEffects.value[0].kind, "card");
+  assert.equal(tutorial.battleEffects.value[0].kind, "balance");
+  assert.equal(tutorial.battleEffects.value[0].duration, 1500);
+  assert.equal(tutorial.battleEffects.value[0].title, "制衡");
+  tutorial.clearBattleEffects();
+  assert.equal(t.battleEffects.value.length, 1);
+  const cards = ["5", "6", "7", "8", "9", "10"].map(rank => ({ suit: "♥", rank }));
+  tutorial.handleBattleFeedback({ event: "CARDS_PLAYED", userId: "你", cards });
+  assert.equal(tutorial.battleEffects.value[0].kind, "straight");
+  assert.equal(tutorial.battleEffects.value[0].duration, 1300);
+  t.clearBattleEffects();
+  assert.equal(tutorial.battleEffects.value.length, 1);
+  t.setTime(1300);
+  tutorial.expireBattleEffects();
+  assert.equal(tutorial.battleEffects.value.length, 0);
 });

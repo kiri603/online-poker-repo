@@ -4,7 +4,18 @@
 import BattleEffectsLayer from "./BattleEffectsLayer.vue";
 import BattlePhaseNotice from "./BattlePhaseNotice.vue";
 // 【核心修复 1】：移除了 onMounted 中的 playBGM("Normal")。
-import {
+import { computed } from "vue";
+import * as liveBindings from "./GameBoard.js";
+const props = defineProps({ session: { type: Object, default: null } });
+const tutorialMode = !!props.session;
+const battleSession = props.session?.battleSession || null;
+const tutorialPhase = computed(() => props.session?.phase.value || "");
+const canBoardAction = (action) => props.session?.policy.canAction(action) ?? true;
+const cardIsSelectable = (card) => props.session?.policy.canSelect(card) ?? true;
+const cardIsTarget = (card) => props.session?.policy.isTarget(card) ?? false;
+const actionIsTarget = (action) => props.session?.policy.isActionTarget(action) ?? false;
+const boardCardId = (card) => card.suit === "JOKER" ? card.rank : card.suit + card.rank;
+const {
   phaseNotice,
   effectsSettingsOpen,
   effectsQuality,
@@ -80,10 +91,11 @@ import {
   confirmKurouAwakenDiscard,
   skipKurouAwakenDiscard,
   tieqiJudgeCards,
-} from "./GameBoard.js";
+} = props.session?.bindings || liveBindings;
 
 // ====== 【核心修复 2：防脱发防白屏机制】 ======
 const _exposeToHtml = {
+  tutorialMode, tutorialPhase, battleSession, canBoardAction, cardIsSelectable, cardIsTarget, actionIsTarget, boardCardId,
   phaseNotice,
   effectsSettingsOpen,
   effectsQuality,

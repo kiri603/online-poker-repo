@@ -7,6 +7,7 @@ import {
 } from "./serverConfig.js";
 import { resetSocialState } from "./socialStore.js";
 import { disconnectWebSocket } from "./gameSocket.js";
+import { queueTutorialInvitation } from "./tutorialState.js";
 
 const ACTIVE_TAB_PREFIX = "poker:active-tab:";
 const TAB_ID_KEY = "poker:tab-id";
@@ -268,11 +269,12 @@ export const bootstrapAuth = async () => {
 };
 
 export const submitAuth = async () => {
+  const isRegistration = state.authMode.value === "register";
   clearAuthMessages();
   state.authLoading.value = true;
   try {
     const endpoint =
-      state.authMode.value === "register" ? "/api/auth/register" : "/api/auth/login";
+      isRegistration ? "/api/auth/register" : "/api/auth/login";
     const response = await apiFetch(endpoint, {
       method: "POST",
       body: JSON.stringify({
@@ -286,6 +288,7 @@ export const submitAuth = async () => {
       throw new Error(data.message || "操作失败");
     }
 
+    if (isRegistration) queueTutorialInvitation(data);
     state.authUser.value = data;
     state.isAuthenticated.value = true;
     state.userId.value = data.username;

@@ -2,6 +2,8 @@
 
 <script setup>
 import { onMounted, onUnmounted } from "vue";
+import TutorialInvitation from "@/views/Tutorial/TutorialInvitation.vue";
+import { openTutorial } from "@/store/tutorialState.js";
 import {
   activeInfoTab,
   closeInfoPanel,
@@ -33,6 +35,7 @@ import {
 } from "./Lobby.js";
 
 const _exposeToHtml = {
+  openTutorial,
   activeInfoTab,
   closeInfoPanel,
   confirmCreateRoom,

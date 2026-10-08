@@ -24,9 +24,12 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { battleEffects, effectsQuality, expireBattleEffects } from "@/store/battleEffects.js";
+import * as liveEffects from "@/store/battleEffects.js";
 import { warmBattleSounds } from "@/store/battleSound.js";
 
+const props = defineProps({ session: { type: Object, default: null } });
+const { battleEffects, expireBattleEffects } = props.session || liveEffects;
+const { effectsQuality } = liveEffects;
 const canvasHost = ref(null);
 const failed = ref(false);
 const stage = ref("idle");

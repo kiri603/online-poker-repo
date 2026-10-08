@@ -1,4 +1,5 @@
 <div class="lobby-shell">
+  <TutorialInvitation />
   <div class="lobby-vignette" aria-hidden="true"></div>
 
   <div class="lobby-top-left">
@@ -10,6 +11,13 @@
     </div>
 
     <div class="lobby-side-buttons">
+      <button type="button" class="side-btn side-btn--tutorial" @click="openTutorial">
+        <svg class="side-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M3 5h7a3 3 0 0 1 2 2 3 3 0 0 1 2-2h7v14h-7a3 3 0 0 0-2 2 3 3 0 0 0-2-2H3V5Z" />
+          <path d="M12 7v14M6 9h3M6 13h3M15 9h3M15 13h3" />
+        </svg>
+        <span>新手教学</span>
+      </button>
       <button
         type="button"
         class="side-btn"
@@ -232,6 +240,8 @@
       <div v-if="activeInfoTab === 'updates'" class="info-body">
         <h2 class="info-headline">最新更新内容</h2>
         <ul class="info-list">
+
+          <li><span class="info-bullet updates"></span><div><strong>新手教学已上线，可从大厅进入。</strong></div></li>
 
           <li>
             <span class="info-bullet skills"></span>
