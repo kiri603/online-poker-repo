@@ -1,0 +1,101 @@
+{
+  "name": "元气甜妹",
+  "selected_audition": "01",
+  "source": "https://huggingface.co/spaces/Qwen/Qwen3-TTS",
+  "design_model": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+  "design_description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording.",
+  "reference_sha256": "e5a9605f5f581514850e659c0d07f33324aa30484c8b0a1102c4766e96842fd5",
+  "generation_method": "voice_design",
+  "generation_seed": 42,
+  "delivery_profiles": {
+    "natural-r1": {
+      "description_suffix": " Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+      "generation": {
+        "temperature": 0.7,
+        "subtalker_temperature": 0.7
+      },
+      "audio_processing": {
+        "peak": 0.85,
+        "fade_ms": 20
+      }
+    },
+    "natural-r2": {
+      "description_suffix": " Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+      "generation": {
+        "temperature": 0.7,
+        "subtalker_temperature": 0.7
+      },
+      "audio_processing": {
+        "peak": 0.85,
+        "fade_ms": 20
+      }
+    },
+    "natural-r2-tone": {
+      "description_suffix": " Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+      "generation": {
+        "temperature": 0.7,
+        "subtalker_temperature": 0.7
+      },
+      "audio_processing": {
+        "peak": 0.85,
+        "fade_ms": 20
+      },
+      "seed": 43
+    },
+    "natural-r3": {
+      "description_suffix": " Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+      "generation": {
+        "temperature": 0.7,
+        "subtalker_temperature": 0.7
+      },
+      "audio_processing": {
+        "peak": 0.85,
+        "fade_ms": 20
+      }
+    },
+    "original-r3": {
+      "description_suffix": "",
+      "generation": {},
+      "audio_processing": {
+        "peak": 1,
+        "fade_ms": 0
+      }
+    },
+    "natural-r5": {
+      "description_suffix": " Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy. Preserve the same bright, sweet, youthful timbre throughout. Express happiness as a small, gentle smile with restrained energy. Say 好耶 softly as pleased conversation, without a cheering attack. Keep 嘿嘿 short and lightly smiling, not a loud laugh. Keep the loudness steady and the onset of every phrase gentle, with no sudden pitch jumps or startled exclamations. Do not lower or darken the voice to make it calmer.",
+      "generation": {
+        "temperature": 0.7,
+        "subtalker_temperature": 0.7
+      },
+      "audio_processing": {
+        "peak": 0.72,
+        "fade_ms": 35
+      }
+    }
+  },
+  "line_profiles": {
+    "basic-1-3": "natural-r1",
+    "basic-2-2": "natural-r1",
+    "basic-5-1": "natural-r1",
+    "basic-6-1": "natural-r2-tone",
+    "basic-complete": "natural-r5",
+    "advanced-1-2": "natural-r1",
+    "advanced-1-3": "natural-r2",
+    "advanced-4-1": "natural-r1",
+    "advanced-4-2": "natural-r2-tone",
+    "advanced-6-1": "natural-r1",
+    "advanced-7-1": "natural-r1",
+    "advanced-7-2": "natural-r1",
+    "advanced-8-1": "natural-r1",
+    "advanced-8-2": "natural-r1",
+    "advanced-8-3": "natural-r1",
+    "advanced-9-1": "natural-r1",
+    "advanced-9-2": "natural-r1",
+    "advanced-complete": "natural-r1",
+    "basic-3-1": "natural-r2",
+    "basic-6-2": "natural-r1",
+    "error": "natural-r2",
+    "invitation": "original-r3",
+    "advanced-1-1": "original-r3"
+  }
+}

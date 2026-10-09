@@ -1,0 +1,7653 @@
+{
+  "clips": {
+    "invitation": {
+      "text": "呀，主公你来啦！嘿嘿～第一次玩也不用紧张，有小桃陪着你呢！要不要先一起练习一局？别紧张，我会慢慢教你的！要是现在不想玩，之后也可以从大厅找到我哦～",
+      "duration_seconds": 14.8,
+      "file": "invitation.original-r3.mp3",
+      "method": "voice_design",
+      "fingerprint": "fafe6cccf8f86888759e7cbe835e825c1d06585c105a0ec05302b8cd6f7e29f8",
+      "sha256": "b93495ec2ff113257b01cbefef9bb6b3ca4e8839a4214db3ea067cad32265970",
+      "recipe": {
+        "profile": "original-r3",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048
+        },
+        "audio_processing": {
+          "peak": 1,
+          "fade_ms": 0
+        }
+      },
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 2
+        },
+        {
+          "time": 0.64,
+          "end": 3
+        },
+        {
+          "time": 0.8,
+          "end": 4
+        },
+        {
+          "time": 0.96,
+          "end": 5
+        },
+        {
+          "time": 1.04,
+          "end": 6
+        },
+        {
+          "time": 1.44,
+          "end": 8
+        },
+        {
+          "time": 1.92,
+          "end": 9
+        },
+        {
+          "time": 2.0,
+          "end": 11
+        },
+        {
+          "time": 3.04,
+          "end": 12
+        },
+        {
+          "time": 3.12,
+          "end": 13
+        },
+        {
+          "time": 3.2,
+          "end": 14
+        },
+        {
+          "time": 3.36,
+          "end": 15
+        },
+        {
+          "time": 3.52,
+          "end": 16
+        },
+        {
+          "time": 3.6,
+          "end": 17
+        },
+        {
+          "time": 3.68,
+          "end": 18
+        },
+        {
+          "time": 3.84,
+          "end": 19
+        },
+        {
+          "time": 4.08,
+          "end": 21
+        },
+        {
+          "time": 4.64,
+          "end": 22
+        },
+        {
+          "time": 4.8,
+          "end": 23
+        },
+        {
+          "time": 5.04,
+          "end": 24
+        },
+        {
+          "time": 5.28,
+          "end": 25
+        },
+        {
+          "time": 5.36,
+          "end": 26
+        },
+        {
+          "time": 5.52,
+          "end": 27
+        },
+        {
+          "time": 5.6,
+          "end": 29
+        },
+        {
+          "time": 6.72,
+          "end": 30
+        },
+        {
+          "time": 6.88,
+          "end": 31
+        },
+        {
+          "time": 6.88,
+          "end": 32
+        },
+        {
+          "time": 7.04,
+          "end": 33
+        },
+        {
+          "time": 7.28,
+          "end": 34
+        },
+        {
+          "time": 7.36,
+          "end": 35
+        },
+        {
+          "time": 7.44,
+          "end": 36
+        },
+        {
+          "time": 7.6,
+          "end": 37
+        },
+        {
+          "time": 7.76,
+          "end": 38
+        },
+        {
+          "time": 7.84,
+          "end": 40
+        },
+        {
+          "time": 8.96,
+          "end": 41
+        },
+        {
+          "time": 9.12,
+          "end": 42
+        },
+        {
+          "time": 9.28,
+          "end": 44
+        },
+        {
+          "time": 9.44,
+          "end": 45
+        },
+        {
+          "time": 9.92,
+          "end": 46
+        },
+        {
+          "time": 10.0,
+          "end": 47
+        },
+        {
+          "time": 10.08,
+          "end": 48
+        },
+        {
+          "time": 10.4,
+          "end": 49
+        },
+        {
+          "time": 10.56,
+          "end": 50
+        },
+        {
+          "time": 10.64,
+          "end": 52
+        },
+        {
+          "time": 11.52,
+          "end": 53
+        },
+        {
+          "time": 11.6,
+          "end": 54
+        },
+        {
+          "time": 11.76,
+          "end": 55
+        },
+        {
+          "time": 12.0,
+          "end": 56
+        },
+        {
+          "time": 12.16,
+          "end": 57
+        },
+        {
+          "time": 12.24,
+          "end": 58
+        },
+        {
+          "time": 12.48,
+          "end": 60
+        },
+        {
+          "time": 12.96,
+          "end": 61
+        },
+        {
+          "time": 13.12,
+          "end": 62
+        },
+        {
+          "time": 13.2,
+          "end": 63
+        },
+        {
+          "time": 13.36,
+          "end": 64
+        },
+        {
+          "time": 13.44,
+          "end": 65
+        },
+        {
+          "time": 13.52,
+          "end": 66
+        },
+        {
+          "time": 13.68,
+          "end": 67
+        },
+        {
+          "time": 13.84,
+          "end": 68
+        },
+        {
+          "time": 14.0,
+          "end": 69
+        },
+        {
+          "time": 14.16,
+          "end": 70
+        },
+        {
+          "time": 14.32,
+          "end": 71
+        },
+        {
+          "time": 14.4,
+          "end": 73
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "b93495ec2ff113257b01cbefef9bb6b3ca4e8839a4214db3ea067cad32265970",
+        "text_sha256": "17952da1e855b7c999cf9c1805a06b404bca27675f9cd64d418c1d17e8ed21a4"
+      }
+    },
+    "basic-1-1": {
+      "text": "好耶！那就开始啦～这局是练习，你和另外两位对手各有 8 张牌。谁先把手牌全部出光，谁就赢啦！",
+      "duration_seconds": 8.16,
+      "file": "basic-1-1.mp3",
+      "method": "voice_design",
+      "fingerprint": "a50da3fbb9f720ad35fea63a0182550722d1df0f54b559dfd01c718cac5eeef8",
+      "sha256": "59dfdc309363c97e0c6b081c01ef11a788bfb1a2f93b89bf321a47155cab3d51",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 3
+        },
+        {
+          "time": 0.72,
+          "end": 4
+        },
+        {
+          "time": 0.88,
+          "end": 5
+        },
+        {
+          "time": 1.04,
+          "end": 6
+        },
+        {
+          "time": 1.2,
+          "end": 7
+        },
+        {
+          "time": 1.28,
+          "end": 9
+        },
+        {
+          "time": 2.0,
+          "end": 10
+        },
+        {
+          "time": 2.24,
+          "end": 11
+        },
+        {
+          "time": 2.32,
+          "end": 12
+        },
+        {
+          "time": 2.48,
+          "end": 13
+        },
+        {
+          "time": 2.72,
+          "end": 15
+        },
+        {
+          "time": 3.36,
+          "end": 16
+        },
+        {
+          "time": 3.52,
+          "end": 17
+        },
+        {
+          "time": 3.6,
+          "end": 18
+        },
+        {
+          "time": 3.76,
+          "end": 19
+        },
+        {
+          "time": 3.84,
+          "end": 20
+        },
+        {
+          "time": 4.08,
+          "end": 21
+        },
+        {
+          "time": 4.16,
+          "end": 22
+        },
+        {
+          "time": 4.32,
+          "end": 23
+        },
+        {
+          "time": 4.48,
+          "end": 24
+        },
+        {
+          "time": 4.72,
+          "end": 26
+        },
+        {
+          "time": 4.8,
+          "end": 28
+        },
+        {
+          "time": 4.88,
+          "end": 29
+        },
+        {
+          "time": 5.12,
+          "end": 31
+        },
+        {
+          "time": 5.76,
+          "end": 32
+        },
+        {
+          "time": 6.0,
+          "end": 33
+        },
+        {
+          "time": 6.16,
+          "end": 34
+        },
+        {
+          "time": 6.24,
+          "end": 35
+        },
+        {
+          "time": 6.4,
+          "end": 36
+        },
+        {
+          "time": 6.64,
+          "end": 37
+        },
+        {
+          "time": 6.88,
+          "end": 38
+        },
+        {
+          "time": 6.96,
+          "end": 39
+        },
+        {
+          "time": 7.12,
+          "end": 41
+        },
+        {
+          "time": 7.44,
+          "end": 42
+        },
+        {
+          "time": 7.6,
+          "end": 43
+        },
+        {
+          "time": 7.84,
+          "end": 44
+        },
+        {
+          "time": 7.84,
+          "end": 46
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "59dfdc309363c97e0c6b081c01ef11a788bfb1a2f93b89bf321a47155cab3d51",
+        "text_sha256": "d0cd1739ebb44a99a2788cbb02feaf8a79cfd32db2051cbe6c60c9f33a4886c8"
+      }
+    },
+    "basic-1-2": {
+      "text": "对了，正式对局可是有倒计时的哦！不过现在不用着急，这局不限时，跟着小桃慢慢来就好～",
+      "duration_seconds": 8.4,
+      "file": "basic-1-2.mp3",
+      "method": "voice_design",
+      "fingerprint": "38c07edba924b5841a0c1a081e96f8a2f5c2a203896ad9f3e782b016afb58775",
+      "sha256": "a894c79541d26c8334394b7f4f777a88a24046c9a026b2d461a8c253633999a8",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.32,
+          "end": 3
+        },
+        {
+          "time": 0.64,
+          "end": 4
+        },
+        {
+          "time": 0.88,
+          "end": 5
+        },
+        {
+          "time": 1.04,
+          "end": 6
+        },
+        {
+          "time": 1.2,
+          "end": 7
+        },
+        {
+          "time": 1.36,
+          "end": 8
+        },
+        {
+          "time": 1.52,
+          "end": 9
+        },
+        {
+          "time": 1.6,
+          "end": 10
+        },
+        {
+          "time": 1.76,
+          "end": 11
+        },
+        {
+          "time": 1.92,
+          "end": 12
+        },
+        {
+          "time": 2.08,
+          "end": 13
+        },
+        {
+          "time": 2.24,
+          "end": 14
+        },
+        {
+          "time": 2.64,
+          "end": 16
+        },
+        {
+          "time": 3.28,
+          "end": 17
+        },
+        {
+          "time": 3.36,
+          "end": 18
+        },
+        {
+          "time": 3.52,
+          "end": 19
+        },
+        {
+          "time": 3.68,
+          "end": 20
+        },
+        {
+          "time": 3.84,
+          "end": 21
+        },
+        {
+          "time": 3.92,
+          "end": 22
+        },
+        {
+          "time": 4.08,
+          "end": 23
+        },
+        {
+          "time": 4.32,
+          "end": 25
+        },
+        {
+          "time": 4.96,
+          "end": 26
+        },
+        {
+          "time": 5.2,
+          "end": 27
+        },
+        {
+          "time": 5.36,
+          "end": 28
+        },
+        {
+          "time": 5.44,
+          "end": 29
+        },
+        {
+          "time": 5.76,
+          "end": 31
+        },
+        {
+          "time": 6.56,
+          "end": 32
+        },
+        {
+          "time": 6.72,
+          "end": 33
+        },
+        {
+          "time": 6.8,
+          "end": 34
+        },
+        {
+          "time": 7.04,
+          "end": 35
+        },
+        {
+          "time": 7.2,
+          "end": 36
+        },
+        {
+          "time": 7.36,
+          "end": 37
+        },
+        {
+          "time": 7.52,
+          "end": 38
+        },
+        {
+          "time": 7.76,
+          "end": 39
+        },
+        {
+          "time": 8.0,
+          "end": 41
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "a894c79541d26c8334394b7f4f777a88a24046c9a026b2d461a8c253633999a8",
+        "text_sha256": "58055985300b264efd7bc232600c12fc290048dfd528024d3896f0bcb6fefdb7"
+      }
+    },
+    "basic-1-3": {
+      "text": "来，看到那张黑桃 3 了吗？点一下选中它，再点击「出牌」。嘿嘿，先把我们的第一张牌打出去吧！",
+      "duration_seconds": 8.24,
+      "file": "basic-1-3.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "d7fed0fc9df73272e6389331b726180a0debfe9980a489bafc4d5a871af8b40e",
+      "fingerprint": "d937cee9930884df453284ec5114efb9bdd1bad7715adcaf7298841e37adb2f0",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 2
+        },
+        {
+          "time": 0.64,
+          "end": 3
+        },
+        {
+          "time": 0.8,
+          "end": 4
+        },
+        {
+          "time": 0.88,
+          "end": 5
+        },
+        {
+          "time": 0.96,
+          "end": 6
+        },
+        {
+          "time": 1.12,
+          "end": 7
+        },
+        {
+          "time": 1.28,
+          "end": 9
+        },
+        {
+          "time": 1.36,
+          "end": 11
+        },
+        {
+          "time": 1.92,
+          "end": 12
+        },
+        {
+          "time": 1.92,
+          "end": 14
+        },
+        {
+          "time": 2.48,
+          "end": 15
+        },
+        {
+          "time": 2.72,
+          "end": 16
+        },
+        {
+          "time": 2.72,
+          "end": 17
+        },
+        {
+          "time": 2.96,
+          "end": 18
+        },
+        {
+          "time": 3.12,
+          "end": 19
+        },
+        {
+          "time": 3.36,
+          "end": 21
+        },
+        {
+          "time": 3.76,
+          "end": 22
+        },
+        {
+          "time": 3.92,
+          "end": 23
+        },
+        {
+          "time": 4.08,
+          "end": 25
+        },
+        {
+          "time": 4.16,
+          "end": 26
+        },
+        {
+          "time": 4.4,
+          "end": 29
+        },
+        {
+          "time": 4.56,
+          "end": 30
+        },
+        {
+          "time": 5.76,
+          "end": 32
+        },
+        {
+          "time": 6.24,
+          "end": 33
+        },
+        {
+          "time": 6.48,
+          "end": 34
+        },
+        {
+          "time": 6.64,
+          "end": 35
+        },
+        {
+          "time": 6.72,
+          "end": 36
+        },
+        {
+          "time": 6.8,
+          "end": 37
+        },
+        {
+          "time": 6.88,
+          "end": 38
+        },
+        {
+          "time": 6.96,
+          "end": 39
+        },
+        {
+          "time": 7.28,
+          "end": 40
+        },
+        {
+          "time": 7.36,
+          "end": 41
+        },
+        {
+          "time": 7.44,
+          "end": 42
+        },
+        {
+          "time": 7.6,
+          "end": 43
+        },
+        {
+          "time": 7.68,
+          "end": 44
+        },
+        {
+          "time": 7.84,
+          "end": 46
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "d7fed0fc9df73272e6389331b726180a0debfe9980a489bafc4d5a871af8b40e",
+        "text_sha256": "5fb93cafa155d5cc64a325d2070dbaf938659e7e42aa9ebd88b47bfee75d98d0"
+      }
+    },
+    "basic-2-1": {
+      "text": "欸，对手出了一张 6！想压过它，就得用更大的单张才行。我们手里的这张 9 就刚刚好！",
+      "duration_seconds": 7.36,
+      "file": "basic-2-1.mp3",
+      "method": "voice_design",
+      "fingerprint": "fd4a09be4bfab7839338630dc06c80dfd727652c12a58c612d4fee867cde39b1",
+      "sha256": "81719817a6bcbb501a063e5bd2836c3229a5198ea9c43440b8e1ec02b9ff9c53",
+      "subtitle_cues": [
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.56,
+          "end": 3
+        },
+        {
+          "time": 0.72,
+          "end": 4
+        },
+        {
+          "time": 0.8,
+          "end": 5
+        },
+        {
+          "time": 0.96,
+          "end": 6
+        },
+        {
+          "time": 1.12,
+          "end": 7
+        },
+        {
+          "time": 1.12,
+          "end": 9
+        },
+        {
+          "time": 2.08,
+          "end": 11
+        },
+        {
+          "time": 2.16,
+          "end": 12
+        },
+        {
+          "time": 2.16,
+          "end": 13
+        },
+        {
+          "time": 2.32,
+          "end": 14
+        },
+        {
+          "time": 2.48,
+          "end": 16
+        },
+        {
+          "time": 2.96,
+          "end": 17
+        },
+        {
+          "time": 3.12,
+          "end": 18
+        },
+        {
+          "time": 3.2,
+          "end": 19
+        },
+        {
+          "time": 3.36,
+          "end": 20
+        },
+        {
+          "time": 3.6,
+          "end": 21
+        },
+        {
+          "time": 3.68,
+          "end": 22
+        },
+        {
+          "time": 3.76,
+          "end": 23
+        },
+        {
+          "time": 3.92,
+          "end": 24
+        },
+        {
+          "time": 4.08,
+          "end": 25
+        },
+        {
+          "time": 4.32,
+          "end": 27
+        },
+        {
+          "time": 5.12,
+          "end": 28
+        },
+        {
+          "time": 5.28,
+          "end": 29
+        },
+        {
+          "time": 5.36,
+          "end": 30
+        },
+        {
+          "time": 5.6,
+          "end": 31
+        },
+        {
+          "time": 5.68,
+          "end": 32
+        },
+        {
+          "time": 5.76,
+          "end": 33
+        },
+        {
+          "time": 6.08,
+          "end": 35
+        },
+        {
+          "time": 6.24,
+          "end": 37
+        },
+        {
+          "time": 6.48,
+          "end": 38
+        },
+        {
+          "time": 6.56,
+          "end": 39
+        },
+        {
+          "time": 6.96,
+          "end": 40
+        },
+        {
+          "time": 7.2,
+          "end": 42
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "81719817a6bcbb501a063e5bd2836c3229a5198ea9c43440b8e1ec02b9ff9c53",
+        "text_sha256": "e3184f9f979382c7f0a29e4fde23ba825992e121340d26b8eb703f14f564cf24"
+      }
+    },
+    "basic-2-2": {
+      "text": "记一下大小顺序哦：从 3 到 A 越来越大，然后是 2、小王和大王。还有还有，普通接牌必须牌型相同、张数也相同，可不能随便乱出哦～",
+      "duration_seconds": 13.44,
+      "file": "basic-2-2.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "59ff4e87b168f9614a77e2f1ff7f588e30ce026742743ff13e0de6205881e768",
+      "fingerprint": "835eaf7b3c1db7f0dd8b9f804c68080bc6f881e1e096febaeccf2393e62120ef",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 2
+        },
+        {
+          "time": 0.24,
+          "end": 3
+        },
+        {
+          "time": 0.4,
+          "end": 4
+        },
+        {
+          "time": 0.56,
+          "end": 5
+        },
+        {
+          "time": 0.72,
+          "end": 6
+        },
+        {
+          "time": 0.88,
+          "end": 7
+        },
+        {
+          "time": 1.2,
+          "end": 9
+        },
+        {
+          "time": 1.76,
+          "end": 11
+        },
+        {
+          "time": 2.0,
+          "end": 13
+        },
+        {
+          "time": 2.32,
+          "end": 15
+        },
+        {
+          "time": 2.48,
+          "end": 17
+        },
+        {
+          "time": 3.04,
+          "end": 18
+        },
+        {
+          "time": 3.04,
+          "end": 19
+        },
+        {
+          "time": 3.04,
+          "end": 20
+        },
+        {
+          "time": 3.2,
+          "end": 22
+        },
+        {
+          "time": 3.92,
+          "end": 23
+        },
+        {
+          "time": 4.08,
+          "end": 24
+        },
+        {
+          "time": 4.24,
+          "end": 26
+        },
+        {
+          "time": 4.48,
+          "end": 28
+        },
+        {
+          "time": 5.6,
+          "end": 29
+        },
+        {
+          "time": 5.92,
+          "end": 30
+        },
+        {
+          "time": 6.16,
+          "end": 31
+        },
+        {
+          "time": 6.304,
+          "end": 32
+        },
+        {
+          "time": 6.432,
+          "end": 34
+        },
+        {
+          "time": 6.56,
+          "end": 35
+        },
+        {
+          "time": 6.56,
+          "end": 36
+        },
+        {
+          "time": 7.28,
+          "end": 37
+        },
+        {
+          "time": 7.84,
+          "end": 39
+        },
+        {
+          "time": 8.4,
+          "end": 40
+        },
+        {
+          "time": 8.64,
+          "end": 41
+        },
+        {
+          "time": 8.8,
+          "end": 42
+        },
+        {
+          "time": 8.96,
+          "end": 43
+        },
+        {
+          "time": 9.28,
+          "end": 44
+        },
+        {
+          "time": 9.52,
+          "end": 45
+        },
+        {
+          "time": 9.68,
+          "end": 46
+        },
+        {
+          "time": 10.0,
+          "end": 47
+        },
+        {
+          "time": 10.24,
+          "end": 48
+        },
+        {
+          "time": 10.48,
+          "end": 50
+        },
+        {
+          "time": 10.72,
+          "end": 51
+        },
+        {
+          "time": 10.72,
+          "end": 52
+        },
+        {
+          "time": 11.28,
+          "end": 53
+        },
+        {
+          "time": 11.36,
+          "end": 54
+        },
+        {
+          "time": 11.52,
+          "end": 56
+        },
+        {
+          "time": 12.0,
+          "end": 57
+        },
+        {
+          "time": 12.24,
+          "end": 58
+        },
+        {
+          "time": 12.32,
+          "end": 59
+        },
+        {
+          "time": 12.4,
+          "end": 60
+        },
+        {
+          "time": 12.64,
+          "end": 61
+        },
+        {
+          "time": 12.64,
+          "end": 62
+        },
+        {
+          "time": 12.96,
+          "end": 63
+        },
+        {
+          "time": 13.2,
+          "end": 65
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "59ff4e87b168f9614a77e2f1ff7f588e30ce026742743ff13e0de6205881e768",
+        "text_sha256": "24d98cf5aab2fc29f21a782edfe1ea8398b6903b2bd4272ccd407651fe303065"
+      }
+    },
+    "basic-3-1": {
+      "text": "你看，对面出了一张二。我们现在没有更大的单张了，只能「要不起」啦。不过要小心哦，要不起会摸两张牌，就算手里有牌能接，主动放弃也一样会受罚的！",
+      "duration_seconds": 12.64,
+      "file": "basic-3-1.natural-r2.mp3",
+      "method": "voice_design",
+      "fingerprint": "563ec2d5cc62f64bf2810871ccd14c1d41f0544ca6448d3f9926b3dc7a6ccc13",
+      "sha256": "370c0166c27f8af22c6e332e9d0b3c44e2d6b38d5daaaf645cde606aa1f005f3",
+      "recipe": {
+        "profile": "natural-r2",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.08,
+          "end": 3
+        },
+        {
+          "time": 0.56,
+          "end": 4
+        },
+        {
+          "time": 0.72,
+          "end": 5
+        },
+        {
+          "time": 0.88,
+          "end": 6
+        },
+        {
+          "time": 1.04,
+          "end": 7
+        },
+        {
+          "time": 1.12,
+          "end": 8
+        },
+        {
+          "time": 1.2,
+          "end": 9
+        },
+        {
+          "time": 1.6,
+          "end": 11
+        },
+        {
+          "time": 2.08,
+          "end": 12
+        },
+        {
+          "time": 2.16,
+          "end": 13
+        },
+        {
+          "time": 2.24,
+          "end": 14
+        },
+        {
+          "time": 2.48,
+          "end": 15
+        },
+        {
+          "time": 2.64,
+          "end": 16
+        },
+        {
+          "time": 2.72,
+          "end": 17
+        },
+        {
+          "time": 2.88,
+          "end": 18
+        },
+        {
+          "time": 3.04,
+          "end": 19
+        },
+        {
+          "time": 3.12,
+          "end": 20
+        },
+        {
+          "time": 3.2,
+          "end": 21
+        },
+        {
+          "time": 3.44,
+          "end": 22
+        },
+        {
+          "time": 3.68,
+          "end": 24
+        },
+        {
+          "time": 4.08,
+          "end": 25
+        },
+        {
+          "time": 4.16,
+          "end": 27
+        },
+        {
+          "time": 4.32,
+          "end": 28
+        },
+        {
+          "time": 4.48,
+          "end": 29
+        },
+        {
+          "time": 4.56,
+          "end": 31
+        },
+        {
+          "time": 4.8,
+          "end": 33
+        },
+        {
+          "time": 5.6,
+          "end": 34
+        },
+        {
+          "time": 5.76,
+          "end": 35
+        },
+        {
+          "time": 5.92,
+          "end": 36
+        },
+        {
+          "time": 6.0,
+          "end": 37
+        },
+        {
+          "time": 6.16,
+          "end": 38
+        },
+        {
+          "time": 6.4,
+          "end": 40
+        },
+        {
+          "time": 7.04,
+          "end": 41
+        },
+        {
+          "time": 7.2,
+          "end": 42
+        },
+        {
+          "time": 7.28,
+          "end": 43
+        },
+        {
+          "time": 7.36,
+          "end": 44
+        },
+        {
+          "time": 7.6,
+          "end": 45
+        },
+        {
+          "time": 7.84,
+          "end": 46
+        },
+        {
+          "time": 7.92,
+          "end": 47
+        },
+        {
+          "time": 8.08,
+          "end": 49
+        },
+        {
+          "time": 8.88,
+          "end": 50
+        },
+        {
+          "time": 9.04,
+          "end": 51
+        },
+        {
+          "time": 9.28,
+          "end": 52
+        },
+        {
+          "time": 9.44,
+          "end": 53
+        },
+        {
+          "time": 9.52,
+          "end": 54
+        },
+        {
+          "time": 9.68,
+          "end": 55
+        },
+        {
+          "time": 9.92,
+          "end": 56
+        },
+        {
+          "time": 10.16,
+          "end": 58
+        },
+        {
+          "time": 10.72,
+          "end": 59
+        },
+        {
+          "time": 10.88,
+          "end": 60
+        },
+        {
+          "time": 11.04,
+          "end": 61
+        },
+        {
+          "time": 11.28,
+          "end": 62
+        },
+        {
+          "time": 11.44,
+          "end": 63
+        },
+        {
+          "time": 11.6,
+          "end": 64
+        },
+        {
+          "time": 11.68,
+          "end": 65
+        },
+        {
+          "time": 11.84,
+          "end": 66
+        },
+        {
+          "time": 12.0,
+          "end": 67
+        },
+        {
+          "time": 12.16,
+          "end": 68
+        },
+        {
+          "time": 12.32,
+          "end": 70
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "370c0166c27f8af22c6e332e9d0b3c44e2d6b38d5daaaf645cde606aa1f005f3",
+        "text_sha256": "35794a71747acb0bf906b2f2951498f9db89e20aa146f79606358f9376728cf2"
+      }
+    },
+    "basic-3-2": {
+      "text": "而且呀，手牌一旦超过 14 张，就会被淘汰！不过刚好 14 张还是安全的。来，先试着点一次「要不起」，注意看看右边的手牌数量～",
+      "duration_seconds": 11.36,
+      "file": "basic-3-2.mp3",
+      "method": "voice_design",
+      "fingerprint": "5f730a7a13ed9fc10349b18332fd8224f257d8713abaddde5d8fb74f7bf6648e",
+      "sha256": "06865d36a89d716b8b216a5fe36ade668e44369683a9c8ffbc7f6d12870fce05",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 2
+        },
+        {
+          "time": 0.48,
+          "end": 4
+        },
+        {
+          "time": 0.96,
+          "end": 5
+        },
+        {
+          "time": 1.28,
+          "end": 6
+        },
+        {
+          "time": 1.44,
+          "end": 7
+        },
+        {
+          "time": 1.52,
+          "end": 8
+        },
+        {
+          "time": 1.68,
+          "end": 9
+        },
+        {
+          "time": 1.92,
+          "end": 11
+        },
+        {
+          "time": 2.0,
+          "end": 14
+        },
+        {
+          "time": 2.48,
+          "end": 16
+        },
+        {
+          "time": 2.8,
+          "end": 17
+        },
+        {
+          "time": 2.96,
+          "end": 18
+        },
+        {
+          "time": 3.04,
+          "end": 19
+        },
+        {
+          "time": 3.2,
+          "end": 20
+        },
+        {
+          "time": 3.36,
+          "end": 22
+        },
+        {
+          "time": 4.32,
+          "end": 23
+        },
+        {
+          "time": 4.48,
+          "end": 24
+        },
+        {
+          "time": 4.72,
+          "end": 25
+        },
+        {
+          "time": 4.96,
+          "end": 27
+        },
+        {
+          "time": 5.12,
+          "end": 30
+        },
+        {
+          "time": 5.44,
+          "end": 31
+        },
+        {
+          "time": 5.6,
+          "end": 32
+        },
+        {
+          "time": 5.76,
+          "end": 33
+        },
+        {
+          "time": 5.84,
+          "end": 34
+        },
+        {
+          "time": 6.0,
+          "end": 35
+        },
+        {
+          "time": 6.24,
+          "end": 37
+        },
+        {
+          "time": 7.12,
+          "end": 39
+        },
+        {
+          "time": 7.52,
+          "end": 40
+        },
+        {
+          "time": 7.76,
+          "end": 41
+        },
+        {
+          "time": 7.84,
+          "end": 42
+        },
+        {
+          "time": 8.0,
+          "end": 43
+        },
+        {
+          "time": 8.16,
+          "end": 44
+        },
+        {
+          "time": 8.24,
+          "end": 46
+        },
+        {
+          "time": 8.4,
+          "end": 47
+        },
+        {
+          "time": 8.56,
+          "end": 48
+        },
+        {
+          "time": 8.72,
+          "end": 51
+        },
+        {
+          "time": 9.6,
+          "end": 52
+        },
+        {
+          "time": 9.68,
+          "end": 53
+        },
+        {
+          "time": 9.76,
+          "end": 54
+        },
+        {
+          "time": 10.0,
+          "end": 55
+        },
+        {
+          "time": 10.16,
+          "end": 56
+        },
+        {
+          "time": 10.24,
+          "end": 57
+        },
+        {
+          "time": 10.4,
+          "end": 58
+        },
+        {
+          "time": 10.48,
+          "end": 59
+        },
+        {
+          "time": 10.64,
+          "end": 60
+        },
+        {
+          "time": 10.8,
+          "end": 61
+        },
+        {
+          "time": 11.04,
+          "end": 63
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "06865d36a89d716b8b216a5fe36ade668e44369683a9c8ffbc7f6d12870fce05",
+        "text_sha256": "09eab836a281a4fb46e3889543fbaaba58b574c65e7cdd079524cb6caa08ac6c"
+      }
+    },
+    "basic-4-1": {
+      "text": "锵锵～接下来是对子！两张点数一样的牌就能组成对子。不过呢，对子只能用更大的对子来接，就算单张 9 再大，也不能拿来接对子哦！",
+      "duration_seconds": 13.04,
+      "file": "basic-4-1.mp3",
+      "method": "voice_design",
+      "fingerprint": "2b8671e7736744c9336cb6463ab40b94a9dbb79d27ce9cfc64559af5c5777f49",
+      "sha256": "ed4e8351ca3b1706ac63f7e65317e60de1f1fc8a6269182fde85c5613b23433e",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 3
+        },
+        {
+          "time": 1.12,
+          "end": 4
+        },
+        {
+          "time": 1.28,
+          "end": 5
+        },
+        {
+          "time": 1.44,
+          "end": 6
+        },
+        {
+          "time": 1.52,
+          "end": 7
+        },
+        {
+          "time": 1.68,
+          "end": 8
+        },
+        {
+          "time": 1.92,
+          "end": 10
+        },
+        {
+          "time": 2.88,
+          "end": 11
+        },
+        {
+          "time": 3.04,
+          "end": 12
+        },
+        {
+          "time": 3.28,
+          "end": 13
+        },
+        {
+          "time": 3.52,
+          "end": 14
+        },
+        {
+          "time": 3.68,
+          "end": 15
+        },
+        {
+          "time": 3.76,
+          "end": 16
+        },
+        {
+          "time": 3.92,
+          "end": 17
+        },
+        {
+          "time": 4.0,
+          "end": 18
+        },
+        {
+          "time": 4.32,
+          "end": 19
+        },
+        {
+          "time": 4.4,
+          "end": 20
+        },
+        {
+          "time": 4.56,
+          "end": 21
+        },
+        {
+          "time": 4.72,
+          "end": 22
+        },
+        {
+          "time": 4.88,
+          "end": 23
+        },
+        {
+          "time": 5.12,
+          "end": 25
+        },
+        {
+          "time": 5.84,
+          "end": 26
+        },
+        {
+          "time": 5.92,
+          "end": 27
+        },
+        {
+          "time": 6.08,
+          "end": 29
+        },
+        {
+          "time": 6.88,
+          "end": 30
+        },
+        {
+          "time": 7.12,
+          "end": 31
+        },
+        {
+          "time": 7.76,
+          "end": 32
+        },
+        {
+          "time": 7.92,
+          "end": 33
+        },
+        {
+          "time": 8.0,
+          "end": 34
+        },
+        {
+          "time": 8.16,
+          "end": 35
+        },
+        {
+          "time": 8.48,
+          "end": 36
+        },
+        {
+          "time": 8.64,
+          "end": 37
+        },
+        {
+          "time": 8.72,
+          "end": 38
+        },
+        {
+          "time": 8.8,
+          "end": 39
+        },
+        {
+          "time": 8.96,
+          "end": 40
+        },
+        {
+          "time": 9.12,
+          "end": 42
+        },
+        {
+          "time": 10.0,
+          "end": 43
+        },
+        {
+          "time": 10.16,
+          "end": 44
+        },
+        {
+          "time": 10.48,
+          "end": 45
+        },
+        {
+          "time": 10.64,
+          "end": 47
+        },
+        {
+          "time": 10.8,
+          "end": 49
+        },
+        {
+          "time": 10.96,
+          "end": 50
+        },
+        {
+          "time": 11.12,
+          "end": 52
+        },
+        {
+          "time": 11.68,
+          "end": 53
+        },
+        {
+          "time": 11.76,
+          "end": 54
+        },
+        {
+          "time": 11.92,
+          "end": 55
+        },
+        {
+          "time": 12.0,
+          "end": 56
+        },
+        {
+          "time": 12.16,
+          "end": 57
+        },
+        {
+          "time": 12.32,
+          "end": 58
+        },
+        {
+          "time": 12.4,
+          "end": 59
+        },
+        {
+          "time": 12.56,
+          "end": 60
+        },
+        {
+          "time": 12.72,
+          "end": 62
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "ed4e8351ca3b1706ac63f7e65317e60de1f1fc8a6269182fde85c5613b23433e",
+        "text_sha256": "e0f617b1edf1f403e78e78faddea8b3da4c1f694af3780cf247b77ac2b5c85df"
+      }
+    },
+    "basic-4-2": {
+      "text": "来来，找到那两张 4 了吗？把它们一起选中，再出牌！等其他人都要不起，桌面就会清空，到时候就又能自由出牌啦～",
+      "duration_seconds": 10.16,
+      "file": "basic-4-2.mp3",
+      "method": "voice_design",
+      "fingerprint": "022b798b5506d124821b297d89fd44aedc9edf9454f73d3f33ab075b7e9550f9",
+      "sha256": "45556f9ed9877bb75012ad1c39b80bf14d60b0dea028153ef19eafbe6c46efb1",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 3
+        },
+        {
+          "time": 0.72,
+          "end": 4
+        },
+        {
+          "time": 0.96,
+          "end": 5
+        },
+        {
+          "time": 1.04,
+          "end": 6
+        },
+        {
+          "time": 1.12,
+          "end": 7
+        },
+        {
+          "time": 1.28,
+          "end": 9
+        },
+        {
+          "time": 1.44,
+          "end": 11
+        },
+        {
+          "time": 1.44,
+          "end": 12
+        },
+        {
+          "time": 1.92,
+          "end": 14
+        },
+        {
+          "time": 2.64,
+          "end": 15
+        },
+        {
+          "time": 2.72,
+          "end": 16
+        },
+        {
+          "time": 2.88,
+          "end": 17
+        },
+        {
+          "time": 2.96,
+          "end": 18
+        },
+        {
+          "time": 3.12,
+          "end": 19
+        },
+        {
+          "time": 3.2,
+          "end": 20
+        },
+        {
+          "time": 3.52,
+          "end": 22
+        },
+        {
+          "time": 3.84,
+          "end": 23
+        },
+        {
+          "time": 4.0,
+          "end": 24
+        },
+        {
+          "time": 4.16,
+          "end": 26
+        },
+        {
+          "time": 4.96,
+          "end": 27
+        },
+        {
+          "time": 5.12,
+          "end": 28
+        },
+        {
+          "time": 5.28,
+          "end": 29
+        },
+        {
+          "time": 5.44,
+          "end": 30
+        },
+        {
+          "time": 5.6,
+          "end": 31
+        },
+        {
+          "time": 5.68,
+          "end": 32
+        },
+        {
+          "time": 5.92,
+          "end": 33
+        },
+        {
+          "time": 6.08,
+          "end": 35
+        },
+        {
+          "time": 6.56,
+          "end": 36
+        },
+        {
+          "time": 6.72,
+          "end": 37
+        },
+        {
+          "time": 6.96,
+          "end": 38
+        },
+        {
+          "time": 7.04,
+          "end": 39
+        },
+        {
+          "time": 7.2,
+          "end": 40
+        },
+        {
+          "time": 7.36,
+          "end": 42
+        },
+        {
+          "time": 8.16,
+          "end": 43
+        },
+        {
+          "time": 8.24,
+          "end": 44
+        },
+        {
+          "time": 8.4,
+          "end": 45
+        },
+        {
+          "time": 8.72,
+          "end": 46
+        },
+        {
+          "time": 8.8,
+          "end": 47
+        },
+        {
+          "time": 9.04,
+          "end": 48
+        },
+        {
+          "time": 9.2,
+          "end": 49
+        },
+        {
+          "time": 9.36,
+          "end": 50
+        },
+        {
+          "time": 9.52,
+          "end": 51
+        },
+        {
+          "time": 9.68,
+          "end": 52
+        },
+        {
+          "time": 9.84,
+          "end": 54
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "45556f9ed9877bb75012ad1c39b80bf14d60b0dea028153ef19eafbe6c46efb1",
+        "text_sha256": "32834772695f654b7901570aa749c08405d74f1828125ffce64bb85dca12bb47"
+      }
+    },
+    "basic-5-1": {
+      "text": "嘿嘿，接下来教你一个小技巧——「制衡」！可以丢掉一张牌，再摸一张新的，手牌数量不会变哦。不过每回合只能用一次，换完牌之后还可以继续出牌！",
+      "duration_seconds": 13.28,
+      "file": "basic-5-1.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "afe6741aa1c5ad7c687514b71c06cf77a4c6be3c0587c81f652336760663f957",
+      "fingerprint": "cbb92b7b0e089f7cda19ed255fad9b74a17d39885a8b19cefd8632fc5e16662c",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.08,
+          "end": 3
+        },
+        {
+          "time": 1.12,
+          "end": 4
+        },
+        {
+          "time": 1.2,
+          "end": 5
+        },
+        {
+          "time": 1.36,
+          "end": 6
+        },
+        {
+          "time": 1.44,
+          "end": 7
+        },
+        {
+          "time": 1.68,
+          "end": 8
+        },
+        {
+          "time": 1.84,
+          "end": 9
+        },
+        {
+          "time": 1.84,
+          "end": 10
+        },
+        {
+          "time": 2.0,
+          "end": 11
+        },
+        {
+          "time": 2.16,
+          "end": 12
+        },
+        {
+          "time": 2.32,
+          "end": 16
+        },
+        {
+          "time": 2.96,
+          "end": 17
+        },
+        {
+          "time": 3.44,
+          "end": 20
+        },
+        {
+          "time": 4.32,
+          "end": 21
+        },
+        {
+          "time": 4.4,
+          "end": 22
+        },
+        {
+          "time": 4.56,
+          "end": 23
+        },
+        {
+          "time": 4.72,
+          "end": 24
+        },
+        {
+          "time": 4.88,
+          "end": 25
+        },
+        {
+          "time": 4.96,
+          "end": 26
+        },
+        {
+          "time": 5.12,
+          "end": 28
+        },
+        {
+          "time": 5.6,
+          "end": 29
+        },
+        {
+          "time": 5.76,
+          "end": 30
+        },
+        {
+          "time": 5.92,
+          "end": 31
+        },
+        {
+          "time": 6.0,
+          "end": 32
+        },
+        {
+          "time": 6.16,
+          "end": 33
+        },
+        {
+          "time": 6.4,
+          "end": 35
+        },
+        {
+          "time": 6.88,
+          "end": 36
+        },
+        {
+          "time": 7.12,
+          "end": 37
+        },
+        {
+          "time": 7.28,
+          "end": 38
+        },
+        {
+          "time": 7.44,
+          "end": 39
+        },
+        {
+          "time": 7.6,
+          "end": 40
+        },
+        {
+          "time": 7.68,
+          "end": 41
+        },
+        {
+          "time": 7.76,
+          "end": 42
+        },
+        {
+          "time": 8.24,
+          "end": 44
+        },
+        {
+          "time": 9.04,
+          "end": 45
+        },
+        {
+          "time": 9.2,
+          "end": 46
+        },
+        {
+          "time": 9.44,
+          "end": 47
+        },
+        {
+          "time": 9.6,
+          "end": 48
+        },
+        {
+          "time": 9.76,
+          "end": 49
+        },
+        {
+          "time": 9.92,
+          "end": 50
+        },
+        {
+          "time": 10.08,
+          "end": 51
+        },
+        {
+          "time": 10.16,
+          "end": 52
+        },
+        {
+          "time": 10.32,
+          "end": 53
+        },
+        {
+          "time": 10.48,
+          "end": 55
+        },
+        {
+          "time": 11.04,
+          "end": 56
+        },
+        {
+          "time": 11.28,
+          "end": 57
+        },
+        {
+          "time": 11.44,
+          "end": 58
+        },
+        {
+          "time": 11.6,
+          "end": 59
+        },
+        {
+          "time": 11.76,
+          "end": 60
+        },
+        {
+          "time": 12.0,
+          "end": 61
+        },
+        {
+          "time": 12.16,
+          "end": 62
+        },
+        {
+          "time": 12.32,
+          "end": 63
+        },
+        {
+          "time": 12.4,
+          "end": 64
+        },
+        {
+          "time": 12.64,
+          "end": 65
+        },
+        {
+          "time": 12.72,
+          "end": 66
+        },
+        {
+          "time": 12.88,
+          "end": 68
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "afe6741aa1c5ad7c687514b71c06cf77a4c6be3c0587c81f652336760663f957",
+        "text_sha256": "e929a745fdeea37c9f031352dd4409aa31b1a370051fe194b9657766233407e1"
+      }
+    },
+    "basic-5-2": {
+      "text": "你看，我们手里已经有 5、6、7、8、9 了！要是再来张 10……嘿嘿，那可就有意思啦！试试选中这张红桃 3，点击「制衡」，看看能不能换张好牌回来～",
+      "duration_seconds": 12.8,
+      "file": "basic-5-2.mp3",
+      "method": "voice_design",
+      "fingerprint": "3e972e8de4450f7bbfd1a2930efeed48fdc2d52e82435d6b569d1c6ecbc73daf",
+      "sha256": "ef62b634c8180a54f35a7a5955aadcce2daa57aba6a4207e3e184c88d3b15178",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.08,
+          "end": 3
+        },
+        {
+          "time": 0.8,
+          "end": 4
+        },
+        {
+          "time": 0.88,
+          "end": 5
+        },
+        {
+          "time": 1.04,
+          "end": 6
+        },
+        {
+          "time": 1.2,
+          "end": 7
+        },
+        {
+          "time": 1.6,
+          "end": 8
+        },
+        {
+          "time": 1.6,
+          "end": 9
+        },
+        {
+          "time": 1.76,
+          "end": 11
+        },
+        {
+          "time": 1.92,
+          "end": 13
+        },
+        {
+          "time": 2.4,
+          "end": 15
+        },
+        {
+          "time": 2.4,
+          "end": 17
+        },
+        {
+          "time": 2.72,
+          "end": 19
+        },
+        {
+          "time": 3.2,
+          "end": 21
+        },
+        {
+          "time": 3.2,
+          "end": 23
+        },
+        {
+          "time": 4.16,
+          "end": 24
+        },
+        {
+          "time": 4.32,
+          "end": 25
+        },
+        {
+          "time": 4.48,
+          "end": 26
+        },
+        {
+          "time": 4.56,
+          "end": 27
+        },
+        {
+          "time": 4.72,
+          "end": 29
+        },
+        {
+          "time": 4.96,
+          "end": 33
+        },
+        {
+          "time": 5.28,
+          "end": 34
+        },
+        {
+          "time": 5.44,
+          "end": 36
+        },
+        {
+          "time": 5.44,
+          "end": 37
+        },
+        {
+          "time": 6.96,
+          "end": 38
+        },
+        {
+          "time": 7.12,
+          "end": 39
+        },
+        {
+          "time": 7.2,
+          "end": 40
+        },
+        {
+          "time": 7.36,
+          "end": 41
+        },
+        {
+          "time": 7.44,
+          "end": 42
+        },
+        {
+          "time": 7.6,
+          "end": 44
+        },
+        {
+          "time": 8.4,
+          "end": 45
+        },
+        {
+          "time": 8.64,
+          "end": 46
+        },
+        {
+          "time": 8.8,
+          "end": 47
+        },
+        {
+          "time": 9.04,
+          "end": 48
+        },
+        {
+          "time": 9.2,
+          "end": 49
+        },
+        {
+          "time": 9.28,
+          "end": 50
+        },
+        {
+          "time": 9.44,
+          "end": 51
+        },
+        {
+          "time": 9.6,
+          "end": 53
+        },
+        {
+          "time": 9.76,
+          "end": 55
+        },
+        {
+          "time": 10.4,
+          "end": 56
+        },
+        {
+          "time": 10.56,
+          "end": 58
+        },
+        {
+          "time": 10.64,
+          "end": 59
+        },
+        {
+          "time": 10.88,
+          "end": 62
+        },
+        {
+          "time": 11.36,
+          "end": 63
+        },
+        {
+          "time": 11.44,
+          "end": 64
+        },
+        {
+          "time": 11.52,
+          "end": 65
+        },
+        {
+          "time": 11.68,
+          "end": 66
+        },
+        {
+          "time": 11.76,
+          "end": 67
+        },
+        {
+          "time": 11.84,
+          "end": 68
+        },
+        {
+          "time": 12.0,
+          "end": 69
+        },
+        {
+          "time": 12.16,
+          "end": 70
+        },
+        {
+          "time": 12.24,
+          "end": 71
+        },
+        {
+          "time": 12.4,
+          "end": 72
+        },
+        {
+          "time": 12.64,
+          "end": 74
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "ef62b634c8180a54f35a7a5955aadcce2daa57aba6a4207e3e184c88d3b15178",
+        "text_sha256": "68b08ef5a5729359af377b99a2a9a66c60acf514258dcbf9286bfbafd6468928"
+      }
+    },
+    "basic-6-1": {
+      "text": "看出来了吗？连续五张以上的牌，就能组成顺子啦！不过 2 和大小王不能放进顺子里哦。要接别人的顺子，还得张数一样，再比谁最大的那张牌更大！",
+      "duration_seconds": 14.64,
+      "file": "basic-6-1.natural-r2-tone.mp3",
+      "method": "voice_design",
+      "fingerprint": "7fc1c75847b8bd840f00385cb865037d18f2a9ca4770f5691095288d3bd192bb",
+      "sha256": "1f28f5f35dc0072422311a3ccec51433b2a4f795a761e6e682a7e6247ecd035e",
+      "recipe": {
+        "profile": "natural-r2-tone",
+        "seed": 43,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 2
+        },
+        {
+          "time": 0.32,
+          "end": 3
+        },
+        {
+          "time": 0.48,
+          "end": 4
+        },
+        {
+          "time": 0.56,
+          "end": 6
+        },
+        {
+          "time": 1.36,
+          "end": 7
+        },
+        {
+          "time": 1.6,
+          "end": 8
+        },
+        {
+          "time": 1.84,
+          "end": 9
+        },
+        {
+          "time": 2.0,
+          "end": 10
+        },
+        {
+          "time": 2.32,
+          "end": 11
+        },
+        {
+          "time": 2.4,
+          "end": 12
+        },
+        {
+          "time": 2.56,
+          "end": 13
+        },
+        {
+          "time": 2.64,
+          "end": 15
+        },
+        {
+          "time": 3.12,
+          "end": 16
+        },
+        {
+          "time": 3.2,
+          "end": 17
+        },
+        {
+          "time": 3.36,
+          "end": 18
+        },
+        {
+          "time": 3.44,
+          "end": 19
+        },
+        {
+          "time": 3.6,
+          "end": 20
+        },
+        {
+          "time": 3.84,
+          "end": 21
+        },
+        {
+          "time": 4.0,
+          "end": 23
+        },
+        {
+          "time": 5.28,
+          "end": 24
+        },
+        {
+          "time": 5.44,
+          "end": 26
+        },
+        {
+          "time": 5.68,
+          "end": 28
+        },
+        {
+          "time": 6.64,
+          "end": 29
+        },
+        {
+          "time": 6.72,
+          "end": 30
+        },
+        {
+          "time": 6.88,
+          "end": 31
+        },
+        {
+          "time": 7.12,
+          "end": 32
+        },
+        {
+          "time": 7.28,
+          "end": 33
+        },
+        {
+          "time": 7.36,
+          "end": 34
+        },
+        {
+          "time": 7.6,
+          "end": 35
+        },
+        {
+          "time": 7.76,
+          "end": 36
+        },
+        {
+          "time": 7.92,
+          "end": 37
+        },
+        {
+          "time": 8.08,
+          "end": 38
+        },
+        {
+          "time": 8.16,
+          "end": 39
+        },
+        {
+          "time": 8.32,
+          "end": 41
+        },
+        {
+          "time": 9.6,
+          "end": 42
+        },
+        {
+          "time": 9.76,
+          "end": 43
+        },
+        {
+          "time": 10.0,
+          "end": 44
+        },
+        {
+          "time": 10.16,
+          "end": 45
+        },
+        {
+          "time": 10.24,
+          "end": 46
+        },
+        {
+          "time": 10.4,
+          "end": 47
+        },
+        {
+          "time": 10.72,
+          "end": 49
+        },
+        {
+          "time": 11.12,
+          "end": 50
+        },
+        {
+          "time": 11.2,
+          "end": 51
+        },
+        {
+          "time": 11.36,
+          "end": 52
+        },
+        {
+          "time": 11.52,
+          "end": 53
+        },
+        {
+          "time": 11.68,
+          "end": 54
+        },
+        {
+          "time": 11.84,
+          "end": 56
+        },
+        {
+          "time": 12.72,
+          "end": 57
+        },
+        {
+          "time": 12.88,
+          "end": 58
+        },
+        {
+          "time": 13.04,
+          "end": 59
+        },
+        {
+          "time": 13.2,
+          "end": 60
+        },
+        {
+          "time": 13.52,
+          "end": 61
+        },
+        {
+          "time": 13.6,
+          "end": 62
+        },
+        {
+          "time": 13.68,
+          "end": 63
+        },
+        {
+          "time": 13.76,
+          "end": 64
+        },
+        {
+          "time": 13.92,
+          "end": 65
+        },
+        {
+          "time": 14.08,
+          "end": 66
+        },
+        {
+          "time": 14.4,
+          "end": 68
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "1f28f5f35dc0072422311a3ccec51433b2a4f795a761e6e682a7e6247ecd035e",
+        "text_sha256": "583ec9d97ccb2bdad861fe273417b84fdb0c3153548a6c5ab0e29c5602c6044d"
+      }
+    },
+    "basic-6-2": {
+      "text": "现在我们从 5 一直连到了 10，刚好六张！来，把它们全部选上，一口气打出去！只要出光手牌，我们就赢啦！",
+      "duration_seconds": 8.88,
+      "file": "basic-6-2.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "502a94abebe32b97ac9604ccf90a44d6c3899910266a3836a0a9fd9c0d8552f2",
+      "fingerprint": "bb2f4f6ea305f18380dbc2f7b8505c65cca05d303b993f470dc05ebfa461c177",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.32,
+          "end": 2
+        },
+        {
+          "time": 0.56,
+          "end": 3
+        },
+        {
+          "time": 0.64,
+          "end": 4
+        },
+        {
+          "time": 0.72,
+          "end": 6
+        },
+        {
+          "time": 1.04,
+          "end": 8
+        },
+        {
+          "time": 1.12,
+          "end": 9
+        },
+        {
+          "time": 1.28,
+          "end": 10
+        },
+        {
+          "time": 1.44,
+          "end": 11
+        },
+        {
+          "time": 1.6,
+          "end": 12
+        },
+        {
+          "time": 1.76,
+          "end": 14
+        },
+        {
+          "time": 1.84,
+          "end": 17
+        },
+        {
+          "time": 2.08,
+          "end": 18
+        },
+        {
+          "time": 2.56,
+          "end": 19
+        },
+        {
+          "time": 2.72,
+          "end": 20
+        },
+        {
+          "time": 2.88,
+          "end": 22
+        },
+        {
+          "time": 3.6,
+          "end": 24
+        },
+        {
+          "time": 4.0,
+          "end": 25
+        },
+        {
+          "time": 4.08,
+          "end": 26
+        },
+        {
+          "time": 4.24,
+          "end": 27
+        },
+        {
+          "time": 4.32,
+          "end": 28
+        },
+        {
+          "time": 4.56,
+          "end": 29
+        },
+        {
+          "time": 4.64,
+          "end": 30
+        },
+        {
+          "time": 4.88,
+          "end": 32
+        },
+        {
+          "time": 5.04,
+          "end": 33
+        },
+        {
+          "time": 5.44,
+          "end": 34
+        },
+        {
+          "time": 5.52,
+          "end": 35
+        },
+        {
+          "time": 5.68,
+          "end": 36
+        },
+        {
+          "time": 5.84,
+          "end": 37
+        },
+        {
+          "time": 5.92,
+          "end": 39
+        },
+        {
+          "time": 6.88,
+          "end": 40
+        },
+        {
+          "time": 7.04,
+          "end": 41
+        },
+        {
+          "time": 7.2,
+          "end": 42
+        },
+        {
+          "time": 7.36,
+          "end": 43
+        },
+        {
+          "time": 7.52,
+          "end": 44
+        },
+        {
+          "time": 7.76,
+          "end": 46
+        },
+        {
+          "time": 8.08,
+          "end": 47
+        },
+        {
+          "time": 8.24,
+          "end": 48
+        },
+        {
+          "time": 8.32,
+          "end": 49
+        },
+        {
+          "time": 8.4,
+          "end": 50
+        },
+        {
+          "time": 8.56,
+          "end": 52
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "502a94abebe32b97ac9604ccf90a44d6c3899910266a3836a0a9fd9c0d8552f2",
+        "text_sha256": "d053128f241d23985d43ce107b1dc9b668c050381b4621946c862c6bdabd5116"
+      }
+    },
+    "basic-complete": {
+      "text": "好耶，主公我们赢了！嘿嘿~看来主公很有天赋呢。要不要继续和小桃练练锦囊？万箭齐发、南蛮入侵、五谷丰登和借刀杀人，下一局都能体验哦～",
+      "duration_seconds": 13.52,
+      "file": "basic-complete.natural-r5.mp3",
+      "method": "voice_design",
+      "fingerprint": "6ef3e2d83d991f01f88b6381139bff24bd498f6d83693507331c2f31aece6697",
+      "sha256": "8ba0cb7f94230ee790a02869d8b77252cbcb77ae9b88269dc9dbbd0b33e0334d",
+      "recipe": {
+        "profile": "natural-r5",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy. Preserve the same bright, sweet, youthful timbre throughout. Express happiness as a small, gentle smile with restrained energy. Say 好耶 softly as pleased conversation, without a cheering attack. Keep 嘿嘿 short and lightly smiling, not a loud laugh. Keep the loudness steady and the onset of every phrase gentle, with no sudden pitch jumps or startled exclamations. Do not lower or darken the voice to make it calmer.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.72,
+          "fade_ms": 35
+        }
+      },
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 3
+        },
+        {
+          "time": 0.64,
+          "end": 4
+        },
+        {
+          "time": 0.8,
+          "end": 5
+        },
+        {
+          "time": 1.12,
+          "end": 6
+        },
+        {
+          "time": 1.28,
+          "end": 7
+        },
+        {
+          "time": 1.36,
+          "end": 8
+        },
+        {
+          "time": 1.44,
+          "end": 10
+        },
+        {
+          "time": 2.32,
+          "end": 11
+        },
+        {
+          "time": 2.56,
+          "end": 13
+        },
+        {
+          "time": 3.2,
+          "end": 14
+        },
+        {
+          "time": 3.36,
+          "end": 15
+        },
+        {
+          "time": 3.52,
+          "end": 16
+        },
+        {
+          "time": 3.6,
+          "end": 17
+        },
+        {
+          "time": 3.76,
+          "end": 18
+        },
+        {
+          "time": 3.92,
+          "end": 19
+        },
+        {
+          "time": 4.08,
+          "end": 20
+        },
+        {
+          "time": 4.24,
+          "end": 21
+        },
+        {
+          "time": 4.4,
+          "end": 23
+        },
+        {
+          "time": 5.04,
+          "end": 24
+        },
+        {
+          "time": 5.28,
+          "end": 25
+        },
+        {
+          "time": 5.36,
+          "end": 26
+        },
+        {
+          "time": 5.52,
+          "end": 27
+        },
+        {
+          "time": 5.68,
+          "end": 28
+        },
+        {
+          "time": 5.84,
+          "end": 29
+        },
+        {
+          "time": 5.92,
+          "end": 30
+        },
+        {
+          "time": 6.16,
+          "end": 31
+        },
+        {
+          "time": 6.4,
+          "end": 32
+        },
+        {
+          "time": 6.56,
+          "end": 33
+        },
+        {
+          "time": 6.72,
+          "end": 34
+        },
+        {
+          "time": 6.88,
+          "end": 36
+        },
+        {
+          "time": 7.52,
+          "end": 37
+        },
+        {
+          "time": 7.76,
+          "end": 38
+        },
+        {
+          "time": 8.0,
+          "end": 39
+        },
+        {
+          "time": 8.32,
+          "end": 41
+        },
+        {
+          "time": 8.8,
+          "end": 42
+        },
+        {
+          "time": 8.96,
+          "end": 43
+        },
+        {
+          "time": 9.12,
+          "end": 44
+        },
+        {
+          "time": 9.36,
+          "end": 46
+        },
+        {
+          "time": 9.84,
+          "end": 47
+        },
+        {
+          "time": 10.08,
+          "end": 48
+        },
+        {
+          "time": 10.24,
+          "end": 49
+        },
+        {
+          "time": 10.56,
+          "end": 50
+        },
+        {
+          "time": 10.72,
+          "end": 51
+        },
+        {
+          "time": 10.88,
+          "end": 52
+        },
+        {
+          "time": 11.04,
+          "end": 53
+        },
+        {
+          "time": 11.2,
+          "end": 54
+        },
+        {
+          "time": 11.52,
+          "end": 56
+        },
+        {
+          "time": 12.0,
+          "end": 57
+        },
+        {
+          "time": 12.4,
+          "end": 58
+        },
+        {
+          "time": 12.4,
+          "end": 59
+        },
+        {
+          "time": 12.48,
+          "end": 60
+        },
+        {
+          "time": 12.64,
+          "end": 61
+        },
+        {
+          "time": 12.8,
+          "end": 62
+        },
+        {
+          "time": 12.96,
+          "end": 63
+        },
+        {
+          "time": 13.04,
+          "end": 65
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "8ba0cb7f94230ee790a02869d8b77252cbcb77ae9b88269dc9dbbd0b33e0334d",
+        "text_sha256": "67a52ea6977953e01e994fd59175f64eea300a2351c96d77574ea575b16d8b88"
+      }
+    },
+    "advanced-1-1": {
+      "text": "主公我们又见面啦！",
+      "duration_seconds": 1.92,
+      "file": "advanced-1-1.original-r3.mp3",
+      "method": "voice_design",
+      "fingerprint": "2a0d445ecc92bc87da0c484c90612c423b30b66b1ee01df5d6096c458dee01c5",
+      "sha256": "8b374f04a32543a1857d8866de4deb5725bd84f6f8285801390a0a7e72f5cf68",
+      "recipe": {
+        "profile": "original-r3",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048
+        },
+        "audio_processing": {
+          "peak": 1,
+          "fade_ms": 0
+        }
+      },
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.8,
+          "end": 3
+        },
+        {
+          "time": 0.96,
+          "end": 4
+        },
+        {
+          "time": 1.04,
+          "end": 5
+        },
+        {
+          "time": 1.28,
+          "end": 6
+        },
+        {
+          "time": 1.44,
+          "end": 7
+        },
+        {
+          "time": 1.6,
+          "end": 9
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "8b374f04a32543a1857d8866de4deb5725bd84f6f8285801390a0a7e72f5cf68",
+        "text_sha256": "46bec9e91fe4e6948fbd32b633784b44ec8c2dd5f63dd107c9afa0b398390584"
+      }
+    },
+    "advanced-1-2": {
+      "text": "锦囊要单张使用，每回合只能用一张。它通常不会替换桌面上原来的牌，结算完还能继续出牌或要不起。可别把锦囊和普通牌一起打出去哦！",
+      "duration_seconds": 11.44,
+      "file": "advanced-1-2.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "0ad993a252f22ad967995f1ad6a9fa4e19dfad2b0a4402d595af8ea37aac1da3",
+      "fingerprint": "f10191f671986d6565377e85e13ceaac7a83a9a0d8c9d6f59a2a0edeaa16ced5",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.32,
+          "end": 3
+        },
+        {
+          "time": 0.48,
+          "end": 4
+        },
+        {
+          "time": 0.64,
+          "end": 5
+        },
+        {
+          "time": 0.8,
+          "end": 6
+        },
+        {
+          "time": 1.04,
+          "end": 8
+        },
+        {
+          "time": 1.6,
+          "end": 9
+        },
+        {
+          "time": 1.84,
+          "end": 10
+        },
+        {
+          "time": 2.0,
+          "end": 11
+        },
+        {
+          "time": 2.16,
+          "end": 12
+        },
+        {
+          "time": 2.32,
+          "end": 13
+        },
+        {
+          "time": 2.4,
+          "end": 14
+        },
+        {
+          "time": 2.56,
+          "end": 15
+        },
+        {
+          "time": 2.8,
+          "end": 17
+        },
+        {
+          "time": 3.6,
+          "end": 18
+        },
+        {
+          "time": 3.76,
+          "end": 19
+        },
+        {
+          "time": 3.92,
+          "end": 20
+        },
+        {
+          "time": 4.08,
+          "end": 21
+        },
+        {
+          "time": 4.24,
+          "end": 22
+        },
+        {
+          "time": 4.32,
+          "end": 23
+        },
+        {
+          "time": 4.48,
+          "end": 24
+        },
+        {
+          "time": 4.72,
+          "end": 25
+        },
+        {
+          "time": 4.8,
+          "end": 26
+        },
+        {
+          "time": 4.96,
+          "end": 27
+        },
+        {
+          "time": 5.12,
+          "end": 28
+        },
+        {
+          "time": 5.28,
+          "end": 29
+        },
+        {
+          "time": 5.44,
+          "end": 30
+        },
+        {
+          "time": 5.52,
+          "end": 32
+        },
+        {
+          "time": 6.32,
+          "end": 33
+        },
+        {
+          "time": 6.56,
+          "end": 34
+        },
+        {
+          "time": 6.8,
+          "end": 35
+        },
+        {
+          "time": 6.88,
+          "end": 36
+        },
+        {
+          "time": 7.04,
+          "end": 37
+        },
+        {
+          "time": 7.2,
+          "end": 38
+        },
+        {
+          "time": 7.36,
+          "end": 39
+        },
+        {
+          "time": 7.44,
+          "end": 40
+        },
+        {
+          "time": 7.6,
+          "end": 41
+        },
+        {
+          "time": 7.84,
+          "end": 42
+        },
+        {
+          "time": 8.0,
+          "end": 43
+        },
+        {
+          "time": 8.16,
+          "end": 44
+        },
+        {
+          "time": 8.24,
+          "end": 46
+        },
+        {
+          "time": 8.96,
+          "end": 47
+        },
+        {
+          "time": 9.12,
+          "end": 48
+        },
+        {
+          "time": 9.28,
+          "end": 49
+        },
+        {
+          "time": 9.44,
+          "end": 50
+        },
+        {
+          "time": 9.6,
+          "end": 51
+        },
+        {
+          "time": 9.76,
+          "end": 52
+        },
+        {
+          "time": 9.92,
+          "end": 53
+        },
+        {
+          "time": 10.08,
+          "end": 54
+        },
+        {
+          "time": 10.24,
+          "end": 55
+        },
+        {
+          "time": 10.4,
+          "end": 56
+        },
+        {
+          "time": 10.48,
+          "end": 57
+        },
+        {
+          "time": 10.64,
+          "end": 58
+        },
+        {
+          "time": 10.72,
+          "end": 59
+        },
+        {
+          "time": 10.88,
+          "end": 60
+        },
+        {
+          "time": 11.04,
+          "end": 62
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "0ad993a252f22ad967995f1ad6a9fa4e19dfad2b0a4402d595af8ea37aac1da3",
+        "text_sha256": "6ab8e2fa7bb160dc0ce5c2ae43d3b4d948f4aee288065720c6987e8fb35460de"
+      }
+    },
+    "advanced-1-3": {
+      "text": "先试试万箭齐发！全场存活玩家都得弃一张黑色牌或小王，否则摸两张罚牌。发动者也会被波及，我们也得响应！",
+      "duration_seconds": 9.84,
+      "file": "advanced-1-3.natural-r2.mp3",
+      "method": "voice_design",
+      "fingerprint": "f7f34e44e4f0502b69e35d3baa3e5a6cd9d492678c011618509f0648620bda2f",
+      "sha256": "e41642f31a1ce70052ae2a7a57afd33fa226bf7c1650cc391f3c0244aa2e913a",
+      "recipe": {
+        "profile": "natural-r2",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.32,
+          "end": 2
+        },
+        {
+          "time": 0.4,
+          "end": 3
+        },
+        {
+          "time": 0.56,
+          "end": 4
+        },
+        {
+          "time": 0.72,
+          "end": 5
+        },
+        {
+          "time": 0.88,
+          "end": 6
+        },
+        {
+          "time": 1.12,
+          "end": 8
+        },
+        {
+          "time": 1.76,
+          "end": 9
+        },
+        {
+          "time": 2.0,
+          "end": 10
+        },
+        {
+          "time": 2.24,
+          "end": 11
+        },
+        {
+          "time": 2.4,
+          "end": 12
+        },
+        {
+          "time": 2.56,
+          "end": 13
+        },
+        {
+          "time": 2.8,
+          "end": 14
+        },
+        {
+          "time": 2.96,
+          "end": 15
+        },
+        {
+          "time": 3.12,
+          "end": 16
+        },
+        {
+          "time": 3.2,
+          "end": 17
+        },
+        {
+          "time": 3.52,
+          "end": 18
+        },
+        {
+          "time": 3.52,
+          "end": 19
+        },
+        {
+          "time": 3.76,
+          "end": 20
+        },
+        {
+          "time": 3.92,
+          "end": 21
+        },
+        {
+          "time": 4.08,
+          "end": 22
+        },
+        {
+          "time": 4.4,
+          "end": 23
+        },
+        {
+          "time": 4.48,
+          "end": 24
+        },
+        {
+          "time": 4.72,
+          "end": 26
+        },
+        {
+          "time": 5.28,
+          "end": 27
+        },
+        {
+          "time": 5.52,
+          "end": 28
+        },
+        {
+          "time": 5.92,
+          "end": 29
+        },
+        {
+          "time": 6.08,
+          "end": 30
+        },
+        {
+          "time": 6.24,
+          "end": 31
+        },
+        {
+          "time": 6.48,
+          "end": 32
+        },
+        {
+          "time": 6.64,
+          "end": 34
+        },
+        {
+          "time": 7.44,
+          "end": 35
+        },
+        {
+          "time": 7.6,
+          "end": 36
+        },
+        {
+          "time": 7.76,
+          "end": 37
+        },
+        {
+          "time": 7.92,
+          "end": 38
+        },
+        {
+          "time": 8.08,
+          "end": 39
+        },
+        {
+          "time": 8.16,
+          "end": 40
+        },
+        {
+          "time": 8.32,
+          "end": 41
+        },
+        {
+          "time": 8.48,
+          "end": 43
+        },
+        {
+          "time": 8.96,
+          "end": 44
+        },
+        {
+          "time": 9.04,
+          "end": 45
+        },
+        {
+          "time": 9.12,
+          "end": 46
+        },
+        {
+          "time": 9.2,
+          "end": 47
+        },
+        {
+          "time": 9.28,
+          "end": 48
+        },
+        {
+          "time": 9.52,
+          "end": 50
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "e41642f31a1ce70052ae2a7a57afd33fa226bf7c1650cc391f3c0244aa2e913a",
+        "text_sha256": "77bfebe094e112f281a672eaaab56c52811ccb2b1575cc4768328edbb59e7565"
+      }
+    },
+    "advanced-2-1": {
+      "text": "看，牌桌正在等我们响应！选中黑桃 3，点「弃牌」就能挡住万箭。这是在响应锦囊，和普通出牌是两回事哦～",
+      "duration_seconds": 10.08,
+      "file": "advanced-2-1.mp3",
+      "method": "voice_design",
+      "fingerprint": "6aef11da1f7418d532d261198fae804c92a65b3b12d798a31b2935c7f14de804",
+      "sha256": "ffe413e7c737d03deafd00dca92b593454645aa43edb24f429bbaaa0381bc543",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 2
+        },
+        {
+          "time": 0.64,
+          "end": 3
+        },
+        {
+          "time": 0.88,
+          "end": 4
+        },
+        {
+          "time": 1.12,
+          "end": 5
+        },
+        {
+          "time": 1.28,
+          "end": 6
+        },
+        {
+          "time": 1.36,
+          "end": 7
+        },
+        {
+          "time": 1.52,
+          "end": 8
+        },
+        {
+          "time": 1.6,
+          "end": 9
+        },
+        {
+          "time": 1.68,
+          "end": 10
+        },
+        {
+          "time": 1.84,
+          "end": 12
+        },
+        {
+          "time": 2.72,
+          "end": 13
+        },
+        {
+          "time": 3.04,
+          "end": 14
+        },
+        {
+          "time": 3.28,
+          "end": 15
+        },
+        {
+          "time": 3.52,
+          "end": 17
+        },
+        {
+          "time": 3.68,
+          "end": 19
+        },
+        {
+          "time": 4.4,
+          "end": 21
+        },
+        {
+          "time": 4.56,
+          "end": 22
+        },
+        {
+          "time": 4.88,
+          "end": 24
+        },
+        {
+          "time": 5.2,
+          "end": 25
+        },
+        {
+          "time": 5.36,
+          "end": 26
+        },
+        {
+          "time": 5.52,
+          "end": 27
+        },
+        {
+          "time": 5.68,
+          "end": 28
+        },
+        {
+          "time": 5.76,
+          "end": 29
+        },
+        {
+          "time": 5.92,
+          "end": 31
+        },
+        {
+          "time": 6.96,
+          "end": 32
+        },
+        {
+          "time": 7.12,
+          "end": 33
+        },
+        {
+          "time": 7.2,
+          "end": 34
+        },
+        {
+          "time": 7.36,
+          "end": 35
+        },
+        {
+          "time": 7.6,
+          "end": 36
+        },
+        {
+          "time": 7.76,
+          "end": 37
+        },
+        {
+          "time": 7.92,
+          "end": 39
+        },
+        {
+          "time": 8.24,
+          "end": 40
+        },
+        {
+          "time": 8.4,
+          "end": 41
+        },
+        {
+          "time": 8.56,
+          "end": 42
+        },
+        {
+          "time": 8.72,
+          "end": 43
+        },
+        {
+          "time": 8.88,
+          "end": 44
+        },
+        {
+          "time": 9.12,
+          "end": 45
+        },
+        {
+          "time": 9.2,
+          "end": 46
+        },
+        {
+          "time": 9.44,
+          "end": 47
+        },
+        {
+          "time": 9.6,
+          "end": 48
+        },
+        {
+          "time": 9.76,
+          "end": 50
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "ffe413e7c737d03deafd00dca92b593454645aa43edb24f429bbaaa0381bc543",
+        "text_sha256": "e908d5d9e6a8491d95f3620d3087ba647920ccdbc62cef98fb59e3622359efbd"
+      }
+    },
+    "advanced-2-2": {
+      "text": "关羽会弃黑色牌，张飞这次选择要不起，会摸两张。就算有符合要求的牌，也可以主动接受罚牌，不过要留意手牌数量！",
+      "duration_seconds": 9.68,
+      "file": "advanced-2-2.mp3",
+      "method": "voice_design",
+      "fingerprint": "4a50d59a85a06df836d2fd77ddb71b12b88b1f8264dba7c08a29e8aca0d95630",
+      "sha256": "f032b5bcde46d5371486fd551ca986831103e33b473ca0dde6936e062a71ab9d",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.24,
+          "end": 3
+        },
+        {
+          "time": 0.4,
+          "end": 4
+        },
+        {
+          "time": 0.56,
+          "end": 5
+        },
+        {
+          "time": 0.72,
+          "end": 6
+        },
+        {
+          "time": 0.88,
+          "end": 8
+        },
+        {
+          "time": 1.76,
+          "end": 9
+        },
+        {
+          "time": 1.92,
+          "end": 10
+        },
+        {
+          "time": 2.08,
+          "end": 11
+        },
+        {
+          "time": 2.24,
+          "end": 12
+        },
+        {
+          "time": 2.32,
+          "end": 13
+        },
+        {
+          "time": 2.56,
+          "end": 14
+        },
+        {
+          "time": 2.64,
+          "end": 15
+        },
+        {
+          "time": 2.8,
+          "end": 16
+        },
+        {
+          "time": 2.88,
+          "end": 18
+        },
+        {
+          "time": 3.2,
+          "end": 19
+        },
+        {
+          "time": 3.36,
+          "end": 20
+        },
+        {
+          "time": 3.6,
+          "end": 21
+        },
+        {
+          "time": 3.76,
+          "end": 23
+        },
+        {
+          "time": 4.64,
+          "end": 24
+        },
+        {
+          "time": 4.8,
+          "end": 25
+        },
+        {
+          "time": 5.04,
+          "end": 26
+        },
+        {
+          "time": 5.12,
+          "end": 27
+        },
+        {
+          "time": 5.28,
+          "end": 28
+        },
+        {
+          "time": 5.44,
+          "end": 29
+        },
+        {
+          "time": 5.6,
+          "end": 30
+        },
+        {
+          "time": 5.76,
+          "end": 31
+        },
+        {
+          "time": 5.84,
+          "end": 33
+        },
+        {
+          "time": 6.24,
+          "end": 34
+        },
+        {
+          "time": 6.32,
+          "end": 35
+        },
+        {
+          "time": 6.48,
+          "end": 36
+        },
+        {
+          "time": 6.56,
+          "end": 37
+        },
+        {
+          "time": 6.72,
+          "end": 38
+        },
+        {
+          "time": 6.96,
+          "end": 39
+        },
+        {
+          "time": 7.04,
+          "end": 40
+        },
+        {
+          "time": 7.2,
+          "end": 41
+        },
+        {
+          "time": 7.36,
+          "end": 43
+        },
+        {
+          "time": 8.08,
+          "end": 44
+        },
+        {
+          "time": 8.24,
+          "end": 45
+        },
+        {
+          "time": 8.48,
+          "end": 46
+        },
+        {
+          "time": 8.64,
+          "end": 47
+        },
+        {
+          "time": 8.8,
+          "end": 48
+        },
+        {
+          "time": 8.88,
+          "end": 49
+        },
+        {
+          "time": 9.04,
+          "end": 50
+        },
+        {
+          "time": 9.2,
+          "end": 51
+        },
+        {
+          "time": 9.44,
+          "end": 53
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "f032b5bcde46d5371486fd551ca986831103e33b473ca0dde6936e062a71ab9d",
+        "text_sha256": "8ca9400382bc1761d7b44d1837d02f0498f57542a2303c9fbc050d26d7b422ff"
+      }
+    },
+    "advanced-3-1": {
+      "text": "万箭结算完，还是我们的回合！本回合的锦囊已经用过了，先打一张梅花 4，把回合交给关羽。",
+      "duration_seconds": 7.76,
+      "file": "advanced-3-1.mp3",
+      "method": "voice_design",
+      "fingerprint": "c34ff9daf5d8b9ebea02a586703bcc687ad10d957d112ae270ede03fc8bcee64",
+      "sha256": "b0062c1a64d81364c18753fbccc0e2b4893c42f91a2dfc24d761d076345060cb",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 2
+        },
+        {
+          "time": 0.4,
+          "end": 3
+        },
+        {
+          "time": 0.56,
+          "end": 4
+        },
+        {
+          "time": 0.72,
+          "end": 6
+        },
+        {
+          "time": 1.2,
+          "end": 7
+        },
+        {
+          "time": 1.44,
+          "end": 8
+        },
+        {
+          "time": 1.6,
+          "end": 9
+        },
+        {
+          "time": 1.76,
+          "end": 10
+        },
+        {
+          "time": 1.84,
+          "end": 11
+        },
+        {
+          "time": 1.92,
+          "end": 12
+        },
+        {
+          "time": 2.08,
+          "end": 14
+        },
+        {
+          "time": 2.96,
+          "end": 15
+        },
+        {
+          "time": 3.12,
+          "end": 16
+        },
+        {
+          "time": 3.28,
+          "end": 17
+        },
+        {
+          "time": 3.36,
+          "end": 18
+        },
+        {
+          "time": 3.44,
+          "end": 19
+        },
+        {
+          "time": 3.6,
+          "end": 20
+        },
+        {
+          "time": 3.84,
+          "end": 21
+        },
+        {
+          "time": 3.84,
+          "end": 22
+        },
+        {
+          "time": 4.0,
+          "end": 23
+        },
+        {
+          "time": 4.16,
+          "end": 24
+        },
+        {
+          "time": 4.24,
+          "end": 26
+        },
+        {
+          "time": 4.96,
+          "end": 27
+        },
+        {
+          "time": 5.2,
+          "end": 28
+        },
+        {
+          "time": 5.36,
+          "end": 29
+        },
+        {
+          "time": 5.44,
+          "end": 30
+        },
+        {
+          "time": 5.6,
+          "end": 31
+        },
+        {
+          "time": 5.76,
+          "end": 33
+        },
+        {
+          "time": 5.84,
+          "end": 35
+        },
+        {
+          "time": 6.4,
+          "end": 36
+        },
+        {
+          "time": 6.56,
+          "end": 37
+        },
+        {
+          "time": 6.72,
+          "end": 38
+        },
+        {
+          "time": 6.96,
+          "end": 39
+        },
+        {
+          "time": 7.12,
+          "end": 40
+        },
+        {
+          "time": 7.2,
+          "end": 41
+        },
+        {
+          "time": 7.44,
+          "end": 43
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "b0062c1a64d81364c18753fbccc0e2b4893c42f91a2dfc24d761d076345060cb",
+        "text_sha256": "9b600bb8fe8d5e8be0d7696cb4c7bae2498b4eb9206bdde296b63b172f75cf0f"
+      }
+    },
+    "advanced-3-2": {
+      "text": "接下来是南蛮入侵，要求正好相反：弃一张红色牌或大王，否则摸两张。注意，它也不会把桌面上的梅花 4 替换掉！",
+      "duration_seconds": 9.84,
+      "file": "advanced-3-2.mp3",
+      "method": "voice_design",
+      "fingerprint": "8bb0463b5da7a87510cd0062e4344b001b6e1de8b9e70dcdcc3de5d589210fd1",
+      "sha256": "e2d2e66e56b85a4b7683a2cc500f412750ef5661dcfe806e9c63b1d2c1a5cd62",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 2
+        },
+        {
+          "time": 0.32,
+          "end": 3
+        },
+        {
+          "time": 0.48,
+          "end": 4
+        },
+        {
+          "time": 0.56,
+          "end": 5
+        },
+        {
+          "time": 0.8,
+          "end": 6
+        },
+        {
+          "time": 0.96,
+          "end": 7
+        },
+        {
+          "time": 1.12,
+          "end": 9
+        },
+        {
+          "time": 2.16,
+          "end": 10
+        },
+        {
+          "time": 2.32,
+          "end": 11
+        },
+        {
+          "time": 2.48,
+          "end": 12
+        },
+        {
+          "time": 2.64,
+          "end": 13
+        },
+        {
+          "time": 2.72,
+          "end": 14
+        },
+        {
+          "time": 2.88,
+          "end": 16
+        },
+        {
+          "time": 3.68,
+          "end": 17
+        },
+        {
+          "time": 4.0,
+          "end": 18
+        },
+        {
+          "time": 4.0,
+          "end": 19
+        },
+        {
+          "time": 4.16,
+          "end": 20
+        },
+        {
+          "time": 4.4,
+          "end": 21
+        },
+        {
+          "time": 4.56,
+          "end": 22
+        },
+        {
+          "time": 4.72,
+          "end": 23
+        },
+        {
+          "time": 4.8,
+          "end": 24
+        },
+        {
+          "time": 4.96,
+          "end": 26
+        },
+        {
+          "time": 5.44,
+          "end": 27
+        },
+        {
+          "time": 5.6,
+          "end": 28
+        },
+        {
+          "time": 5.68,
+          "end": 29
+        },
+        {
+          "time": 5.92,
+          "end": 30
+        },
+        {
+          "time": 6.08,
+          "end": 32
+        },
+        {
+          "time": 6.8,
+          "end": 33
+        },
+        {
+          "time": 6.96,
+          "end": 35
+        },
+        {
+          "time": 7.52,
+          "end": 36
+        },
+        {
+          "time": 7.68,
+          "end": 37
+        },
+        {
+          "time": 7.84,
+          "end": 38
+        },
+        {
+          "time": 7.92,
+          "end": 39
+        },
+        {
+          "time": 8.0,
+          "end": 40
+        },
+        {
+          "time": 8.16,
+          "end": 41
+        },
+        {
+          "time": 8.32,
+          "end": 42
+        },
+        {
+          "time": 8.48,
+          "end": 43
+        },
+        {
+          "time": 8.64,
+          "end": 44
+        },
+        {
+          "time": 8.64,
+          "end": 45
+        },
+        {
+          "time": 8.8,
+          "end": 47
+        },
+        {
+          "time": 8.96,
+          "end": 49
+        },
+        {
+          "time": 9.12,
+          "end": 50
+        },
+        {
+          "time": 9.28,
+          "end": 51
+        },
+        {
+          "time": 9.52,
+          "end": 53
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "e2d2e66e56b85a4b7683a2cc500f412750ef5661dcfe806e9c63b1d2c1a5cd62",
+        "text_sha256": "3a55da75473faf6f93a1729c3c0803558d49aef7d98aff2e4f13e4152dc286fd"
+      }
+    },
+    "advanced-4-1": {
+      "text": "这次换我们体验罚牌！点击锦囊响应区的「要不起」，会摸两张。旁边的手牌数量会增加，超过 14 张就会被淘汰哦。",
+      "duration_seconds": 9.84,
+      "file": "advanced-4-1.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "8d6b0253899b956a6555df7de360ec6ce54de786fa8b35a4f64c64a8b4092f8a",
+      "fingerprint": "848b4c7cee22e606ebac148832c4c51ccafaa1ba2384237b6a502271a301ab27",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 2
+        },
+        {
+          "time": 0.4,
+          "end": 3
+        },
+        {
+          "time": 0.8,
+          "end": 4
+        },
+        {
+          "time": 0.8,
+          "end": 5
+        },
+        {
+          "time": 0.96,
+          "end": 6
+        },
+        {
+          "time": 1.12,
+          "end": 7
+        },
+        {
+          "time": 1.2,
+          "end": 8
+        },
+        {
+          "time": 1.36,
+          "end": 10
+        },
+        {
+          "time": 2.32,
+          "end": 11
+        },
+        {
+          "time": 2.56,
+          "end": 12
+        },
+        {
+          "time": 2.72,
+          "end": 13
+        },
+        {
+          "time": 2.88,
+          "end": 14
+        },
+        {
+          "time": 3.04,
+          "end": 15
+        },
+        {
+          "time": 3.2,
+          "end": 16
+        },
+        {
+          "time": 3.36,
+          "end": 17
+        },
+        {
+          "time": 3.52,
+          "end": 19
+        },
+        {
+          "time": 3.6,
+          "end": 20
+        },
+        {
+          "time": 3.84,
+          "end": 21
+        },
+        {
+          "time": 3.92,
+          "end": 24
+        },
+        {
+          "time": 4.16,
+          "end": 25
+        },
+        {
+          "time": 4.72,
+          "end": 26
+        },
+        {
+          "time": 4.72,
+          "end": 27
+        },
+        {
+          "time": 4.8,
+          "end": 29
+        },
+        {
+          "time": 5.68,
+          "end": 30
+        },
+        {
+          "time": 5.92,
+          "end": 31
+        },
+        {
+          "time": 6.08,
+          "end": 32
+        },
+        {
+          "time": 6.16,
+          "end": 33
+        },
+        {
+          "time": 6.32,
+          "end": 34
+        },
+        {
+          "time": 6.48,
+          "end": 35
+        },
+        {
+          "time": 6.64,
+          "end": 36
+        },
+        {
+          "time": 6.88,
+          "end": 37
+        },
+        {
+          "time": 6.96,
+          "end": 38
+        },
+        {
+          "time": 7.12,
+          "end": 40
+        },
+        {
+          "time": 7.68,
+          "end": 41
+        },
+        {
+          "time": 7.92,
+          "end": 43
+        },
+        {
+          "time": 8.0,
+          "end": 46
+        },
+        {
+          "time": 8.24,
+          "end": 47
+        },
+        {
+          "time": 8.8,
+          "end": 48
+        },
+        {
+          "time": 8.96,
+          "end": 49
+        },
+        {
+          "time": 9.04,
+          "end": 50
+        },
+        {
+          "time": 9.2,
+          "end": 51
+        },
+        {
+          "time": 9.28,
+          "end": 52
+        },
+        {
+          "time": 9.44,
+          "end": 54
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "8d6b0253899b956a6555df7de360ec6ce54de786fa8b35a4f64c64a8b4092f8a",
+        "text_sha256": "bc1690df30c93e2cff9b3c2924ad1f1f0ef944750b75047055c07499f7fc3896"
+      }
+    },
+    "advanced-4-2": {
+      "text": "关羽和张飞已经各弃了一张红色牌。虽然现在是关羽的回合，我们仍然要响应锦囊，不能等到自己的回合才处理！",
+      "duration_seconds": 9.84,
+      "file": "advanced-4-2.natural-r2-tone.mp3",
+      "method": "voice_design",
+      "fingerprint": "3fcb17f1630781265a0aa3f5021e4324a5c8c19c47a70c63d5404e474d932953",
+      "sha256": "7c1da8bb3f4984a3c9c7d913fcefa4c61770a77c3d2d87910303571305856804",
+      "recipe": {
+        "profile": "natural-r2-tone",
+        "seed": 43,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.4,
+          "end": 2
+        },
+        {
+          "time": 0.48,
+          "end": 3
+        },
+        {
+          "time": 0.64,
+          "end": 4
+        },
+        {
+          "time": 0.96,
+          "end": 5
+        },
+        {
+          "time": 1.36,
+          "end": 6
+        },
+        {
+          "time": 1.52,
+          "end": 7
+        },
+        {
+          "time": 1.76,
+          "end": 8
+        },
+        {
+          "time": 1.92,
+          "end": 9
+        },
+        {
+          "time": 2.08,
+          "end": 10
+        },
+        {
+          "time": 2.16,
+          "end": 11
+        },
+        {
+          "time": 2.24,
+          "end": 12
+        },
+        {
+          "time": 2.48,
+          "end": 13
+        },
+        {
+          "time": 2.64,
+          "end": 14
+        },
+        {
+          "time": 2.88,
+          "end": 16
+        },
+        {
+          "time": 3.76,
+          "end": 17
+        },
+        {
+          "time": 4.0,
+          "end": 18
+        },
+        {
+          "time": 4.24,
+          "end": 19
+        },
+        {
+          "time": 4.4,
+          "end": 20
+        },
+        {
+          "time": 4.48,
+          "end": 21
+        },
+        {
+          "time": 4.64,
+          "end": 22
+        },
+        {
+          "time": 4.96,
+          "end": 23
+        },
+        {
+          "time": 4.96,
+          "end": 24
+        },
+        {
+          "time": 5.04,
+          "end": 25
+        },
+        {
+          "time": 5.28,
+          "end": 27
+        },
+        {
+          "time": 5.92,
+          "end": 28
+        },
+        {
+          "time": 6.08,
+          "end": 29
+        },
+        {
+          "time": 6.24,
+          "end": 30
+        },
+        {
+          "time": 6.32,
+          "end": 31
+        },
+        {
+          "time": 6.64,
+          "end": 32
+        },
+        {
+          "time": 6.64,
+          "end": 33
+        },
+        {
+          "time": 6.88,
+          "end": 34
+        },
+        {
+          "time": 7.04,
+          "end": 35
+        },
+        {
+          "time": 7.2,
+          "end": 37
+        },
+        {
+          "time": 7.76,
+          "end": 38
+        },
+        {
+          "time": 7.92,
+          "end": 39
+        },
+        {
+          "time": 8.08,
+          "end": 40
+        },
+        {
+          "time": 8.16,
+          "end": 41
+        },
+        {
+          "time": 8.32,
+          "end": 42
+        },
+        {
+          "time": 8.48,
+          "end": 43
+        },
+        {
+          "time": 8.56,
+          "end": 44
+        },
+        {
+          "time": 8.72,
+          "end": 45
+        },
+        {
+          "time": 8.88,
+          "end": 46
+        },
+        {
+          "time": 8.96,
+          "end": 47
+        },
+        {
+          "time": 9.12,
+          "end": 48
+        },
+        {
+          "time": 9.28,
+          "end": 50
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "7c1da8bb3f4984a3c9c7d913fcefa4c61770a77c3d2d87910303571305856804",
+        "text_sha256": "8bc9ada083da6155255402c9443814424884ded77adfbd9522874bc8fcfec15d"
+      }
+    },
+    "advanced-5-1": {
+      "text": "轮到我们啦！五谷丰登会展示与存活人数一样多的牌，现在有三个人，就翻开三张。",
+      "duration_seconds": 7.6,
+      "file": "advanced-5-1.mp3",
+      "method": "voice_design",
+      "fingerprint": "15df65cb16ba8e3fb533a14c6214856f02cbaecd0be93fd313175614048db94b",
+      "sha256": "713267ad0021ad19edf2a624a058ab993cbec2b6d1d845a38a7711b5a0d69236",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.4,
+          "end": 3
+        },
+        {
+          "time": 0.48,
+          "end": 4
+        },
+        {
+          "time": 0.56,
+          "end": 6
+        },
+        {
+          "time": 1.6,
+          "end": 7
+        },
+        {
+          "time": 1.76,
+          "end": 8
+        },
+        {
+          "time": 1.92,
+          "end": 9
+        },
+        {
+          "time": 2.24,
+          "end": 10
+        },
+        {
+          "time": 2.56,
+          "end": 11
+        },
+        {
+          "time": 2.72,
+          "end": 12
+        },
+        {
+          "time": 2.96,
+          "end": 13
+        },
+        {
+          "time": 3.12,
+          "end": 14
+        },
+        {
+          "time": 3.28,
+          "end": 15
+        },
+        {
+          "time": 3.44,
+          "end": 16
+        },
+        {
+          "time": 3.6,
+          "end": 17
+        },
+        {
+          "time": 3.76,
+          "end": 18
+        },
+        {
+          "time": 3.92,
+          "end": 19
+        },
+        {
+          "time": 4.0,
+          "end": 20
+        },
+        {
+          "time": 4.16,
+          "end": 21
+        },
+        {
+          "time": 4.32,
+          "end": 22
+        },
+        {
+          "time": 4.4,
+          "end": 24
+        },
+        {
+          "time": 5.36,
+          "end": 25
+        },
+        {
+          "time": 5.6,
+          "end": 26
+        },
+        {
+          "time": 5.68,
+          "end": 27
+        },
+        {
+          "time": 5.84,
+          "end": 28
+        },
+        {
+          "time": 6.16,
+          "end": 29
+        },
+        {
+          "time": 6.24,
+          "end": 31
+        },
+        {
+          "time": 6.48,
+          "end": 32
+        },
+        {
+          "time": 6.56,
+          "end": 33
+        },
+        {
+          "time": 6.72,
+          "end": 34
+        },
+        {
+          "time": 6.88,
+          "end": 35
+        },
+        {
+          "time": 7.12,
+          "end": 37
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "713267ad0021ad19edf2a624a058ab993cbec2b6d1d845a38a7711b5a0d69236",
+        "text_sha256": "85b10c14f54eb1bab293daf9ab27748748ac73a245661763c6743e48086ca9d0"
+      }
+    },
+    "advanced-5-2": {
+      "text": "从发动者开始，顺时针每人挑一张加入手牌。嘿嘿，我们先选，关羽和张飞接着选。来，先把五谷丰登打出去！",
+      "duration_seconds": 11.44,
+      "file": "advanced-5-2.mp3",
+      "method": "voice_design",
+      "fingerprint": "dcc04748f41a84bad4ff9bcd5e36a387672c1ad91e0359bdf51e3110fc451360",
+      "sha256": "942aa89c066bc42b19c8260cb3a913252f4fb1bfcfb8cba9ed8a7a14f54b0884",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.4,
+          "end": 3
+        },
+        {
+          "time": 0.64,
+          "end": 4
+        },
+        {
+          "time": 0.72,
+          "end": 5
+        },
+        {
+          "time": 0.96,
+          "end": 7
+        },
+        {
+          "time": 1.52,
+          "end": 8
+        },
+        {
+          "time": 1.84,
+          "end": 9
+        },
+        {
+          "time": 2.0,
+          "end": 10
+        },
+        {
+          "time": 2.16,
+          "end": 11
+        },
+        {
+          "time": 2.32,
+          "end": 12
+        },
+        {
+          "time": 2.48,
+          "end": 13
+        },
+        {
+          "time": 2.72,
+          "end": 14
+        },
+        {
+          "time": 2.72,
+          "end": 15
+        },
+        {
+          "time": 2.96,
+          "end": 16
+        },
+        {
+          "time": 3.2,
+          "end": 17
+        },
+        {
+          "time": 3.28,
+          "end": 18
+        },
+        {
+          "time": 3.44,
+          "end": 20
+        },
+        {
+          "time": 3.76,
+          "end": 21
+        },
+        {
+          "time": 4.48,
+          "end": 23
+        },
+        {
+          "time": 5.36,
+          "end": 24
+        },
+        {
+          "time": 5.44,
+          "end": 25
+        },
+        {
+          "time": 5.52,
+          "end": 26
+        },
+        {
+          "time": 5.76,
+          "end": 28
+        },
+        {
+          "time": 6.64,
+          "end": 29
+        },
+        {
+          "time": 6.96,
+          "end": 30
+        },
+        {
+          "time": 6.96,
+          "end": 31
+        },
+        {
+          "time": 7.12,
+          "end": 32
+        },
+        {
+          "time": 7.36,
+          "end": 33
+        },
+        {
+          "time": 7.68,
+          "end": 34
+        },
+        {
+          "time": 7.92,
+          "end": 35
+        },
+        {
+          "time": 8.0,
+          "end": 37
+        },
+        {
+          "time": 8.96,
+          "end": 39
+        },
+        {
+          "time": 9.44,
+          "end": 40
+        },
+        {
+          "time": 9.6,
+          "end": 41
+        },
+        {
+          "time": 9.76,
+          "end": 42
+        },
+        {
+          "time": 9.92,
+          "end": 43
+        },
+        {
+          "time": 10.08,
+          "end": 44
+        },
+        {
+          "time": 10.32,
+          "end": 45
+        },
+        {
+          "time": 10.48,
+          "end": 46
+        },
+        {
+          "time": 10.64,
+          "end": 47
+        },
+        {
+          "time": 10.72,
+          "end": 49
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "942aa89c066bc42b19c8260cb3a913252f4fb1bfcfb8cba9ed8a7a14f54b0884",
+        "text_sha256": "515cd15bc483576afe53f5a6caa97746f464f80b0be8ed8175072d66afd1902f"
+      }
+    },
+    "advanced-6-1": {
+      "text": "展示牌在这里！点选梅花 10，再确认挑选，它就会加入我们的手牌。一次只能选一张哦～",
+      "duration_seconds": 8.64,
+      "file": "advanced-6-1.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "974a8434ba8acd11d8f139bb159e99ca5b521140281b452f437a70715710e33e",
+      "fingerprint": "5c38129339a5f9c4b012c41cbdc26208914609d9c56346d68f5300d382a022ee",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 2
+        },
+        {
+          "time": 0.4,
+          "end": 3
+        },
+        {
+          "time": 0.56,
+          "end": 4
+        },
+        {
+          "time": 0.72,
+          "end": 5
+        },
+        {
+          "time": 1.04,
+          "end": 7
+        },
+        {
+          "time": 2.0,
+          "end": 8
+        },
+        {
+          "time": 2.24,
+          "end": 9
+        },
+        {
+          "time": 2.48,
+          "end": 10
+        },
+        {
+          "time": 2.64,
+          "end": 12
+        },
+        {
+          "time": 2.88,
+          "end": 15
+        },
+        {
+          "time": 3.52,
+          "end": 16
+        },
+        {
+          "time": 3.68,
+          "end": 17
+        },
+        {
+          "time": 3.84,
+          "end": 18
+        },
+        {
+          "time": 4.0,
+          "end": 19
+        },
+        {
+          "time": 4.24,
+          "end": 21
+        },
+        {
+          "time": 4.8,
+          "end": 22
+        },
+        {
+          "time": 4.96,
+          "end": 23
+        },
+        {
+          "time": 5.12,
+          "end": 24
+        },
+        {
+          "time": 5.28,
+          "end": 25
+        },
+        {
+          "time": 5.44,
+          "end": 26
+        },
+        {
+          "time": 5.6,
+          "end": 27
+        },
+        {
+          "time": 5.68,
+          "end": 28
+        },
+        {
+          "time": 5.76,
+          "end": 29
+        },
+        {
+          "time": 5.84,
+          "end": 30
+        },
+        {
+          "time": 6.0,
+          "end": 32
+        },
+        {
+          "time": 6.88,
+          "end": 33
+        },
+        {
+          "time": 7.12,
+          "end": 34
+        },
+        {
+          "time": 7.6,
+          "end": 35
+        },
+        {
+          "time": 7.68,
+          "end": 36
+        },
+        {
+          "time": 7.84,
+          "end": 37
+        },
+        {
+          "time": 8.0,
+          "end": 38
+        },
+        {
+          "time": 8.16,
+          "end": 39
+        },
+        {
+          "time": 8.24,
+          "end": 41
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "974a8434ba8acd11d8f139bb159e99ca5b521140281b452f437a70715710e33e",
+        "text_sha256": "24ede2647dbde932d6830afef82a446632bb18dee88fc9c9da6ef54b12edf3d9"
+      }
+    },
+    "advanced-6-2": {
+      "text": "等关羽、张飞都选完，还是我们的回合。桌面上原来的 6 也还在，接下来得用更大的单张来接。",
+      "duration_seconds": 7.36,
+      "file": "advanced-6-2.mp3",
+      "method": "voice_design",
+      "fingerprint": "dd834009934cb82c3eb435a29783eb660b7192c8ff27721b459ac4037f7b2f85",
+      "sha256": "4c54657506e159bf9e8455742704ad9807b143dac5121990cac27e477a86e467",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.48,
+          "end": 4
+        },
+        {
+          "time": 0.64,
+          "end": 5
+        },
+        {
+          "time": 0.8,
+          "end": 6
+        },
+        {
+          "time": 0.96,
+          "end": 7
+        },
+        {
+          "time": 1.12,
+          "end": 8
+        },
+        {
+          "time": 1.28,
+          "end": 10
+        },
+        {
+          "time": 1.76,
+          "end": 11
+        },
+        {
+          "time": 1.92,
+          "end": 12
+        },
+        {
+          "time": 2.08,
+          "end": 13
+        },
+        {
+          "time": 2.16,
+          "end": 14
+        },
+        {
+          "time": 2.24,
+          "end": 15
+        },
+        {
+          "time": 2.56,
+          "end": 16
+        },
+        {
+          "time": 2.72,
+          "end": 18
+        },
+        {
+          "time": 3.36,
+          "end": 19
+        },
+        {
+          "time": 3.52,
+          "end": 20
+        },
+        {
+          "time": 3.68,
+          "end": 21
+        },
+        {
+          "time": 3.92,
+          "end": 22
+        },
+        {
+          "time": 4.08,
+          "end": 23
+        },
+        {
+          "time": 4.16,
+          "end": 25
+        },
+        {
+          "time": 4.48,
+          "end": 27
+        },
+        {
+          "time": 4.48,
+          "end": 28
+        },
+        {
+          "time": 4.56,
+          "end": 29
+        },
+        {
+          "time": 4.8,
+          "end": 31
+        },
+        {
+          "time": 5.44,
+          "end": 32
+        },
+        {
+          "time": 5.6,
+          "end": 33
+        },
+        {
+          "time": 5.76,
+          "end": 34
+        },
+        {
+          "time": 5.84,
+          "end": 35
+        },
+        {
+          "time": 6.0,
+          "end": 36
+        },
+        {
+          "time": 6.16,
+          "end": 37
+        },
+        {
+          "time": 6.32,
+          "end": 38
+        },
+        {
+          "time": 6.4,
+          "end": 39
+        },
+        {
+          "time": 6.56,
+          "end": 40
+        },
+        {
+          "time": 6.72,
+          "end": 41
+        },
+        {
+          "time": 6.8,
+          "end": 42
+        },
+        {
+          "time": 6.96,
+          "end": 44
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "4c54657506e159bf9e8455742704ad9807b143dac5121990cac27e477a86e467",
+        "text_sha256": "fc18debf3ff8b5e191ee0d431f60dfaf19cc79ae9c0cbd300fce2637e88c4336"
+      }
+    },
+    "advanced-7-1": {
+      "text": "这一回合已经用过五谷丰登啦，先用黑桃 J 接住桌面的 6。等对手接牌，再轮到我们，就可以用下一张锦囊！",
+      "duration_seconds": 8.72,
+      "file": "advanced-7-1.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "a3ca102be67f324cc21bee947fd69865fc2d5bdb030d1c6b502c827073a8fefe",
+      "fingerprint": "cf5dfaf4d44b10989cf6b58117e48b75f5797e627606244649596fbe4c37cb2d",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 2
+        },
+        {
+          "time": 0.32,
+          "end": 3
+        },
+        {
+          "time": 0.48,
+          "end": 4
+        },
+        {
+          "time": 0.64,
+          "end": 5
+        },
+        {
+          "time": 0.8,
+          "end": 6
+        },
+        {
+          "time": 0.96,
+          "end": 7
+        },
+        {
+          "time": 1.12,
+          "end": 8
+        },
+        {
+          "time": 1.28,
+          "end": 9
+        },
+        {
+          "time": 1.36,
+          "end": 10
+        },
+        {
+          "time": 1.52,
+          "end": 11
+        },
+        {
+          "time": 1.68,
+          "end": 12
+        },
+        {
+          "time": 1.76,
+          "end": 14
+        },
+        {
+          "time": 2.48,
+          "end": 15
+        },
+        {
+          "time": 2.72,
+          "end": 16
+        },
+        {
+          "time": 2.88,
+          "end": 17
+        },
+        {
+          "time": 3.12,
+          "end": 19
+        },
+        {
+          "time": 3.28,
+          "end": 21
+        },
+        {
+          "time": 3.52,
+          "end": 22
+        },
+        {
+          "time": 3.68,
+          "end": 23
+        },
+        {
+          "time": 3.84,
+          "end": 24
+        },
+        {
+          "time": 4.0,
+          "end": 25
+        },
+        {
+          "time": 4.16,
+          "end": 27
+        },
+        {
+          "time": 4.24,
+          "end": 29
+        },
+        {
+          "time": 5.12,
+          "end": 30
+        },
+        {
+          "time": 5.28,
+          "end": 31
+        },
+        {
+          "time": 5.44,
+          "end": 32
+        },
+        {
+          "time": 5.6,
+          "end": 33
+        },
+        {
+          "time": 5.76,
+          "end": 35
+        },
+        {
+          "time": 6.32,
+          "end": 36
+        },
+        {
+          "time": 6.4,
+          "end": 37
+        },
+        {
+          "time": 6.56,
+          "end": 38
+        },
+        {
+          "time": 6.88,
+          "end": 39
+        },
+        {
+          "time": 6.96,
+          "end": 41
+        },
+        {
+          "time": 7.36,
+          "end": 42
+        },
+        {
+          "time": 7.44,
+          "end": 43
+        },
+        {
+          "time": 7.6,
+          "end": 44
+        },
+        {
+          "time": 7.68,
+          "end": 45
+        },
+        {
+          "time": 7.84,
+          "end": 46
+        },
+        {
+          "time": 8.08,
+          "end": 47
+        },
+        {
+          "time": 8.08,
+          "end": 48
+        },
+        {
+          "time": 8.24,
+          "end": 49
+        },
+        {
+          "time": 8.4,
+          "end": 51
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "a3ca102be67f324cc21bee947fd69865fc2d5bdb030d1c6b502c827073a8fefe",
+        "text_sha256": "c24757e251f1f9948eb1aab39126f3aec042e469c14750c5b38780b5e05f21ac"
+      }
+    },
+    "advanced-7-2": {
+      "text": "最后这张借刀杀人，需要桌面上有别人打出的牌。它会让下一位存活玩家替你接牌，不能在空桌时使用哦。",
+      "duration_seconds": 8.48,
+      "file": "advanced-7-2.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "6bac81333180e1936986c21f77545e6c3f1e0d13b25bb255d10f710ed32d1acc",
+      "fingerprint": "206c8d0952242152d6a10136660efaffa723059b3664ecf87f93d74ba2c03540",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.48,
+          "end": 2
+        },
+        {
+          "time": 0.56,
+          "end": 3
+        },
+        {
+          "time": 0.64,
+          "end": 4
+        },
+        {
+          "time": 0.8,
+          "end": 5
+        },
+        {
+          "time": 1.04,
+          "end": 6
+        },
+        {
+          "time": 1.2,
+          "end": 7
+        },
+        {
+          "time": 1.44,
+          "end": 9
+        },
+        {
+          "time": 1.92,
+          "end": 10
+        },
+        {
+          "time": 2.08,
+          "end": 11
+        },
+        {
+          "time": 2.24,
+          "end": 12
+        },
+        {
+          "time": 2.4,
+          "end": 13
+        },
+        {
+          "time": 2.64,
+          "end": 14
+        },
+        {
+          "time": 2.8,
+          "end": 15
+        },
+        {
+          "time": 2.88,
+          "end": 16
+        },
+        {
+          "time": 3.12,
+          "end": 17
+        },
+        {
+          "time": 3.28,
+          "end": 18
+        },
+        {
+          "time": 3.44,
+          "end": 19
+        },
+        {
+          "time": 3.52,
+          "end": 20
+        },
+        {
+          "time": 3.68,
+          "end": 22
+        },
+        {
+          "time": 4.4,
+          "end": 23
+        },
+        {
+          "time": 4.48,
+          "end": 24
+        },
+        {
+          "time": 4.64,
+          "end": 25
+        },
+        {
+          "time": 4.8,
+          "end": 26
+        },
+        {
+          "time": 5.12,
+          "end": 27
+        },
+        {
+          "time": 5.12,
+          "end": 28
+        },
+        {
+          "time": 5.28,
+          "end": 29
+        },
+        {
+          "time": 5.44,
+          "end": 30
+        },
+        {
+          "time": 5.52,
+          "end": 31
+        },
+        {
+          "time": 5.76,
+          "end": 32
+        },
+        {
+          "time": 5.84,
+          "end": 33
+        },
+        {
+          "time": 6.08,
+          "end": 34
+        },
+        {
+          "time": 6.16,
+          "end": 35
+        },
+        {
+          "time": 6.32,
+          "end": 37
+        },
+        {
+          "time": 6.96,
+          "end": 38
+        },
+        {
+          "time": 7.04,
+          "end": 39
+        },
+        {
+          "time": 7.2,
+          "end": 40
+        },
+        {
+          "time": 7.28,
+          "end": 41
+        },
+        {
+          "time": 7.68,
+          "end": 42
+        },
+        {
+          "time": 7.68,
+          "end": 43
+        },
+        {
+          "time": 7.84,
+          "end": 44
+        },
+        {
+          "time": 8.0,
+          "end": 45
+        },
+        {
+          "time": 8.08,
+          "end": 47
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "6bac81333180e1936986c21f77545e6c3f1e0d13b25bb255d10f710ed32d1acc",
+        "text_sha256": "a09a0ed3b8a25b1ae3e752f7d71aa7b869bad627e476b6f6569e9194fe73d427"
+      }
+    },
+    "advanced-8-1": {
+      "text": "现在桌上是张飞的 K，符合借刀条件！打出借刀杀人，就会让下家关羽替我们接这张牌。",
+      "duration_seconds": 7.76,
+      "file": "advanced-8-1.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "c1bcd380860e9adbc2ee0696ad4b27d4fb87941f5c17a6830e59e374235094e4",
+      "fingerprint": "aac5502789077692a053950f3cd189d7257fcead1c311dc8ab9969688cff07a9",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.32,
+          "end": 2
+        },
+        {
+          "time": 0.4,
+          "end": 3
+        },
+        {
+          "time": 0.64,
+          "end": 4
+        },
+        {
+          "time": 0.88,
+          "end": 5
+        },
+        {
+          "time": 0.96,
+          "end": 6
+        },
+        {
+          "time": 1.2,
+          "end": 7
+        },
+        {
+          "time": 1.28,
+          "end": 9
+        },
+        {
+          "time": 1.36,
+          "end": 11
+        },
+        {
+          "time": 1.92,
+          "end": 12
+        },
+        {
+          "time": 2.16,
+          "end": 13
+        },
+        {
+          "time": 2.32,
+          "end": 14
+        },
+        {
+          "time": 2.4,
+          "end": 15
+        },
+        {
+          "time": 2.56,
+          "end": 16
+        },
+        {
+          "time": 2.72,
+          "end": 18
+        },
+        {
+          "time": 3.6,
+          "end": 19
+        },
+        {
+          "time": 3.84,
+          "end": 20
+        },
+        {
+          "time": 4.0,
+          "end": 21
+        },
+        {
+          "time": 4.24,
+          "end": 22
+        },
+        {
+          "time": 4.4,
+          "end": 23
+        },
+        {
+          "time": 4.96,
+          "end": 25
+        },
+        {
+          "time": 5.2,
+          "end": 26
+        },
+        {
+          "time": 5.36,
+          "end": 27
+        },
+        {
+          "time": 5.44,
+          "end": 28
+        },
+        {
+          "time": 5.6,
+          "end": 29
+        },
+        {
+          "time": 5.84,
+          "end": 30
+        },
+        {
+          "time": 6.0,
+          "end": 31
+        },
+        {
+          "time": 6.32,
+          "end": 32
+        },
+        {
+          "time": 6.48,
+          "end": 33
+        },
+        {
+          "time": 6.64,
+          "end": 34
+        },
+        {
+          "time": 6.72,
+          "end": 35
+        },
+        {
+          "time": 6.88,
+          "end": 36
+        },
+        {
+          "time": 7.04,
+          "end": 37
+        },
+        {
+          "time": 7.2,
+          "end": 38
+        },
+        {
+          "time": 7.6,
+          "end": 40
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "c1bcd380860e9adbc2ee0696ad4b27d4fb87941f5c17a6830e59e374235094e4",
+        "text_sha256": "18188a0c6fbc2f2e0ef6b5340d90ddc8a3bf947f967a051901b53296115dfef6"
+      }
+    },
+    "advanced-8-2": {
+      "text": "如果他能接住，接出的牌会算在我们名下，我们的回合结束。如果他要不起，只罚摸一张，然后我们继续行动。关羽这次会演示要不起！",
+      "duration_seconds": 12.32,
+      "file": "advanced-8-2.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "06010004393eb01052bc64a29a841f7c1bc90f232332f5eac34735d6a84cc878",
+      "fingerprint": "fa30c58c5f81381e6ac552ae68e87d6db553e3fb9e4f5452734ed083cc7a66ca",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.24,
+          "end": 3
+        },
+        {
+          "time": 0.4,
+          "end": 4
+        },
+        {
+          "time": 0.56,
+          "end": 5
+        },
+        {
+          "time": 0.8,
+          "end": 7
+        },
+        {
+          "time": 1.28,
+          "end": 8
+        },
+        {
+          "time": 1.44,
+          "end": 9
+        },
+        {
+          "time": 1.6,
+          "end": 10
+        },
+        {
+          "time": 1.68,
+          "end": 11
+        },
+        {
+          "time": 1.84,
+          "end": 12
+        },
+        {
+          "time": 2.0,
+          "end": 13
+        },
+        {
+          "time": 2.16,
+          "end": 14
+        },
+        {
+          "time": 2.24,
+          "end": 15
+        },
+        {
+          "time": 2.32,
+          "end": 16
+        },
+        {
+          "time": 2.4,
+          "end": 17
+        },
+        {
+          "time": 2.56,
+          "end": 19
+        },
+        {
+          "time": 3.36,
+          "end": 20
+        },
+        {
+          "time": 3.52,
+          "end": 21
+        },
+        {
+          "time": 3.6,
+          "end": 22
+        },
+        {
+          "time": 3.68,
+          "end": 23
+        },
+        {
+          "time": 3.84,
+          "end": 24
+        },
+        {
+          "time": 3.92,
+          "end": 25
+        },
+        {
+          "time": 4.08,
+          "end": 27
+        },
+        {
+          "time": 5.68,
+          "end": 28
+        },
+        {
+          "time": 5.84,
+          "end": 29
+        },
+        {
+          "time": 5.92,
+          "end": 30
+        },
+        {
+          "time": 6.08,
+          "end": 31
+        },
+        {
+          "time": 6.24,
+          "end": 32
+        },
+        {
+          "time": 6.32,
+          "end": 34
+        },
+        {
+          "time": 6.88,
+          "end": 35
+        },
+        {
+          "time": 6.96,
+          "end": 36
+        },
+        {
+          "time": 7.12,
+          "end": 37
+        },
+        {
+          "time": 7.28,
+          "end": 38
+        },
+        {
+          "time": 7.44,
+          "end": 40
+        },
+        {
+          "time": 8.24,
+          "end": 41
+        },
+        {
+          "time": 8.4,
+          "end": 42
+        },
+        {
+          "time": 8.56,
+          "end": 43
+        },
+        {
+          "time": 8.56,
+          "end": 44
+        },
+        {
+          "time": 8.64,
+          "end": 45
+        },
+        {
+          "time": 8.8,
+          "end": 46
+        },
+        {
+          "time": 8.88,
+          "end": 47
+        },
+        {
+          "time": 9.04,
+          "end": 49
+        },
+        {
+          "time": 10.32,
+          "end": 50
+        },
+        {
+          "time": 10.64,
+          "end": 51
+        },
+        {
+          "time": 10.8,
+          "end": 52
+        },
+        {
+          "time": 10.96,
+          "end": 53
+        },
+        {
+          "time": 11.12,
+          "end": 54
+        },
+        {
+          "time": 11.28,
+          "end": 55
+        },
+        {
+          "time": 11.44,
+          "end": 56
+        },
+        {
+          "time": 11.6,
+          "end": 57
+        },
+        {
+          "time": 11.76,
+          "end": 58
+        },
+        {
+          "time": 11.84,
+          "end": 60
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "06010004393eb01052bc64a29a841f7c1bc90f232332f5eac34735d6a84cc878",
+        "text_sha256": "5acfc9d412ccc652b5ad0bf3210f92a4034150da4f6ff53218611a662db6691f"
+      }
+    },
+    "advanced-8-3": {
+      "text": "被借刀时只能应对桌面的牌，不能用锦囊或技能。正式对局限时 10 秒，这里仍然不限时。来，看看借刀的效果吧～",
+      "duration_seconds": 9.52,
+      "file": "advanced-8-3.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "e7b4bcc8955abf8f9d0edc1f220972a0704d1391f8976491efeedced6426bf10",
+      "fingerprint": "2439e3cf3a8247f7e6c54ec9ad4854b7a4c409f27173ac0a241017d764139c80",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.32,
+          "end": 3
+        },
+        {
+          "time": 0.48,
+          "end": 4
+        },
+        {
+          "time": 0.72,
+          "end": 5
+        },
+        {
+          "time": 0.8,
+          "end": 6
+        },
+        {
+          "time": 0.96,
+          "end": 7
+        },
+        {
+          "time": 0.96,
+          "end": 8
+        },
+        {
+          "time": 1.2,
+          "end": 9
+        },
+        {
+          "time": 1.52,
+          "end": 10
+        },
+        {
+          "time": 1.6,
+          "end": 11
+        },
+        {
+          "time": 1.76,
+          "end": 13
+        },
+        {
+          "time": 2.08,
+          "end": 14
+        },
+        {
+          "time": 2.16,
+          "end": 15
+        },
+        {
+          "time": 2.32,
+          "end": 16
+        },
+        {
+          "time": 2.48,
+          "end": 17
+        },
+        {
+          "time": 2.64,
+          "end": 18
+        },
+        {
+          "time": 2.8,
+          "end": 19
+        },
+        {
+          "time": 2.88,
+          "end": 20
+        },
+        {
+          "time": 3.28,
+          "end": 22
+        },
+        {
+          "time": 4.0,
+          "end": 23
+        },
+        {
+          "time": 4.24,
+          "end": 24
+        },
+        {
+          "time": 4.48,
+          "end": 25
+        },
+        {
+          "time": 4.64,
+          "end": 26
+        },
+        {
+          "time": 4.8,
+          "end": 27
+        },
+        {
+          "time": 4.96,
+          "end": 29
+        },
+        {
+          "time": 5.12,
+          "end": 32
+        },
+        {
+          "time": 5.52,
+          "end": 34
+        },
+        {
+          "time": 5.92,
+          "end": 35
+        },
+        {
+          "time": 6.0,
+          "end": 36
+        },
+        {
+          "time": 6.16,
+          "end": 37
+        },
+        {
+          "time": 6.32,
+          "end": 38
+        },
+        {
+          "time": 6.48,
+          "end": 39
+        },
+        {
+          "time": 6.56,
+          "end": 40
+        },
+        {
+          "time": 6.72,
+          "end": 42
+        },
+        {
+          "time": 6.88,
+          "end": 44
+        },
+        {
+          "time": 8.16,
+          "end": 45
+        },
+        {
+          "time": 8.32,
+          "end": 46
+        },
+        {
+          "time": 8.4,
+          "end": 47
+        },
+        {
+          "time": 8.56,
+          "end": 48
+        },
+        {
+          "time": 8.72,
+          "end": 49
+        },
+        {
+          "time": 8.8,
+          "end": 50
+        },
+        {
+          "time": 8.96,
+          "end": 51
+        },
+        {
+          "time": 9.04,
+          "end": 53
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "e7b4bcc8955abf8f9d0edc1f220972a0704d1391f8976491efeedced6426bf10",
+        "text_sha256": "1d53da7e9d46f2e7263a24d6c7ed3771aeb37de3c766a431ea8753677d09694e"
+      }
+    },
+    "advanced-9-1": {
+      "text": "看到啦？关羽只多了一张牌，桌面还是张飞的 K，回合回到我们这里了。最后用红桃 A 接住它吧！",
+      "duration_seconds": 8.56,
+      "file": "advanced-9-1.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "b562727ac2dc14a210351e9a704d16b8fe054403d0c8b72e5fa875a95be46953",
+      "fingerprint": "d0ed77749979fc46505a42855cfe0820a639bda561f740f27d8df7b25418cc56",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.16,
+          "end": 2
+        },
+        {
+          "time": 0.32,
+          "end": 4
+        },
+        {
+          "time": 0.96,
+          "end": 5
+        },
+        {
+          "time": 1.28,
+          "end": 6
+        },
+        {
+          "time": 1.36,
+          "end": 7
+        },
+        {
+          "time": 1.52,
+          "end": 8
+        },
+        {
+          "time": 1.68,
+          "end": 9
+        },
+        {
+          "time": 1.76,
+          "end": 10
+        },
+        {
+          "time": 2.0,
+          "end": 11
+        },
+        {
+          "time": 2.24,
+          "end": 13
+        },
+        {
+          "time": 2.96,
+          "end": 14
+        },
+        {
+          "time": 3.12,
+          "end": 15
+        },
+        {
+          "time": 3.28,
+          "end": 16
+        },
+        {
+          "time": 3.44,
+          "end": 17
+        },
+        {
+          "time": 3.52,
+          "end": 18
+        },
+        {
+          "time": 3.76,
+          "end": 19
+        },
+        {
+          "time": 3.84,
+          "end": 21
+        },
+        {
+          "time": 4.0,
+          "end": 23
+        },
+        {
+          "time": 4.72,
+          "end": 24
+        },
+        {
+          "time": 4.88,
+          "end": 25
+        },
+        {
+          "time": 5.04,
+          "end": 26
+        },
+        {
+          "time": 5.2,
+          "end": 27
+        },
+        {
+          "time": 5.44,
+          "end": 28
+        },
+        {
+          "time": 5.44,
+          "end": 29
+        },
+        {
+          "time": 5.52,
+          "end": 30
+        },
+        {
+          "time": 5.68,
+          "end": 31
+        },
+        {
+          "time": 5.76,
+          "end": 33
+        },
+        {
+          "time": 6.64,
+          "end": 34
+        },
+        {
+          "time": 6.88,
+          "end": 35
+        },
+        {
+          "time": 7.2,
+          "end": 36
+        },
+        {
+          "time": 7.36,
+          "end": 37
+        },
+        {
+          "time": 7.52,
+          "end": 39
+        },
+        {
+          "time": 7.68,
+          "end": 41
+        },
+        {
+          "time": 7.84,
+          "end": 42
+        },
+        {
+          "time": 8.0,
+          "end": 43
+        },
+        {
+          "time": 8.08,
+          "end": 44
+        },
+        {
+          "time": 8.24,
+          "end": 46
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "b562727ac2dc14a210351e9a704d16b8fe054403d0c8b72e5fa875a95be46953",
+        "text_sha256": "a3d0ae71766351418944097667db0c77307f7216e06d3001b2da69fae98eb7be"
+      }
+    },
+    "advanced-9-2": {
+      "text": "嘿嘿，四种锦囊的关键操作都练过啦。去真正的牌桌时，记得看看响应条件、手牌数量，还有锦囊结算后轮到谁！",
+      "duration_seconds": 11.12,
+      "file": "advanced-9-2.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "9c28efa97f8156bc209779e9ce265136b5ac1c46efeb6b596d9e459ee9e8c455",
+      "fingerprint": "62dd8c3cb556fd33414f1ac44653b1313aff371eb153ef14221eb4ad950cd3c0",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.08,
+          "end": 3
+        },
+        {
+          "time": 0.96,
+          "end": 4
+        },
+        {
+          "time": 1.28,
+          "end": 5
+        },
+        {
+          "time": 1.52,
+          "end": 6
+        },
+        {
+          "time": 1.76,
+          "end": 7
+        },
+        {
+          "time": 1.84,
+          "end": 8
+        },
+        {
+          "time": 2.0,
+          "end": 9
+        },
+        {
+          "time": 2.16,
+          "end": 10
+        },
+        {
+          "time": 2.32,
+          "end": 11
+        },
+        {
+          "time": 2.56,
+          "end": 12
+        },
+        {
+          "time": 2.8,
+          "end": 13
+        },
+        {
+          "time": 3.2,
+          "end": 14
+        },
+        {
+          "time": 3.2,
+          "end": 15
+        },
+        {
+          "time": 3.36,
+          "end": 17
+        },
+        {
+          "time": 4.4,
+          "end": 18
+        },
+        {
+          "time": 4.56,
+          "end": 19
+        },
+        {
+          "time": 4.72,
+          "end": 20
+        },
+        {
+          "time": 4.88,
+          "end": 21
+        },
+        {
+          "time": 4.96,
+          "end": 22
+        },
+        {
+          "time": 5.2,
+          "end": 23
+        },
+        {
+          "time": 5.36,
+          "end": 25
+        },
+        {
+          "time": 6.08,
+          "end": 26
+        },
+        {
+          "time": 6.24,
+          "end": 27
+        },
+        {
+          "time": 6.4,
+          "end": 28
+        },
+        {
+          "time": 6.56,
+          "end": 29
+        },
+        {
+          "time": 6.72,
+          "end": 30
+        },
+        {
+          "time": 6.88,
+          "end": 31
+        },
+        {
+          "time": 7.04,
+          "end": 32
+        },
+        {
+          "time": 7.28,
+          "end": 34
+        },
+        {
+          "time": 7.84,
+          "end": 35
+        },
+        {
+          "time": 8.08,
+          "end": 36
+        },
+        {
+          "time": 8.24,
+          "end": 37
+        },
+        {
+          "time": 8.48,
+          "end": 39
+        },
+        {
+          "time": 9.12,
+          "end": 40
+        },
+        {
+          "time": 9.28,
+          "end": 41
+        },
+        {
+          "time": 9.36,
+          "end": 42
+        },
+        {
+          "time": 9.6,
+          "end": 43
+        },
+        {
+          "time": 9.76,
+          "end": 44
+        },
+        {
+          "time": 9.84,
+          "end": 45
+        },
+        {
+          "time": 10.08,
+          "end": 46
+        },
+        {
+          "time": 10.48,
+          "end": 47
+        },
+        {
+          "time": 10.64,
+          "end": 48
+        },
+        {
+          "time": 10.8,
+          "end": 50
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "9c28efa97f8156bc209779e9ce265136b5ac1c46efeb6b596d9e459ee9e8c455",
+        "text_sha256": "374f71d4d47b3eb20bcd1916c5d60764965bf5048129d967e6aae04c05ca07b1"
+      }
+    },
+    "advanced-complete": {
+      "text": "好耶！和关羽、张飞一起，把四种锦囊都练过啦～记得每回合只能用一张锦囊，响应时看清要求，结算后再看轮到谁。想复习的话，小桃随时陪你再练一次！",
+      "duration_seconds": 13.36,
+      "file": "advanced-complete.natural-r1.mp3",
+      "method": "voice_design",
+      "recipe": {
+        "profile": "natural-r1",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "sha256": "fd617adebf2adf51578cac7e0a69fc3553f3e1755ad60e9ded199c424b3252d9",
+      "fingerprint": "8ebe0576c515fee76c1fd9f8f86e4a5a1a336d058a16abe6b28f6574a1ee9cd9",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.24,
+          "end": 3
+        },
+        {
+          "time": 0.8,
+          "end": 4
+        },
+        {
+          "time": 0.96,
+          "end": 5
+        },
+        {
+          "time": 1.28,
+          "end": 7
+        },
+        {
+          "time": 1.36,
+          "end": 8
+        },
+        {
+          "time": 1.92,
+          "end": 9
+        },
+        {
+          "time": 2.08,
+          "end": 10
+        },
+        {
+          "time": 2.16,
+          "end": 12
+        },
+        {
+          "time": 2.4,
+          "end": 13
+        },
+        {
+          "time": 2.56,
+          "end": 14
+        },
+        {
+          "time": 2.72,
+          "end": 15
+        },
+        {
+          "time": 2.96,
+          "end": 16
+        },
+        {
+          "time": 3.12,
+          "end": 17
+        },
+        {
+          "time": 3.36,
+          "end": 18
+        },
+        {
+          "time": 3.84,
+          "end": 19
+        },
+        {
+          "time": 3.84,
+          "end": 20
+        },
+        {
+          "time": 3.84,
+          "end": 22
+        },
+        {
+          "time": 4.48,
+          "end": 23
+        },
+        {
+          "time": 4.64,
+          "end": 24
+        },
+        {
+          "time": 4.8,
+          "end": 25
+        },
+        {
+          "time": 4.96,
+          "end": 26
+        },
+        {
+          "time": 5.12,
+          "end": 27
+        },
+        {
+          "time": 5.36,
+          "end": 28
+        },
+        {
+          "time": 5.52,
+          "end": 29
+        },
+        {
+          "time": 5.6,
+          "end": 30
+        },
+        {
+          "time": 5.76,
+          "end": 31
+        },
+        {
+          "time": 5.92,
+          "end": 32
+        },
+        {
+          "time": 6.08,
+          "end": 33
+        },
+        {
+          "time": 6.32,
+          "end": 35
+        },
+        {
+          "time": 6.8,
+          "end": 36
+        },
+        {
+          "time": 7.04,
+          "end": 37
+        },
+        {
+          "time": 7.2,
+          "end": 38
+        },
+        {
+          "time": 7.44,
+          "end": 39
+        },
+        {
+          "time": 7.6,
+          "end": 40
+        },
+        {
+          "time": 7.76,
+          "end": 41
+        },
+        {
+          "time": 8.0,
+          "end": 43
+        },
+        {
+          "time": 8.48,
+          "end": 44
+        },
+        {
+          "time": 8.72,
+          "end": 45
+        },
+        {
+          "time": 8.96,
+          "end": 46
+        },
+        {
+          "time": 9.12,
+          "end": 47
+        },
+        {
+          "time": 9.28,
+          "end": 48
+        },
+        {
+          "time": 9.44,
+          "end": 49
+        },
+        {
+          "time": 9.52,
+          "end": 50
+        },
+        {
+          "time": 9.68,
+          "end": 52
+        },
+        {
+          "time": 10.48,
+          "end": 53
+        },
+        {
+          "time": 10.72,
+          "end": 54
+        },
+        {
+          "time": 10.88,
+          "end": 55
+        },
+        {
+          "time": 11.04,
+          "end": 56
+        },
+        {
+          "time": 11.2,
+          "end": 58
+        },
+        {
+          "time": 11.68,
+          "end": 59
+        },
+        {
+          "time": 11.84,
+          "end": 60
+        },
+        {
+          "time": 12.0,
+          "end": 61
+        },
+        {
+          "time": 12.24,
+          "end": 62
+        },
+        {
+          "time": 12.4,
+          "end": 63
+        },
+        {
+          "time": 12.48,
+          "end": 64
+        },
+        {
+          "time": 12.64,
+          "end": 65
+        },
+        {
+          "time": 12.72,
+          "end": 66
+        },
+        {
+          "time": 12.96,
+          "end": 67
+        },
+        {
+          "time": 12.96,
+          "end": 69
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "fd617adebf2adf51578cac7e0a69fc3553f3e1755ad60e9ded199c424b3252d9",
+        "text_sha256": "f86be6cf9ce5006270b4b3c83b9c2d9a34c41e3c91d60e05c25a194f3107d37a"
+      }
+    },
+    "exit": {
+      "text": "欸？这就要走啦？好吧好吧～想继续练习的话，随时都能从大厅重新开始教学，小桃会等你的哦！",
+      "duration_seconds": 9.68,
+      "file": "exit.mp3",
+      "method": "voice_design",
+      "fingerprint": "d64c9d0e72f026e5afa4acece5b0f55603f941bebaeb8cc778e57e8319e3b00b",
+      "sha256": "9101745de1fcdae6a1ec259e01787b9a582be3d86d16e1bd1061a6d8311b8d5e",
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 2
+        },
+        {
+          "time": 0.88,
+          "end": 3
+        },
+        {
+          "time": 1.04,
+          "end": 4
+        },
+        {
+          "time": 1.12,
+          "end": 5
+        },
+        {
+          "time": 1.2,
+          "end": 6
+        },
+        {
+          "time": 1.36,
+          "end": 8
+        },
+        {
+          "time": 1.6,
+          "end": 9
+        },
+        {
+          "time": 3.52,
+          "end": 10
+        },
+        {
+          "time": 3.6,
+          "end": 11
+        },
+        {
+          "time": 3.76,
+          "end": 13
+        },
+        {
+          "time": 4.56,
+          "end": 14
+        },
+        {
+          "time": 4.8,
+          "end": 15
+        },
+        {
+          "time": 4.88,
+          "end": 16
+        },
+        {
+          "time": 5.04,
+          "end": 17
+        },
+        {
+          "time": 5.2,
+          "end": 18
+        },
+        {
+          "time": 5.28,
+          "end": 19
+        },
+        {
+          "time": 5.44,
+          "end": 21
+        },
+        {
+          "time": 6.0,
+          "end": 22
+        },
+        {
+          "time": 6.24,
+          "end": 23
+        },
+        {
+          "time": 6.4,
+          "end": 24
+        },
+        {
+          "time": 6.56,
+          "end": 25
+        },
+        {
+          "time": 6.64,
+          "end": 26
+        },
+        {
+          "time": 6.8,
+          "end": 27
+        },
+        {
+          "time": 6.96,
+          "end": 28
+        },
+        {
+          "time": 7.12,
+          "end": 29
+        },
+        {
+          "time": 7.36,
+          "end": 30
+        },
+        {
+          "time": 7.52,
+          "end": 31
+        },
+        {
+          "time": 7.68,
+          "end": 32
+        },
+        {
+          "time": 7.76,
+          "end": 33
+        },
+        {
+          "time": 8.0,
+          "end": 35
+        },
+        {
+          "time": 8.48,
+          "end": 36
+        },
+        {
+          "time": 8.72,
+          "end": 37
+        },
+        {
+          "time": 8.88,
+          "end": 38
+        },
+        {
+          "time": 8.96,
+          "end": 39
+        },
+        {
+          "time": 9.12,
+          "end": 40
+        },
+        {
+          "time": 9.2,
+          "end": 41
+        },
+        {
+          "time": 9.28,
+          "end": 43
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "9101745de1fcdae6a1ec259e01787b9a582be3d86d16e1bd1061a6d8311b8d5e",
+        "text_sha256": "07d65186f7d62a3c4b4c97a1e8872bae6e44adcd645433bd379dce44b613fc18"
+      }
+    },
+    "error": {
+      "text": "哎呀，练习好像出了点小问题……重新开始一次吧！",
+      "duration_seconds": 4.64,
+      "file": "error.natural-r2.mp3",
+      "method": "voice_design",
+      "fingerprint": "2b2585fb16240879d9877c8b3f02320d8f2ccea2b9c2c6973d752c56e1215db7",
+      "sha256": "b4143a657699c98bb27975b881dd52ca0d8851c139e90b888f5524a2cf016600",
+      "recipe": {
+        "profile": "natural-r2",
+        "seed": 42,
+        "description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording. Keep the delivery natural and relaxed while remaining cheerful and youthful. Use a comfortable bright pitch with clear, lightly smiling speech. Avoid a nasal whiny or coquettish delivery, drawn-out squeaky vowels, shouting and sudden loud exclamations. Use a gentle onset and moderate conversational energy.",
+        "generation": {
+          "language": "Chinese",
+          "non_streaming_mode": true,
+          "max_new_tokens": 2048,
+          "temperature": 0.7,
+          "subtalker_temperature": 0.7
+        },
+        "audio_processing": {
+          "peak": 0.85,
+          "fade_ms": 20
+        }
+      },
+      "subtitle_cues": [
+        {
+          "time": 0.0,
+          "end": 1
+        },
+        {
+          "time": 0.4,
+          "end": 3
+        },
+        {
+          "time": 0.8,
+          "end": 4
+        },
+        {
+          "time": 1.04,
+          "end": 5
+        },
+        {
+          "time": 1.28,
+          "end": 6
+        },
+        {
+          "time": 1.44,
+          "end": 7
+        },
+        {
+          "time": 1.6,
+          "end": 8
+        },
+        {
+          "time": 1.76,
+          "end": 9
+        },
+        {
+          "time": 1.84,
+          "end": 10
+        },
+        {
+          "time": 2.0,
+          "end": 11
+        },
+        {
+          "time": 2.16,
+          "end": 12
+        },
+        {
+          "time": 2.4,
+          "end": 15
+        },
+        {
+          "time": 3.52,
+          "end": 16
+        },
+        {
+          "time": 3.6,
+          "end": 17
+        },
+        {
+          "time": 3.76,
+          "end": 18
+        },
+        {
+          "time": 3.92,
+          "end": 19
+        },
+        {
+          "time": 4.08,
+          "end": 20
+        },
+        {
+          "time": 4.16,
+          "end": 21
+        },
+        {
+          "time": 4.32,
+          "end": 23
+        }
+      ],
+      "subtitle_alignment": {
+        "model": "Qwen/Qwen3-ForcedAligner-0.6B",
+        "revision": "c7cbfc2048c462b0d63a45797104fc9db3ad62b7",
+        "audio_sha256": "b4143a657699c98bb27975b881dd52ca0d8851c139e90b888f5524a2cf016600",
+        "text_sha256": "1f8726d1fb0b3b1270b05ae4ccb0a6bb0c5704faa0e613c6670868ada5eb7fda"
+      }
+    }
+  },
+  "voice": "元气甜妹",
+  "model": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+  "reference_sha256": "e5a9605f5f581514850e659c0d07f33324aa30484c8b0a1102c4766e96842fd5",
+  "seed": 42,
+  "runtime": {
+    "qwen-tts": "0.1.1",
+    "transformers": "4.57.3",
+    "torch": "2.13.0+cu126",
+    "soundfile": "0.14.0",
+    "imageio-ffmpeg": "0.6.0"
+  },
+  "status": "complete",
+  "method": "voice_design",
+  "design_description": "A young adult female voice speaking standard Mandarin Chinese. Bright, sweet and youthful anime heroine timbre, cheerful and energetic, with a natural smile in the voice. Clear consonants, lively rising intonation, playful short giggles for 嘿嘿, and warm encouraging delivery. Natural conversational speed, clean studio recording.",
+  "generation": {
+    "language": "Chinese",
+    "non_streaming_mode": true,
+    "max_new_tokens": 2048
+  },
+  "audio_conversion": "gradio_peak_normalized_pcm16",
+  "model_revision": "5ecdb67327fd37bb2e042aab12ff7391903235d3"
+}
