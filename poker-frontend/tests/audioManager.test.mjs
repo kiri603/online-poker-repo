@@ -4,28 +4,238 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { getCardFeedback } from "../src/store/battleFeedback.js";
 
-function setup() {
+function setup({ requireGesture = false } = {}) {
   const audios = [];
   const watchers = [];
+  const warnings = [];
+  const playback = new Map();
+  let userGesture = false;
+  const eventTarget = () => {
+    const listeners = new Map();
+    return {
+      addEventListener: (type, fn) => {
+        if (!listeners.has(type)) listeners.set(type, new Set());
+        listeners.get(type).add(fn);
+      },
+      removeEventListener: (type, fn) => listeners.get(type)?.delete(fn),
+      dispatch: (type) => {
+        userGesture = ["click", "touchend", "keydown"].includes(type);
+        try { for (const fn of [...(listeners.get(type) || [])]) fn(); }
+        finally { userGesture = false; }
+      },
+    };
+  };
+  const document = { ...eventTarget(), hidden: false, visibilityState: "visible" };
+  const window = { ...eventTarget(), localStorage: { getItem: () => null, setItem: () => {} } };
   const sound = { value: true };
   const context = vm.createContext({
-    isSoundOn: sound, getCardFeedback, console, Date, setTimeout, clearTimeout,
+    isSoundOn: sound, getCardFeedback, console: { warn: (...args) => warnings.push(args) }, Date, setTimeout, clearTimeout,
     computed: (fn) => ({ get value() { return fn(); } }), reactive: (value) => value,
     watch: (source, cb) => watchers.push({ source, cb }),
     setBattleSoundVolume: () => {}, stopBattleSounds: () => {},
-    document: { addEventListener: () => {}, removeEventListener: () => {} },
-    window: { localStorage: { getItem: () => null, setItem: () => {} } },
+    document, window,
     Audio: class {
-      constructor(src) { this.src = src; this.paused = true; this.volume = 1; audios.push(this); }
-      play() { this.paused = false; return Promise.resolve(); }
+      constructor(src = "") {
+        this.src = src; this.volume = 1; this.unlocked = false;
+        this.playCalls = 0; this.loadCalls = 0; audios.push(this);
+      }
+      get src() { return this.filename; }
+      set src(value) { this.filename = value; this.paused = true; this.ended = false; this.error = null; this.currentTime = 0; }
+      play() {
+        this.playCalls++;
+        if (requireGesture && !this.unlocked && !userGesture) {
+          return Promise.reject(Object.assign(new Error("User gesture required"), { name: "NotAllowedError" }));
+        }
+        const result = playback.get(this.src);
+        if (typeof result === "function") return result(this);
+        if (result) return Promise.reject(result);
+        this.unlocked = true; this.paused = false; this.ended = false;
+        return Promise.resolve();
+      }
       pause() { this.paused = true; }
+      load() { this.loadCalls++; this.error = null; this.paused = true; this.ended = false; this.currentTime = 0; }
+      finish() { this.paused = true; this.ended = true; this.onended?.(); }
     },
   });
   const source = readFileSync(new URL("../src/store/audioManager.js", import.meta.url), "utf8");
   const clean = source.replace(/^import[\s\S]*?from\s+"[^"]+";\r?\n/gm, "").replace(/export const /g, "const ");
   vm.runInContext(`${clean}\nglobalThis.api = { playBGM, playAudio, playCardAudio, playVoicePresentation, stopGameAudio, audioLevels, setMusicDucking };`, context);
-  return { audios, api: context.api, mute: () => { sound.value = false; watchers.find((w) => w.source === sound).cb(false); } };
+  const setSound = (value) => { sound.value = value; watchers.find((w) => w.source === sound).cb(value); };
+  return {
+    audios, api: context.api, warnings, playback, document, window,
+    bgm: () => audios.findLast((audio) => /\/(Normal|Exciting|Welcome|Win|Lose)\.mp3$/.test(audio.src)),
+    dispatch: document.dispatch, mute: () => setSound(false), unmute: () => setSound(true),
+  };
 }
+
+const settlePlayback = () => new Promise((resolve) => setImmediate(resolve));
+
+test("BGM keeps the media element unlocked by a gesture across track changes", async () => {
+  const t = setup({ requireGesture: true });
+  t.api.playBGM("Welcome");
+  await settlePlayback();
+  t.dispatch("click");
+  await settlePlayback();
+  const unlocked = t.bgm();
+  assert.equal(unlocked.paused, false);
+
+  t.api.playBGM("Normal");
+  await settlePlayback();
+  assert.equal(t.bgm().paused, false);
+  assert.equal(t.bgm(), unlocked);
+  t.api.playBGM("Exciting", false);
+  await settlePlayback();
+  assert.equal(t.bgm().paused, false);
+  assert.equal(t.bgm().loop, false);
+  t.bgm().finish();
+  await settlePlayback();
+  assert.equal(t.bgm().src, "/audios/Normal.mp3");
+  assert.equal(t.bgm().paused, false);
+  assert.equal(t.bgm().loop, true);
+  assert.equal(t.bgm(), unlocked);
+});
+
+test("later gestures recover a failed return from Exciting to Normal", async () => {
+  const t = setup();
+  t.api.playBGM("Normal");
+  t.dispatch("click");
+  t.api.playAudio("combo_bomb");
+  const error = Object.assign(new Error("Playback denied"), { name: "NotAllowedError" });
+  t.playback.set("/audios/Normal.mp3", error);
+  t.bgm().finish();
+  await settlePlayback();
+  assert.equal(t.bgm().src, "/audios/Normal.mp3");
+  assert.equal(t.bgm().paused, true);
+  t.playback.clear();
+  t.dispatch("touchend");
+  await settlePlayback();
+  assert.equal(t.bgm().paused, false);
+  assert.equal(t.bgm().loop, true);
+  assert.equal(t.warnings[0][1], error);
+
+  t.bgm().pause();
+  t.dispatch("click");
+  assert.equal(t.bgm().paused, false);
+  t.bgm().pause();
+  t.dispatch("keydown");
+  assert.equal(t.bgm().paused, false);
+});
+
+test("recovering blocked Exciting preserves its one-shot loop and return to Normal", async () => {
+  const t = setup();
+  t.api.playBGM("Normal");
+  t.dispatch("click");
+  t.playback.set("/audios/Exciting.mp3", Object.assign(new Error("Playback denied"), { name: "NotAllowedError" }));
+  t.api.playAudio("last_1");
+  await settlePlayback();
+  assert.equal(t.bgm().paused, true);
+  t.playback.clear();
+  t.dispatch("click");
+  assert.equal(t.bgm().paused, false);
+  assert.equal(t.bgm().loop, false);
+  t.bgm().finish();
+  assert.equal(t.bgm().src, "/audios/Normal.mp3");
+  assert.equal(t.bgm().loop, true);
+});
+
+test("returning to the foreground resumes BGM without resetting progress", () => {
+  const t = setup();
+  t.api.playBGM("Normal");
+  t.dispatch("click");
+  const bgm = t.bgm();
+  bgm.currentTime = 18;
+  bgm.pause();
+  const calls = bgm.playCalls;
+  t.document.hidden = true;
+  t.document.visibilityState = "hidden";
+  t.dispatch("visibilitychange");
+  assert.equal(bgm.playCalls, calls);
+  t.document.hidden = false;
+  t.document.visibilityState = "visible";
+  t.dispatch("visibilitychange");
+  assert.equal(bgm.paused, false);
+  assert.equal(bgm.currentTime, 18);
+  bgm.pause();
+  t.window.dispatch("pageshow");
+  assert.equal(bgm.paused, false);
+  assert.equal(bgm.currentTime, 18);
+});
+
+test("mute preserves the selected one-shot track and prevents gesture or foreground recovery", () => {
+  const t = setup();
+  t.mute();
+  t.api.playBGM("Exciting", false);
+  t.dispatch("click");
+  t.dispatch("touchend");
+  t.dispatch("visibilitychange");
+  t.window.dispatch("pageshow");
+  assert.ok(t.audios.every((audio) => audio.paused && audio.playCalls === 0));
+  t.unmute();
+  assert.equal(t.bgm().paused, false);
+  assert.equal(t.bgm().loop, false);
+  t.bgm().finish();
+  assert.equal(t.bgm().src, "/audios/Normal.mp3");
+});
+
+test("completed result music stays finished after gestures, foreground return and mute toggles", () => {
+  for (const track of ["Win", "Lose"]) {
+    const t = setup();
+    t.api.playBGM("Normal");
+    t.dispatch("click");
+    t.api.playBGM(track, false);
+    const bgm = t.bgm();
+    bgm.finish();
+    const calls = bgm.playCalls;
+    t.dispatch("click");
+    t.dispatch("touchend");
+    t.dispatch("visibilitychange");
+    t.window.dispatch("pageshow");
+    t.mute(); t.unmute();
+    assert.equal(bgm.playCalls, calls);
+    assert.equal(bgm.paused, true);
+    assert.equal(bgm.src, `/audios/${track}.mp3`);
+  }
+});
+
+test("a gesture cannot replay result music while its native ended event is still queued", () => {
+  const t = setup();
+  t.api.playBGM("Win", false);
+  const bgm = t.bgm();
+  bgm.paused = true;
+  bgm.ended = true;
+  t.dispatch("touchend");
+  assert.equal(bgm.paused, true);
+  assert.equal(bgm.ended, true);
+});
+
+test("an obsolete play rejection does not report an error for the new result track", async () => {
+  const t = setup();
+  let rejectOldPlay;
+  t.playback.set("/audios/Normal.mp3", () => new Promise((resolve, reject) => { rejectOldPlay = reject; }));
+  t.api.playBGM("Normal");
+  t.api.playBGM("Lose", false);
+  rejectOldPlay(Object.assign(new Error("Replaced source"), { name: "AbortError" }));
+  await settlePlayback();
+  assert.equal(t.bgm().src, "/audios/Lose.mp3");
+  assert.equal(t.bgm().paused, false);
+  assert.equal(t.warnings.length, 0);
+});
+
+test("a gesture reloads an errored BGM and retains its track and loop mode", () => {
+  const t = setup();
+  t.api.playBGM("Exciting", false);
+  t.dispatch("click");
+  const bgm = t.bgm();
+  bgm.pause();
+  bgm.error = { code: 2, message: "Network failure" };
+  bgm.onerror?.();
+  t.dispatch("touchend");
+  assert.equal(t.bgm(), bgm);
+  assert.equal(bgm.paused, false);
+  assert.equal(bgm.error, null);
+  assert.equal(bgm.loop, false);
+  assert.equal(bgm.src, "/audios/Exciting.mp3");
+});
 
 test("skill speech ducks music and restores its level when speech ends", () => {
   const t = setup();

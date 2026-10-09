@@ -58,6 +58,10 @@ export const toggleSound = () => {
 // ====== 2. 背景音乐 (BGM) 核心控制器 ======
 let currentBGM = null;
 let currentBGMName = "";
+let currentBGMLoop = true;
+let bgmEnded = false;
+let bgmGeneration = 0;
+let bgmPlayAttempt = 0;
 let isExcitingPlaying = false;
 let countdownAudio = null;
 export const stopCountdownAudio = () => {
@@ -67,61 +71,80 @@ export const stopCountdownAudio = () => {
   }
 };
 
-// 监听全局声音开关：用户随时可以暂停/恢复 BGM
+const reportBGMError = (error) => {
+  console.warn(`BGM [${currentBGMName}] 播放失败，将在用户交互或返回前台时重试。`, error, {
+    at: new Date().toISOString(),
+    mediaErrorCode: currentBGM?.error?.code,
+    readyState: currentBGM?.readyState,
+    networkState: currentBGM?.networkState,
+    currentTime: currentBGM?.currentTime,
+    loop: currentBGMLoop,
+    visibility: document.visibilityState,
+  });
+};
+
+const prepareBGM = () => {
+  // iOS 的播放许可属于媒体元素，切换曲目时保留已解锁的播放器。
+  if (!currentBGM) currentBGM = new Audio();
+  currentBGM.src = `/audios/${currentBGMName}.mp3`;
+  currentBGM.loop = currentBGMLoop;
+  updateMusicVolume();
+  const generation = bgmGeneration;
+  currentBGM.onended = () => {
+    if (generation !== bgmGeneration || !currentBGM.ended) return;
+    bgmEnded = true;
+    isExcitingPlaying = false;
+    if (currentBGMName === "Exciting") playBGM("Normal", true);
+  };
+  currentBGM.onerror = () => {
+    if (generation === bgmGeneration && currentBGM.error) reportBGMError(currentBGM.error);
+  };
+};
+
+const resumeBGM = () => {
+  if (!isSoundOn.value || !currentBGMName || bgmEnded || currentBGM?.ended) return;
+  if (!currentBGM) prepareBGM();
+  if (currentBGM.error) currentBGM.load();
+  const generation = bgmGeneration;
+  const attempt = ++bgmPlayAttempt;
+  const failed = (error) => {
+    // 切曲或静音会中断旧的 play()，不能把其延迟结果归到当前播放。
+    if (generation === bgmGeneration && attempt === bgmPlayAttempt && isSoundOn.value && !bgmEnded) reportBGMError(error);
+  };
+  try { currentBGM.play()?.catch(failed); }
+  catch (error) { failed(error); }
+};
+
+// 监听全局声音开关：用户随时可以暂停/恢复 BGM。
 watch(isSoundOn, (newVal) => {
-  if (!newVal) stopGameAudio({ preservePresentations: true });
-  if (currentBGM) {
-    if (newVal) {
-      currentBGM.play().catch((e) => console.warn("恢复BGM失败:", e));
-    } else {
-      currentBGM.pause();
-    }
-  } else if (newVal && currentBGMName) {
-    playBGM(currentBGMName);
+  if (newVal) resumeBGM();
+  else {
+    bgmPlayAttempt++;
+    stopGameAudio({ preservePresentations: true });
+    currentBGM?.pause();
   }
 });
 
-// 【核心机制】：现代浏览器严禁无交互自动播放，添加一次性点击解锁防线
+// 保留交互恢复入口，后续切曲或系统中断后也可重试，且不重置进度和循环模式。
 const enableAudioOnInteraction = () => {
-  if (currentBGMName && isSoundOn.value && (!currentBGM || currentBGM.paused)) {
-    playBGM(currentBGMName);
-  }
-  document.removeEventListener("click", enableAudioOnInteraction);
+  if (!currentBGM || currentBGM.paused || currentBGM.error) resumeBGM();
 };
 document.addEventListener("click", enableAudioOnInteraction);
+document.addEventListener("touchend", enableAudioOnInteraction, { passive: true });
+document.addEventListener("keydown", enableAudioOnInteraction);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) resumeBGM(); });
+window.addEventListener("pageshow", resumeBGM);
 
-// 播放 BGM 的主方法
+// 播放 BGM 的主方法。
 export const playBGM = (filename, loop = true) => {
-  if (currentBGM) {
-    currentBGM.pause();
-    currentBGM = null;
-  }
+  currentBGM?.pause();
   currentBGMName = filename;
-
-  if (!isSoundOn.value) return;
-
-  currentBGM = new Audio(`/audios/${filename}.mp3`);
-  currentBGM.loop = loop;
-  updateMusicVolume();
-  currentBGM.play().catch((e) => {
-    console.warn(
-      `BGM [${filename}] 被浏览器拦截，等待用户第一次点击屏幕自动恢复。`,
-    );
-  });
-
-  // 如果播放的是激情音乐，监听播放结束事件
-  if (filename === "Exciting") {
-    isExcitingPlaying = true;
-    currentBGM.onended = () => {
-      isExcitingPlaying = false;
-      // 激情音乐放完一遍后，如果游戏还没结束(BGM标识还是Exciting)，切回 Nomal
-      if (currentBGMName === "Exciting") {
-        playBGM("Normal", true);
-      }
-    };
-  } else {
-    isExcitingPlaying = false;
-  }
+  currentBGMLoop = loop;
+  bgmEnded = false;
+  bgmGeneration++;
+  isExcitingPlaying = filename === "Exciting";
+  if (currentBGM || isSoundOn.value) prepareBGM();
+  resumeBGM();
 };
 
 // ====== 3. 音效播放与智能解析器 ======
