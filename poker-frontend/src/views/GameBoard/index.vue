@@ -6,6 +6,7 @@ import BattlePhaseNotice from "./BattlePhaseNotice.vue";
 // 【核心修复 1】：移除了 onMounted 中的 playBGM("Normal")。
 import { computed } from "vue";
 import * as liveBindings from "./GameBoard.js";
+import { cardLabel as boardCardLabel } from "@/tutorial/tutorialMatch.js";
 const props = defineProps({ session: { type: Object, default: null } });
 const tutorialMode = !!props.session;
 const battleSession = props.session?.battleSession || null;
@@ -95,7 +96,7 @@ const {
 
 // ====== 【核心修复 2：防脱发防白屏机制】 ======
 const _exposeToHtml = {
-  tutorialMode, tutorialPhase, battleSession, canBoardAction, cardIsSelectable, cardIsTarget, actionIsTarget, boardCardId,
+  tutorialMode, tutorialPhase, battleSession, canBoardAction, cardIsSelectable, cardIsTarget, actionIsTarget, boardCardId, boardCardLabel,
   phaseNotice,
   effectsSettingsOpen,
   effectsQuality,

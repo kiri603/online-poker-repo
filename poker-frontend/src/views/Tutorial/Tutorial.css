@@ -30,6 +30,14 @@
 .tutorial-more { margin: 12px 0 0; color: #d8c2a0; font-size: 12px; line-height: 1.8; }
 .tutorial-error-detail { overflow-wrap: anywhere; }
 .tutorial-more button { border: 0; background: none; color: #ffde9a; font-size: 12px; padding: 8px 0; text-decoration: underline; cursor: pointer; }
+.tutorial-view .guide-buttons { flex-wrap: wrap; justify-content: flex-end; }
+.tutorial-view .guide-caption { min-width: 0; letter-spacing: 0; }
+.tutorial-view .tutorial-wgfd-unlimited { color: #d5bd98; font-size: 12px; margin: 12px 0 0; }
+.tutorial-view[data-focus="pool"] .skill-action-overlay { top: 100px; bottom: auto; left: 30%; right: 4%; padding: 12px; background: transparent; backdrop-filter: none; border: 0; box-shadow: none; }
+.tutorial-view[data-focus="pool"] .wgfd-content { padding: 16px 24px !important; }
+.tutorial-view[data-focus="pool"][data-phase="dialogue"] .wgfd-confirm-btn { display: none; }
+.tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-window { bottom: 28px; max-height: min(320px, calc(100dvh - 380px)); }
+.tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-portrait { bottom: 100px; }
 .tutorial-confirm { position: absolute; inset: 0; z-index: 120; background: #120807db; display: grid; place-items: center; padding: 16px; }
 .tutorial-confirm-card { width: min(370px, 100%); box-sizing: border-box; border: 1px solid #cba761; background: #381317; border-radius: 12px; padding: 28px 22px; text-align: center; }
 .tutorial-confirm-card h2 { color: #ffe7b6; font: 600 24px/1.4 "Noto Serif SC", serif; margin: 0 0 10px; }
@@ -42,7 +50,11 @@
 .tutorial-guide-enter-from, .tutorial-guide-leave-to { opacity: 0; }
 .tutorial-guide-enter-from .guide-window, .tutorial-guide-leave-to .guide-window { transform: translateY(12px); }
 @keyframes tutorial-glow { 50% { outline-color: #e9b94980; } }
-@media (max-width: 900px) { .tutorial-task { top: 255px; width: min(380px, calc(100% - 32px)); left: 50%; transform: translateX(-50%); padding: 10px 14px; } }
+@media (max-width: 900px) {
+  .tutorial-task { top: 255px; width: min(380px, calc(100% - 32px)); left: 50%; transform: translateX(-50%); padding: 10px 14px; }
+  .tutorial-view[data-focus="pool"] .tutorial-task { top: 62px; }
+  .tutorial-view[data-focus="pool"][data-phase="operation"] .skill-action-overlay { top: 155px; }
+}
 @media (max-width: 600px) and (orientation: portrait) {
   .tutorial-view .gb-tutorial { padding-top: 54px; }
   .tutorial-topbar { top: 10px; left: 12px; right: 12px; }
@@ -50,6 +62,17 @@
   .tutorial-brand small { font-size: 9px; letter-spacing: 0; }
   .tutorial-top-actions { gap: 6px; }
   .tutorial-top-actions button { font-size: 11px; min-height: 34px; padding: 6px 9px; }
+  .tutorial-view[data-kind="advanced"] .tutorial-brand { font-size: 13px; }
+  .tutorial-view .guide-heading { flex-wrap: wrap; gap: 4px 8px; }
+  .tutorial-view .guide-caption { font-size: 9px; }
+  .tutorial-view .guide-primary, .tutorial-view .guide-secondary { padding: 8px 10px; font-size: 12px; }
+  .tutorial-view[data-focus="pool"] .skill-action-overlay { top: 96px; left: 12px; right: 12px; padding: 0; }
+  .tutorial-view[data-focus="pool"] .wgfd-content { padding: 12px 16px !important; }
+  .tutorial-view[data-focus="pool"] .wgfd-title { font-size: 22px; margin-bottom: 4px; }
+  .tutorial-view[data-focus="pool"] .wgfd-card-row { margin: 8px 0; gap: 10px; }
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-window { left: 12px; right: 12px; bottom: 20px; max-height: calc(100dvh - 313px); }
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-portrait { left: 6px; bottom: 265px; width: 135px; height: 185px; }
+  .tutorial-view[data-focus="pool"] .tutorial-task { top: 56px; }
   .tutorial-task { top: 192px; padding: 9px 12px; gap: 10px; }
   .tutorial-task-number { font-size: 25px; }
   .tutorial-task-title { font-size: 12px; }
@@ -68,6 +91,7 @@
   .tutorial-view[data-phase="complete"] .guide-portrait { top: max(50px, calc(100dvh - 660px)); bottom: auto; width: 145px; height: 200px; }
 }
 @media (max-width: 600px) and (orientation: portrait) and (max-height: 650px) {
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-portrait { top: 176px; bottom: auto; width: 52px; height: 90px; }
   .tutorial-view[data-phase="dialogue"][data-focus="table"] .guide-window { max-height: calc(100dvh - 280px); }
   .tutorial-view[data-phase="dialogue"][data-focus="table"] .gb-table { top: 50px; right: 48px; width: 124px; }
   .tutorial-view[data-phase="dialogue"][data-focus="table"] .gb-table-felt { padding: 4px; }
@@ -81,6 +105,14 @@
   .tutorial-brand { font-size: 14px; }
   .tutorial-brand small { display: none; }
   .tutorial-top-actions button { min-height: 30px; padding: 4px 10px; font-size: 11px; }
+  .tutorial-view[data-focus="pool"] .skill-action-overlay { top: 50px; left: 4%; right: 52%; padding: 0; }
+  .tutorial-view[data-focus="pool"] .wgfd-content { padding: 10px 16px !important; }
+  .tutorial-view[data-focus="pool"] .wgfd-title { font-size: 22px; }
+  .tutorial-view[data-focus="pool"] .wgfd-card-row { margin: 8px 0; gap: 10px; }
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-window { bottom: 16px; max-height: calc(100dvh - 80px); }
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-portrait { bottom: 8px; left: 4%; width: 90px; height: 64px; }
+  .tutorial-view[data-focus="pool"][data-phase="operation"] .skill-action-overlay { top: 50px; }
+  .tutorial-view[data-focus="pool"] .tutorial-task { top: 52px; left: 52%; width: 44%; }
   .tutorial-view .gb-top-seats { min-height: 70px; padding-top: 0; }
   .tutorial-task { top: 48px; left: 12px; transform: none; width: 180px; padding: 8px 10px; gap: 8px; }
   .tutorial-task-number { font-size: 22px; }

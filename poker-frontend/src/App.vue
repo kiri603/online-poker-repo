@@ -40,7 +40,8 @@
     </div>
 
     <AuthView v-if="!authChecked || !isAuthenticated" />
-    <TutorialView v-else-if="showTutorial && !isConnected && !isReconnecting" @exit="closeTutorial" />
+    <TutorialView v-else-if="showTutorial && !isConnected && !isReconnecting" :key="tutorialKind" :kind="tutorialKind"
+      @exit="closeTutorial" @advanced="openTutorial('advanced')" />
     <Lobby v-else-if="!isConnected && !isReconnecting" />
 
     <div v-else class="game-table">
@@ -94,7 +95,7 @@ import GameBoard from "@/views/GameBoard/index.vue";
 import RulesDetail from "@/views/RulesDetail/index.vue";
 import AccountHub from "@/views/Social/AccountHub.vue";
 import TutorialView from "@/views/Tutorial/index.vue";
-import { showTutorial, closeTutorial } from "@/store/tutorialState.js";
+import { showTutorial, tutorialKind, openTutorial, closeTutorial } from "@/store/tutorialState.js";
 
 let authHeartbeat = null;
 let socialHeartbeat = null;

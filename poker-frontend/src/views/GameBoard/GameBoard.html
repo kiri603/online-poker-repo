@@ -67,7 +67,7 @@
           class="turn-badge"
         >
           {{ currentAoeType === 'GUSHOU_DISCARD' ? '弃牌中' : '结算中' }}
-          ({{ countdown }}s)
+          ({{ tutorialMode ? '∞' : countdown + 's' }})
         </span>
         <span v-else-if="player.status === 'WON'" class="turn-badge">
           <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -157,8 +157,8 @@
     <div class="gb-table-frame">
       <div class="gb-table-felt">
         <div class="table-center">
-          <div v-if="phaseNotice" class="played-cards gb-phase-display">
-            <BattlePhaseNotice :notice="phaseNotice" :countdown="countdown" />
+          <div v-if="phaseNotice" class="played-cards gb-phase-display" data-tutorial-target="phase">
+            <BattlePhaseNotice :notice="phaseNotice" :countdown="countdown" :unlimited="tutorialMode" />
             <div v-if="currentAoeType === 'GUANXING'" class="card-display-row gb-phase-cards">
               <div
                 v-for="i in 5"
@@ -364,7 +364,7 @@
 
     <template v-else-if="currentAoeType">
       <div v-if="amIPendingAoe" class="aoe-action-bar">
-        <div class="countdown-timer" :class="{ hurry: countdown <= 3 }">
+        <div class="countdown-timer" :class="{ hurry: !tutorialMode && countdown <= 3 }" :aria-label="tutorialMode ? '教学时间无限制' : undefined">
           <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle
               cx="12"
@@ -389,7 +389,7 @@
               stroke-linecap="round"
             />
           </svg>
-          {{ countdown }}s
+          {{ tutorialMode ? '∞' : countdown + 's' }}
         </div>
         <span class="aoe-hint">
           请弃置: {{ luanjianInitiator === userId ? '任意牌' : (currentAoeType
@@ -398,13 +398,18 @@
         <button
           @click="respondAoe(null)"
           class="pass-btn gb-btn gb-btn--pass"
+          data-tutorial-target="respondAoe"
+          :data-tutorial-highlight="actionIsTarget('respondAoe') || undefined"
+          :disabled="!canBoardAction('respondAoe')"
         >
           要不起
         </button>
         <button
           @click="discardAoe"
           class="play-btn gb-btn gb-btn--play"
-          :disabled="selectedCards.length !== 1"
+          data-tutorial-target="discardAoe"
+          :data-tutorial-highlight="actionIsTarget('discardAoe') || undefined"
+          :disabled="!canBoardAction('discardAoe') || selectedCards.length !== 1"
         >
           弃牌
         </button>
@@ -524,7 +529,7 @@
       :data-tutorial-target="'card:' + boardCardId(card)"
       :data-tutorial-highlight="cardIsTarget(card) || undefined"
       :role="tutorialMode ? 'button' : undefined"
-      :aria-label="tutorialMode ? '选择 ' + card.suit + card.rank : undefined"
+      :aria-label="tutorialMode ? '选择 ' + boardCardLabel(card) : undefined"
       :aria-pressed="tutorialMode ? card.selected : undefined"
       :aria-disabled="tutorialMode ? !cardIsSelectable(card) : undefined"
       :tabindex="tutorialMode && cardIsSelectable(card) ? 0 : undefined"
@@ -878,6 +883,15 @@
           :key="index"
           class="card mini-card"
           :class="{ selected: card.selected, 'selectable': amIPendingAoe }"
+          :data-tutorial-target="'wgfd-card:' + boardCardId(card)"
+          :data-tutorial-highlight="cardIsTarget(card) || undefined"
+          :role="tutorialMode ? 'button' : undefined"
+          :aria-label="tutorialMode ? '挑选 ' + boardCardLabel(card) : undefined"
+          :aria-pressed="tutorialMode ? card.selected : undefined"
+          :aria-disabled="tutorialMode ? !cardIsSelectable(card) : undefined"
+          :tabindex="tutorialMode && cardIsSelectable(card) ? 0 : undefined"
+          @keydown.enter.prevent="tutorialMode && toggleWgfdSelect(card)"
+          @keydown.space.prevent="tutorialMode && toggleWgfdSelect(card)"
           @click="toggleWgfdSelect(card)"
         >
           <img :src="getCardImageUrl(card)" @error="handleImageError" />
@@ -886,7 +900,7 @@
         </div>
       </div>
 
-      <div v-if="amIPendingAoe" class="skill-timer-wrapper wgfd-timer-wrapper">
+      <div v-if="amIPendingAoe && !tutorialMode" class="skill-timer-wrapper wgfd-timer-wrapper">
         <div
           class="skill-timer-bar"
           :style="{ width: (countdown / 10) * 100 + '%' }"
@@ -898,11 +912,14 @@
       <button
         v-if="amIPendingAoe"
         @click="confirmWgfd"
-        :disabled="selectedWgfdCard.length !== 1"
+        :disabled="!canBoardAction('confirmWgfd') || selectedWgfdCard.length !== 1"
         class="return-room-btn wgfd-confirm-btn"
+        data-tutorial-target="confirmWgfd"
+        :data-tutorial-highlight="actionIsTarget('confirmWgfd') || undefined"
       >
         确认挑选
       </button>
+      <p v-if="amIPendingAoe && tutorialMode" class="tutorial-wgfd-unlimited" aria-label="教学时间无限制">练习不限时 · ∞</p>
     </div>
   </div>
 </div>

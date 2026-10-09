@@ -4,18 +4,19 @@ import vm from "node:vm";
 import { readFileSync } from "node:fs";
 import { computed, ref, shallowRef, watch, effectScope } from "vue";
 import { createTutorialController } from "../src/tutorial/tutorialController.js";
-import { cardId } from "../src/tutorial/tutorialMatch.js";
+import { cardId, createTutorialCard, TUTORIAL_SCROLLS } from "../src/tutorial/tutorialMatch.js";
 import { TUTORIAL_NAMES, TUTORIAL_STEPS } from "../src/tutorial/tutorialScript.js";
+import { getTutorialLesson } from "../src/tutorial/tutorialLessons.js";
 import { CAVALRY_TIMING, createFeedbackDirector } from "../src/store/battleFeedback.js";
 
-function setup() {
+function setup(kind = "basic") {
   const timers = new Map(), delays = new Map(), listeners = new Map(), mounted = [], unmounted = [], ducking = [], music = [];
   let timerId = 0, now = 0;
   const scope = effectScope();
   const document = { hidden: false, addEventListener: (name, fn) => listeners.set(name, fn),
     removeEventListener: (name) => listeners.delete(name) };
   const context = vm.createContext({ computed, ref, shallowRef, watch, createTutorialController,
-    cardId, TUTORIAL_NAMES, TUTORIAL_STEPS, document,
+    cardId, createTutorialCard, TUTORIAL_SCROLLS, getTutorialLesson, TUTORIAL_NAMES, TUTORIAL_STEPS, document,
     onMounted: (fn) => mounted.push(fn), onUnmounted: (fn) => unmounted.push(fn),
     Date: { now: () => now }, CAVALRY_TIMING, createFeedbackDirector: () => createFeedbackDirector(() => now),
     playBattleSound: () => {}, playCavalrySounds: () => {}, stopBattleSounds: () => {}, playVoicePresentation: () => {},
@@ -30,7 +31,7 @@ function setup() {
   const source = readFileSync(new URL("../src/tutorial/useTutorialSession.js", import.meta.url), "utf8")
     .replace(/^import .*;\r?\n/gm, "").replace("export function", "function");
   vm.runInContext(`${source}\nglobalThis.createSession = useTutorialSession;`, context);
-  const session = scope.run(() => context.createSession());
+  const session = scope.run(() => context.createSession(kind));
   mounted.forEach((fn) => fn());
   const tick = () => {
     const [id, fn] = timers.entries().next().value;
@@ -96,7 +97,7 @@ test("the board bindings derive cards and turn from their own tutorial session",
   try {
     firstAction(first.session);
     assert.equal(first.session.bindings.handCards.value.length, 7);
-    assert.equal(first.session.bindings.currentTurn.value, "青龙");
+    assert.equal(first.session.bindings.currentTurn.value, "关羽");
     assert.equal(first.session.bindings.tableCards.value[0].rank, "3");
     assert.equal(second.session.bindings.handCards.value.length, 8);
     assert.equal(second.session.bindings.currentTurn.value, "你");
@@ -104,6 +105,40 @@ test("the board bindings derive cards and turn from their own tutorial session",
     assert.equal(second.session.bindings.countdown.value, 0);
     assert.equal(second.session.bindings.showSkillSelection.value, false);
   } finally { first.close(); second.close(); }
+});
+
+test("advanced bindings expose responses, harvest selection and the formal scroll effects", () => {
+  const t = setup("advanced");
+  try {
+    for (const step of getTutorialLesson("advanced").steps) {
+      while (t.session.phase.value === "dialogue") t.session.controller.continueDialogue();
+      for (const id of step.cards) {
+        const card = createTutorialCard(id);
+        if (step.action === "confirmWgfd") assert.equal(t.session.bindings.toggleWgfdSelect(card), true);
+        else assert.equal(t.session.bindings.toggleSelect(card), true);
+      }
+      if (step.action === "respondAoe") {
+        assert.equal(t.session.bindings.currentTurn.value, "关羽");
+        assert.equal(t.session.bindings.amIPendingAoe.value, true);
+        assert.equal(t.session.bindings.phaseNotice.value.title, "南蛮入侵");
+        assert.equal(t.session.bindings.respondAoe(null), true);
+      } else if (step.action === "confirmWgfd") {
+        assert.equal(t.session.bindings.showWgfdModal.value, true);
+        assert.equal(t.session.bindings.selectedWgfdCard.value.length, 1);
+        assert.equal(t.session.bindings.confirmWgfd(), true);
+      } else if (step.action === "discardAoe") assert.equal(t.session.bindings.discardAoe(), true);
+      else assert.equal(t.session.bindings.playCards(), true);
+      if (step.cards[0]?.startsWith("SCROLL")) {
+        const effect = t.session.battleSession.battleEffects.value.at(-1);
+        assert.equal(effect.title, TUTORIAL_SCROLLS[step.cards[0].slice(6)].name);
+        assert.ok([...t.delays.values()][0] >= effect.duration);
+      }
+      while (t.session.phase.value === "demo") t.tick();
+    }
+    assert.equal(t.session.phase.value, "complete");
+    assert.equal(t.session.bindings.showWgfdModal.value, false);
+    assert.equal(t.session.bindings.jdsrTarget.value, null);
+  } finally { t.close(); }
 });
 
 test("selecting the full target set moves the highlight from cards to the required button", () => {
@@ -145,4 +180,51 @@ test("tutorial balance and straight use formal effects and finish before the nex
     assert.equal(t.music.at(-1), "Normal");
     assert.equal(t.session.battleSession.battleEffects.value.length, 0);
   } finally { t.close(); }
+});
+
+test("advanced restart clears the harvest pool and hidden or exited sessions cannot run stale demonstrations", () => {
+  const t = setup("advanced");
+  try {
+    let stale;
+    for (let i = 0; i < 5; i++) {
+      const step = getTutorialLesson("advanced").steps[i];
+      while (t.session.phase.value === "dialogue") t.session.controller.continueDialogue();
+      for (const id of step.cards) t.session.controller.toggleCard(id);
+      t.session.controller.execute(step.action);
+      stale = [...t.timers.values()][0];
+      while (t.session.phase.value === "demo") t.tick();
+    }
+    assert.equal(t.session.bindings.showWgfdModal.value, true);
+    const before = JSON.stringify(t.session.snapshot.value.match);
+    t.document.hidden = true; t.listeners.get("visibilitychange")();
+    stale();
+    assert.equal(JSON.stringify(t.session.snapshot.value.match), before);
+    assert.equal(t.timers.size, 0);
+    t.session.bindings.exitGame();
+    t.document.hidden = false; t.listeners.get("visibilitychange")();
+    assert.equal(t.session.snapshot.value.paused, true);
+    t.session.cancelExit();
+    assert.equal(t.session.snapshot.value.paused, false);
+    t.session.restart(); stale();
+    assert.equal(t.session.bindings.showWgfdModal.value, false);
+    assert.equal(t.session.bindings.wgfdCards.value.length, 0);
+    assert.equal(t.session.bindings.currentAoeType.value, null);
+    assert.equal(t.session.bindings.handCards.value.length, 8);
+    assert.equal(t.session.snapshot.value.stepIndex, 0);
+  } finally { t.close(); }
+});
+
+test("switching from basic to advanced discards the old timer without changing the new session", () => {
+  const basic = setup();
+  firstAction(basic.session);
+  const stale = [...basic.timers.values()][0];
+  basic.close();
+  const advanced = setup("advanced");
+  try {
+    const before = JSON.stringify(advanced.session.snapshot.value);
+    stale();
+    assert.equal(JSON.stringify(advanced.session.snapshot.value), before);
+    assert.equal(advanced.session.bindings.otherPlayers.value[0].userId, "关羽");
+    assert.equal(advanced.session.bindings.otherPlayers.value[1].userId, "张飞");
+  } finally { advanced.close(); }
 });

@@ -3,7 +3,7 @@
     <div class="phase-notice-heading">
       <span class="phase-notice-title">{{ notice.title }}</span>
       <span class="phase-notice-owner">{{ notice.owner }}</span>
-      <span v-if="countdown >= 0" class="phase-notice-time" :class="{ 'is-hurry': countdown <= 3 }">{{ countdown }}<small>秒</small></span>
+      <span v-if="unlimited || countdown >= 0" class="phase-notice-time" :class="{ 'is-hurry': !unlimited && countdown <= 3 }" :aria-label="unlimited ? '教学时间无限制' : undefined">{{ unlimited ? '∞' : countdown }}<small v-if="!unlimited">秒</small></span>
     </div>
     <div class="phase-notice-action">
       <span>{{ notice.instruction }}</span>
@@ -12,7 +12,7 @@
   </div>
 </template>
 <script setup>
-defineProps({ notice: { type: Object, required: true }, countdown: { type: Number, default: -1 } });
+defineProps({ notice: { type: Object, required: true }, countdown: { type: Number, default: -1 }, unlimited: Boolean });
 </script>
 <style scoped>
 .phase-notice { width: min(390px, 82vw); padding: 10px 22px 11px; background: linear-gradient(90deg, transparent, #17140de6 12%, #17140de6 88%, transparent); border: 0; border-radius: 0; text-align: left; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; color: #e8dcc7; }

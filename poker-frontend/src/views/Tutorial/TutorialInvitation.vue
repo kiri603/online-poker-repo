@@ -11,10 +11,10 @@ import { computed, ref, watch } from "vue";
 import GuideDialogue from "./GuideDialogue.vue";
 import { authUser, dailySignInVisible, showRules, showUpdates, showCreateModal, showRuleDetail, isConnected, isReconnecting } from "@/store/gameState.js";
 import { socialDrawerOpen, socialProfileVisible, socialInvitePrompt } from "@/store/socialStore.js";
-import { openTutorial, tutorialInvitations } from "@/store/tutorialState.js";
+import { openTutorial, tutorialInvitations, showTutorialSelector } from "@/store/tutorialState.js";
 const visible = ref(false);
 let offeredTo = null;
-const blocked = computed(() => dailySignInVisible.value || showRules.value || showUpdates.value ||
+const blocked = computed(() => showTutorialSelector.value || dailySignInVisible.value || showRules.value || showUpdates.value ||
   showCreateModal.value || showRuleDetail.value || isConnected.value || isReconnecting.value ||
   socialDrawerOpen.value || socialProfileVisible.value || !!socialInvitePrompt.value);
 watch([authUser, blocked], ([user, waiting]) => {
@@ -23,7 +23,7 @@ watch([authUser, blocked], ([user, waiting]) => {
   tutorialInvitations.markShown(user);
   offeredTo = user.id; visible.value = true;
 }, { immediate: true });
-const start = () => { visible.value = false; openTutorial(); };
+const start = () => { visible.value = false; openTutorial("basic"); };
 </script>
 
 <style scoped>

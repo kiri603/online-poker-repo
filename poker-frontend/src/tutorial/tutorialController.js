@@ -1,30 +1,30 @@
-import { applyTutorialMove, createTutorialMatch } from "./tutorialMatch.js";
-import { TUTORIAL_STEPS } from "./tutorialScript.js";
+import { getTutorialLesson } from "./tutorialLessons.js";
 
 const sameCards = (a, b) => Array.isArray(a) && a.length === b.length && new Set(a).size === a.length && a.every((id) => b.includes(id));
-export function createTutorialController({ onChange = () => {}, onAction = () => {} } = {}) {
+export function createTutorialController({ kind = "basic", onChange = () => {}, onAction = () => {} } = {}) {
+  const lesson = getTutorialLesson(kind);
   let disposed = false;
   const pauses = new Set();
-  const initial = () => ({ match: createTutorialMatch(), stepIndex: 0, phase: "dialogue", dialoguePage: 0,
+  const initial = () => ({ match: lesson.createMatch(), stepIndex: 0, phase: "dialogue", dialoguePage: 0,
     selected: [], demoIndex: 0, paused: pauses.size > 0, lastEvent: null, error: "" });
   let state = initial();
   let eventId = 0;
   const publish = (patch) => { state = { ...state, ...patch }; onChange(state); };
-  const step = () => TUTORIAL_STEPS[state.stepIndex];
+  const step = () => lesson.steps[state.stepIndex];
   const active = () => !disposed && !state.paused;
   const fail = (error) => { publish({ phase: "error", error: error.message || "教学脚本异常", selected: [] }); return false; };
   const settle = (move) => {
-    const match = applyTutorialMove(state.match, move);
+    const match = lesson.applyMove(state.match, move);
     const event = { ...move, id: ++eventId };
     publish({ match, selected: [], lastEvent: event });
     onAction(event, match);
   };
   const canExecute = (action, ids = state.selected) => active() && state.phase === "operation" &&
-    state.match.turn === "you" && action === step().action && sameCards(ids, step().cards);
+    action === step().action && lesson.canAct(state.match, "you", action) && sameCards(ids, step().cards);
   return {
     get state() { return state; },
     canExecute,
-    canSelect(id) { return active() && state.phase === "operation" && state.match.turn === "you" && step().cards.includes(id); },
+    canSelect(id) { return active() && state.phase === "operation" && lesson.canAct(state.match, "you", step().action) && step().cards.includes(id); },
     toggleCard(id) {
       if (!this.canSelect(id)) return false;
       publish({ selected: state.selected.includes(id) ? state.selected.filter((c) => c !== id) : [...state.selected, id] });
@@ -53,10 +53,11 @@ export function createTutorialController({ onChange = () => {}, onAction = () =>
       try {
         const move = step().opponents[state.demoIndex];
         if (move) { settle(move); publish({ demoIndex: state.demoIndex + 1 }); }
-        else if (state.match.winner === "you") publish({ phase: "complete" });
+        else if (lesson.isComplete(state.match, state.stepIndex)) publish({ phase: "complete" });
         else {
           const nextIndex = state.stepIndex + 1;
-          if (!TUTORIAL_STEPS[nextIndex] || state.match.turn !== "you") throw new Error("教学回合未能按脚本推进");
+          const next = lesson.steps[nextIndex];
+          if (!next || !lesson.canAct(state.match, "you", next.action)) throw new Error("教学回合未能按脚本推进");
           publish({ stepIndex: nextIndex, phase: "dialogue", dialoguePage: 0, selected: [], lastEvent: null });
         }
         return true;

@@ -40,7 +40,7 @@ const observeTargets = () => {
   for (const element of props.host?.querySelectorAll("[data-tutorial-target]") || []) observer?.observe(element);
 };
 const trackTransition = (event) => {
-  if (!event.target.matches?.(".gb-hand > .card")) return;
+  if (!event.target.matches?.(".gb-hand > .card, .wgfd-card-row > .card")) return;
   transitionUntil = performance.now() + 250;
   const tick = () => {
     frame = null;

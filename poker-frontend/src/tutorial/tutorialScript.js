@@ -1,5 +1,5 @@
 const move = (actor, action, cards = []) => ({ actor, action, cards });
-export const TUTORIAL_NAMES = { you: "你", dragon: "青龙", tortoise: "玄武" };
+export const TUTORIAL_NAMES = { you: "你", dragon: "关羽", tortoise: "张飞" };
 export const TUTORIAL_STEPS = [
   {
     title: "打出第一张牌", action: "play", cards: ["♠3"], focus: "hand",
