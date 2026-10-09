@@ -72,6 +72,24 @@
       "name": "嘉欣",
       "category": "character",
       "url": "/images/avatars/hoodie-girl-smug.png"
+    },
+    {
+      "id": "kunkun",
+      "name": "坤坤",
+      "category": "character",
+      "url": "/images/avatars/kunkun.png"
+    },
+    {
+      "id": "nailong",
+      "name": "奶龙",
+      "category": "character",
+      "url": "/images/avatars/nailong.png"
+    },
+    {
+      "id": "naiwa",
+      "name": "奶娃",
+      "category": "character",
+      "url": "/images/avatars/naiwa.png"
     }
   ]
 }
