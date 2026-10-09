@@ -1,5 +1,6 @@
 <template>
   <div class="guide-stage" :class="{ 'guide-stage--invitation': invitation }">
+    <audio ref="voiceRef" preload="auto" />
     <div class="guide-portrait" aria-hidden="true">
       <img src="/images/waiting-mascot.png" alt="" draggable="false" />
     </div>
@@ -8,9 +9,17 @@
       <div class="guide-heading">
         <span class="guide-name">小桃</span>
         <span class="guide-caption">{{ caption }}</span>
-        <button class="guide-sound" type="button" @click="toggleSound" :aria-label="soundStatus ? '关闭所有声音' : '开启所有声音'">
-          {{ soundStatus ? '声音：开' : '声音：关' }}
-        </button>
+        <div class="guide-controls">
+          <button v-if="allowAutoAdvance" class="guide-toggle" type="button" :aria-pressed="autoPlay"
+            :aria-label="autoPlay ? '关闭自动播放' : '开启自动播放'" @click="autoPlay = !autoPlay">
+            自动播放：{{ autoPlay ? '开' : '关' }}
+          </button>
+          <button class="guide-toggle" type="button" :aria-pressed="voiceEnabled" @click="voiceEnabled = !voiceEnabled"
+            :aria-label="voiceEnabled ? '关闭小桃语音' : '开启小桃语音'"
+            :title="soundStatus ? '仅控制小桃语音' : '全局声音已关闭，开启全局声音后才能播放小桃语音'">
+            小桃语音：{{ voiceEnabled ? '开' : '关' }}
+          </button>
+        </div>
       </div>
       <div class="guide-body">
         <h2 id="guide-title">{{ title }}</h2>
@@ -23,9 +32,9 @@
       <div class="guide-footer">
         <span class="guide-page">{{ pageLabel || '点击文字可显示全文' }}</span>
         <div class="guide-buttons">
-          <button type="button" class="guide-secondary" @click="$emit('secondary')">{{ secondaryLabel }}</button>
+          <button type="button" class="guide-secondary" @click="leave">{{ secondaryLabel }}</button>
           <button ref="continueRef" type="button" class="guide-primary" @click="advance">
-            {{ fullyShown ? continueLabel : '显示全文' }} <span aria-hidden="true">›</span>
+            {{ fullyShown ? narrating ? '跳过讲解' : continueLabel : '显示全文' }} <span aria-hidden="true">›</span>
           </button>
         </div>
       </div>
@@ -34,33 +43,38 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, nextTick, onMounted, onUnmounted } from "vue";
-import { soundStatus, toggleSound } from "@/store/audioManager.js";
+import { computed, ref, watch, nextTick, onMounted, onUnmounted, inject } from "vue";
+import { soundStatus } from "@/store/audioManager.js";
+import { useTutorialVoice } from "@/tutorial/useTutorialVoice.js";
+import { getTutorialSubtitleLength } from "@/tutorial/tutorialVoicePlayer.js";
+import { TUTORIAL_DIALOGUE_SETTINGS } from "@/tutorial/tutorialDialogueSettings.js";
+import { createTutorialDialogueAutoPlayer } from "@/tutorial/tutorialDialogueAutoPlayer.js";
 const props = defineProps({ text: { type: String, required: true }, title: String, caption: String,
   continueLabel: { type: String, default: "开始操作" }, secondaryLabel: { type: String, default: "退出教学" },
-  pageLabel: String, paused: Boolean, invitation: Boolean });
+  pageLabel: String, paused: Boolean, invitation: Boolean, allowAutoAdvance: Boolean });
 const emit = defineEmits(["continue", "secondary"]);
-const windowRef = ref(null), continueRef = ref(null), length = ref(0);
+const { voiceEnabled, autoPlay } = inject(TUTORIAL_DIALOGUE_SETTINGS, null) || { voiceEnabled: ref(true), autoPlay: ref(false) };
+const { voiceRef, stopVoice, playback, hasVoice, subtitleCues, enabled, isPaused } =
+  useTutorialVoice(() => props.text, () => props.paused, () => voiceEnabled.value);
+const autoPlayer = createTutorialDialogueAutoPlayer({ onAdvance: () => { stopVoice(); emit("continue"); } });
+watch(() => ({ text: props.text, enabled: props.allowAutoAdvance && autoPlay.value, paused: isPaused.value,
+  voiceEnabled: enabled.value, hasVoice: hasVoice.value, status: playback.value.status }),
+  (state) => autoPlayer.update(state), { immediate: true, flush: "post" });
+const windowRef = ref(null), continueRef = ref(null), revealed = ref(false);
 const characters = computed(() => Array.from(props.text));
+const length = computed(() => getTutorialSubtitleLength(characters.value.length, subtitleCues.value, playback.value, revealed.value));
 const typedText = computed(() => characters.value.slice(0, length.value).join(""));
 const fullyShown = computed(() => length.value >= characters.value.length);
-let timer = null, previousFocus = null;
-const reveal = () => { clearTimeout(timer); length.value = characters.value.length; };
-const typeNext = () => {
-  clearTimeout(timer);
-  if (fullyShown.value) return;
-  timer = setTimeout(() => {
-    if (!props.paused && !document.hidden) length.value++;
-    typeNext();
-  }, props.paused || document.hidden ? 150 : 26);
-};
+const narrating = computed(() => enabled.value && hasVoice.value && !["idle", "ended", "error"].includes(playback.value.status));
+let previousFocus = null;
+const reveal = () => { if (!props.paused) revealed.value = true; };
 watch(() => props.text, () => {
-  clearTimeout(timer);
-  length.value = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? characters.value.length : 0;
-  typeNext();
+  revealed.value = !enabled.value || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   nextTick(() => continueRef.value?.focus({ preventScroll: true }));
 }, { immediate: true });
-const advance = () => { if (props.paused) return; if (!fullyShown.value) reveal(); else emit("continue"); };
+watch(enabled, (value) => { if (!value) revealed.value = true; });
+const advance = () => { if (props.paused) return; if (!fullyShown.value) reveal(); else { autoPlayer.cancel(); stopVoice(); emit("continue"); } };
+const leave = () => emit("secondary");
 function trapFocus(event) {
   if (event.key !== "Tab") return;
   const buttons = [...windowRef.value.querySelectorAll("button:not([disabled])")];
@@ -69,7 +83,7 @@ function trapFocus(event) {
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 }
 onMounted(() => { previousFocus = document.activeElement; nextTick(() => continueRef.value?.focus({ preventScroll: true })); });
-onUnmounted(() => { clearTimeout(timer); if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true }); });
+onUnmounted(() => { autoPlayer.dispose(); if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true }); });
 </script>
 
 <style scoped>
@@ -78,10 +92,12 @@ onUnmounted(() => { clearTimeout(timer); if (previousFocus?.isConnected) previou
 .guide-portrait img { width: 100%; height: auto; display: block; }
 .guide-window { position: absolute; left: 31%; right: 5%; bottom: 205px; padding: 20px 26px 18px; border: 1px solid #cba761; border-radius: 10px 10px 20px 10px; background: linear-gradient(145deg, #48181af5, #220e10f8); box-shadow: 0 18px 50px #0009, inset 0 0 0 5px #d6b5680b; text-align: left; display: flex; flex-direction: column; max-height: calc(100dvh - 235px); box-sizing: border-box; }
 .guide-window::before { content: ""; position: absolute; left: -1px; top: 24px; width: 3px; height: 38px; background: #e9b949; }
-.guide-heading { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.guide-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; flex-shrink: 0; }
 .guide-name { font: 600 20px/1.4 "Noto Serif SC", "KaiTi", serif; letter-spacing: 3px; color: #ffde9a; }
 .guide-caption { font-size: 11px; letter-spacing: 2px; color: #d5bd98; }
-.guide-sound { margin-left: auto; color: #d5bd98; border: 0; background: none; padding: 8px 0 8px 8px; font-size: 11px; white-space: nowrap; }
+.guide-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+.guide-toggle { min-height: 36px; padding: 6px 10px; color: #d5bd98; border: 1px solid #c6a36b60; border-radius: 6px; background: #ffffff05; font-size: 11px; white-space: nowrap; }
+.guide-toggle[aria-pressed="true"] { color: #ffde9a; border-color: #c6a36b; background: #c6a36b15; }
 .guide-body { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 .guide-body h2 { font: 600 clamp(19px, 2vw, 28px)/1.4 "Noto Serif SC", "KaiTi", serif; color: #fff0c8; margin: 12px 0 10px; letter-spacing: 2px; }
 .guide-body p { font-size: clamp(15px, 1.35vw, 18px); line-height: 1.9; margin: 0; min-height: 3.8em; cursor: pointer; }
@@ -103,6 +119,8 @@ button:focus-visible { outline: 2px solid #fff4c4; outline-offset: 4px; }
   .guide-heading { gap: 8px; }
   .guide-name { font-size: 17px; }
   .guide-caption { font-size: 10px; letter-spacing: 0; }
+  .guide-controls { width: 100%; justify-content: flex-end; }
+  .guide-toggle { min-height: 40px; }
   .guide-body h2 { font-size: 21px; margin: 8px 0; }
   .guide-body p { font-size: 14px; line-height: 1.75; }
   .guide-footer { margin-top: 12px; padding-top: 10px; flex-wrap: wrap; }

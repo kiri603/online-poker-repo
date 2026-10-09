@@ -1,0 +1,5 @@
+qwen-tts==0.1.1
+transformers==4.57.3
+accelerate==1.12.0
+gradio==5.33.0
+imageio-ffmpeg==0.6.0

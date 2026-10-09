@@ -11,6 +11,7 @@ export function useTutorialSession(kind = "basic") {
   const lesson = getTutorialLesson(kind);
   const snapshot = shallowRef(null);
   const exitRequested = ref(false);
+  const voiceEnabled = ref(true), autoPlay = ref(false);
   const battleSession = createBattleEffectsSession();
   let demoTimer = null, demoGeneration = 0;
   const clearDemo = () => { demoGeneration++; if (demoTimer !== null) clearTimeout(demoTimer); demoTimer = null; };
@@ -135,7 +136,7 @@ export function useTutorialSession(kind = "basic") {
     controller.dispose(); clearDemo(); battleSession.clearBattleEffects(); stopGameAudio(); setMusicDucking("tutorial", false);
     document.removeEventListener("visibilitychange", visibility);
   });
-  const restart = () => { clearDemo(); battleSession.clearBattleEffects(); stopGameAudio(); exitRequested.value = false; controller.setPaused("exit", false); controller.restart(); playBGM("Normal"); };
+  const restart = () => { autoPlay.value = false; clearDemo(); battleSession.clearBattleEffects(); stopGameAudio(); exitRequested.value = false; controller.setPaused("exit", false); controller.restart(); playBGM("Normal"); };
   const cancelExit = () => { exitRequested.value = false; controller.setPaused("exit", false); };
   const policy = {
     canAction: (action) => controller.canExecute(action),
@@ -143,5 +144,5 @@ export function useTutorialSession(kind = "basic") {
     isTarget: (c) => phase.value === "operation" && !controller.canExecute(step.value.action) && step.value.cards.includes(cardId(c)),
     isActionTarget: (action) => controller.canExecute(action),
   };
-  return { lesson, bindings, policy, battleSession, snapshot, step, phase, controller, restart, exitRequested, cancelExit };
+  return { lesson, bindings, policy, battleSession, snapshot, step, phase, controller, restart, exitRequested, cancelExit, voiceEnabled, autoPlay };
 }

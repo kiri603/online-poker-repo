@@ -46,6 +46,25 @@ function firstAction(session) {
   assert.equal(session.bindings.playCards(), true);
 }
 
+test("auto dialogue is inherited within the tutorial and reset when restarting", () => {
+  const t = setup();
+  try {
+    assert.equal(t.session.autoPlay.value, false);
+    t.session.autoPlay.value = true;
+    t.session.voiceEnabled.value = false;
+    firstAction(t.session);
+    assert.equal(t.session.autoPlay.value, true);
+    t.session.restart();
+    assert.equal(t.session.autoPlay.value, false);
+    assert.equal(t.session.voiceEnabled.value, false, "Restart keeps the user's narration mute choice");
+  } finally { t.close(); }
+  const fresh = setup();
+  try {
+    assert.equal(fresh.session.autoPlay.value, false);
+    assert.equal(fresh.session.voiceEnabled.value, true);
+  } finally { fresh.close(); }
+});
+
 test("visibility and exit confirmation cancel scheduled opponents without advancing the match", () => {
   const t = setup();
   try {

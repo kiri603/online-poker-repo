@@ -1,5 +1,6 @@
 <template>
   <section ref="host" class="tutorial-view" :data-kind="lesson.kind" :data-step="snapshot.stepIndex + 1" :data-phase="phase" :data-focus="step.focus">
+    <audio ref="exitVoiceRef" preload="auto" />
     <GameBoard :session="session" :inert="modalActive || undefined" />
     <header class="tutorial-topbar" :inert="modalActive || undefined">
       <div class="tutorial-brand"><div>{{ lesson.title }}<small>{{ lesson.subtitle }}</small></div></div>
@@ -20,7 +21,7 @@
       <div v-if="phase === 'dialogue'" class="tutorial-modal" @keydown.esc="session.bindings.exitGame()">
         <TutorialSpotlight :host="host" :targets="spotlightTargets" />
         <GuideDialogue :text="step.dialogue[snapshot.dialoguePage]" :title="step.title" :caption="`${lesson.title} · ${snapshot.stepIndex + 1} / ${lesson.steps.length}`"
-          :page-label="`${snapshot.dialoguePage + 1} / ${step.dialogue.length}`" :paused="snapshot.paused"
+          :page-label="`${snapshot.dialoguePage + 1} / ${step.dialogue.length}`" :paused="snapshot.paused" allow-auto-advance
           :continue-label="snapshot.dialoguePage === step.dialogue.length - 1 ? '开始操作' : '下一句'"
           @continue="controller.continueDialogue()" @secondary="session.bindings.exitGame()">
           <div v-if="step.showRanks" class="tutorial-ranks" aria-label="点数从小到大">
@@ -32,7 +33,7 @@
     <div v-if="phase === 'complete' || phase === 'error'" class="tutorial-modal" :inert="showRuleDetail || undefined">
       <div class="tutorial-shade"></div>
       <GuideDialogue :title="phase === 'complete' ? lesson.completionTitle : '这局练习需要重新开始'"
-        :caption="lesson.title" :text="phase === 'complete' ? lesson.completionText : '哎呀，练习好像出了点小问题……呜，重新开始一次吧！'"
+        :caption="lesson.title" :text="phase === 'complete' ? lesson.completionText : TUTORIAL_ERROR_TEXT"
         :paused="snapshot.paused" :continue-label="phase === 'error' ? '重新开始' : lesson.kind === 'basic' ? '进入锦囊牌进阶教程' : '再练一次'" secondary-label="返回大厅"
         @continue="phase === 'complete' && lesson.kind === 'basic' ? $emit('advanced') : restart()" @secondary="$emit('exit')">
         <div v-if="phase === 'complete'" class="tutorial-review">
@@ -48,7 +49,7 @@
     </div>
     <div v-if="exitRequested" class="tutorial-confirm" role="dialog" aria-modal="true" aria-labelledby="tutorial-exit-title" @keydown="trapExitFocus" @keydown.esc="cancelExit">
       <div class="tutorial-confirm-card">
-        <h2 id="tutorial-exit-title">先休息一下？</h2><p>欸？这就要走啦？好吧好吧～想继续练习的话，随时都能从大厅重新开始教学，小桃会等你的哦！</p>
+        <h2 id="tutorial-exit-title">先休息一下？</h2><p>{{ TUTORIAL_EXIT_TEXT }}</p>
         <div><button ref="cancelButton" type="button" @click="cancelExit">继续练习</button><button type="button" @click="$emit('exit')">返回大厅</button></div>
       </div>
     </div>
@@ -56,17 +57,22 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, nextTick } from "vue";
+import { computed, ref, watch, nextTick, provide } from "vue";
 import GameBoard from "@/views/GameBoard/index.vue";
 import GuideDialogue from "./GuideDialogue.vue";
 import TutorialSpotlight from "./TutorialSpotlight.vue";
 import { useTutorialSession } from "@/tutorial/useTutorialSession.js";
+import { useTutorialVoice } from "@/tutorial/useTutorialVoice.js";
+import { TUTORIAL_DIALOGUE_SETTINGS } from "@/tutorial/tutorialDialogueSettings.js";
+import { TUTORIAL_ERROR_TEXT, TUTORIAL_EXIT_TEXT } from "@/tutorial/tutorialVoiceLines.js";
 import { showRuleDetail } from "@/store/gameState.js";
 const props = defineProps({ kind: { type: String, default: "basic" } });
 defineEmits(["exit", "advanced"]);
 const session = useTutorialSession(props.kind);
 const { lesson } = session;
 const { snapshot, phase, step, controller, restart, exitRequested, cancelExit } = session;
+provide(TUTORIAL_DIALOGUE_SETTINGS, { voiceEnabled: session.voiceEnabled, autoPlay: session.autoPlay });
+const { voiceRef: exitVoiceRef } = useTutorialVoice(() => exitRequested.value ? TUTORIAL_EXIT_TEXT : "", () => false, () => session.voiceEnabled.value);
 const host = ref(null), cancelButton = ref(null);
 const modalActive = computed(() => ["dialogue", "complete", "error"].includes(phase.value) || exitRequested.value);
 const cardTargets = computed(() => step.value.cards.map((id) => (step.value.focus === "pool" ? "wgfd-card:" : "card:") + id));

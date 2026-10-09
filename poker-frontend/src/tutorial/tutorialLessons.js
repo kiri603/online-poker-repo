@@ -10,7 +10,7 @@ const lessons = {
     canAct: (match, actor) => !match.winner && match.turn === actor && match.statuses[actor] === "PLAYING",
     isComplete: (match) => match.winner === "you",
     completionTitle: "第一场胜利，恭喜你！",
-    completionText: "哇啊，真的赢了！嘿嘿～选牌、接牌、要不起，还有制衡，你都学会啦！要不要继续和小桃练练锦囊？万箭齐发、南蛮入侵、五谷丰登和借刀杀人，下一局都能体验哦～",
+    completionText: "好耶，主公我们赢了！嘿嘿~看来主公很有天赋呢。要不要继续和小桃练练锦囊？万箭齐发、南蛮入侵、五谷丰登和借刀杀人，下一局都能体验哦～",
     review: ["接牌：同牌型、同张数、更大", "要不起：摸 2 张", "制衡：每回合弃 1 摸 1", "超过 14 张：淘汰"],
   },
   advanced: {

@@ -1,7 +1,7 @@
 <template>
   <div v-if="visible && !blocked" class="tutorial-invitation">
     <GuideDialogue invitation title="第一局让小桃陪你" caption="新手教学 · 约 3–5 分钟"
-      text="呀，你来啦！嘿嘿～第一次玩也不用紧张，有小桃陪着你呢！要不要先一起练习一局？别紧张，我会慢慢教你的！要是现在不想玩，之后也可以从大厅找到我哦～"
+      :text="TUTORIAL_INVITATION_TEXT"
       continue-label="开始教学" secondary-label="稍后" @continue="start" @secondary="visible = false" />
   </div>
 </template>
@@ -9,6 +9,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import GuideDialogue from "./GuideDialogue.vue";
+import { TUTORIAL_INVITATION_TEXT } from "@/tutorial/tutorialVoiceLines.js";
 import { authUser, dailySignInVisible, showRules, showUpdates, showCreateModal, showRuleDetail, isConnected, isReconnecting } from "@/store/gameState.js";
 import { socialDrawerOpen, socialProfileVisible, socialInvitePrompt } from "@/store/socialStore.js";
 import { openTutorial, tutorialInvitations, showTutorialSelector } from "@/store/tutorialState.js";
