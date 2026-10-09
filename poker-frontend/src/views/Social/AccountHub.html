@@ -8,7 +8,10 @@
       aria-haspopup="dialog"
       @click="handleAccountClick"
     >
-      <span class="account-trigger-avatar" aria-hidden="true">{{ displayInitial }}</span>
+      <span class="account-trigger-avatar" aria-hidden="true">
+        <img v-if="canUseSocial" :src="accountAvatar" alt="" />
+        <template v-else>{{ displayInitial }}</template>
+      </span>
       <span class="account-trigger-name">{{
         authUser.nickname || authUser.username
       }}</span>
@@ -43,6 +46,7 @@
       aria-modal="true"
       aria-labelledby="hub-title"
       @click.stop
+      @keydown.tab="trapHubFocus"
     >
       <header class="hub-header">
         <div class="hub-header-top">
@@ -110,6 +114,17 @@
           <nav class="hub-tabs" role="tablist" aria-label="个人详情分区">
             <button
               v-if="isViewingSelf"
+              id="hub-account-tab"
+              type="button"
+              class="hub-tab-btn"
+              :class="{ active: socialActiveTab === 'account' }"
+              role="tab"
+              :aria-selected="socialActiveTab === 'account'"
+              aria-controls="hub-account-panel"
+              @click="socialActiveTab = 'account'"
+            >账号信息</button>
+            <button
+              v-if="isViewingSelf"
               type="button"
               class="hub-tab-btn"
               :class="{ active: socialActiveTab === 'profile' }"
@@ -153,6 +168,50 @@
       </div>
 
       <section
+        v-else-if="socialActiveTab === 'account' && isViewingSelf"
+        id="hub-account-panel"
+        class="hub-body hub-account-settings"
+        role="tabpanel"
+        aria-labelledby="hub-account-tab"
+      >
+        <div class="hub-avatar-current">
+          <img :src="profile.avatar || accountAvatar" alt="当前头像" />
+          <div>
+            <h3 class="hub-section-title">{{ profile.nickname || authUser?.nickname }}</h3>
+            <p class="hub-avatar-note">账号 ID：{{ profile.userId }}</p>
+          </div>
+        </div>
+        <form @submit.prevent="saveSelectedAvatar" :aria-busy="avatarSaving">
+          <fieldset class="hub-avatar-fieldset" :disabled="avatarSaving">
+            <legend class="hub-section-title">选择头像</legend>
+            <p class="hub-avatar-note">选一张喜欢的头像，保存后会显示在账号和牌桌中。</p>
+            <p v-if="avatarLoading" role="status">正在加载头像...</p>
+            <div v-else class="hub-avatar-grid">
+              <label v-for="avatar in avatarOptions" :key="avatar.id" class="hub-avatar-option"
+                     :class="{ selected: selectedAvatarId === avatar.id }">
+                <input v-model="selectedAvatarId" type="radio" name="account-avatar" :value="avatar.id" />
+                <img :src="avatar.url" alt="" loading="lazy" />
+                <span>{{ avatar.name }}</span>
+                <span v-if="selectedAvatarId === avatar.id" class="hub-avatar-check" aria-hidden="true">✓</span>
+              </label>
+            </div>
+          </fieldset>
+          <div class="hub-avatar-actions">
+            <span v-if="avatarPreview" class="hub-avatar-note">已选：{{ avatarPreview.name }}</span>
+            <button type="submit" class="hub-btn hub-btn-primary"
+                    :disabled="avatarLoading || avatarSaving || !avatarOptions.length || !selectedAvatarId || selectedAvatarId === profile.avatarId">
+              {{ avatarSaving ? '保存中...' : '保存头像' }}
+            </button>
+          </div>
+          <p v-if="avatarMessage" class="hub-avatar-success" role="status">{{ avatarMessage }}</p>
+          <div v-if="avatarError" class="hub-avatar-error" role="alert">
+            {{ avatarError }}
+            <button v-if="!avatarOptions.length" type="button" class="hub-mini-btn" @click="loadAvatarOptions">重试</button>
+          </div>
+        </form>
+      </section>
+
+      <section
         v-else-if="socialActiveTab === 'profile'"
         class="hub-body hub-profile"
         role="tabpanel"
@@ -174,6 +233,10 @@
           </button>
         </div>
 
+        <div class="hub-avatar-current">
+          <img :src="profile.avatar || accountAvatar" :alt="`${profile.userId || ''} 的头像`" />
+          <h3 class="hub-section-title">{{ profile.nickname || profile.userId }}</h3>
+        </div>
         <div class="hub-summary-grid">
           <div class="hub-summary-card">
             <span class="hub-summary-label">注册时间</span>

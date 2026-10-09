@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "avatars": [
+    {
+      "id": "xiaotao-smile",
+      "name": "小桃·笑",
+      "category": "xiaotao",
+      "url": "/images/emojis/01_xiao.png"
+    },
+    {
+      "id": "xiaotao-happy",
+      "name": "小桃·开心",
+      "category": "xiaotao",
+      "url": "/images/emojis/02_kaixin.png"
+    },
+    {
+      "id": "xiaotao-angry",
+      "name": "小桃·生气",
+      "category": "xiaotao",
+      "url": "/images/emojis/04_shengqi.png"
+    },
+    {
+      "id": "xiaotao-crying",
+      "name": "小桃·大哭",
+      "category": "xiaotao",
+      "url": "/images/emojis/06_daku.png"
+    },
+    {
+      "id": "xiaotao-shy",
+      "name": "小桃·害羞",
+      "category": "xiaotao",
+      "url": "/images/emojis/07_haixiu.png"
+    },
+    {
+      "id": "xiaotao-smug",
+      "name": "小桃·得意",
+      "category": "xiaotao",
+      "url": "/images/emojis/09_deyi.png"
+    },
+    {
+      "id": "cat-tuxedo",
+      "name": "奶牛猫",
+      "category": "cat",
+      "url": "/images/avatars/cat-tuxedo.png"
+    },
+    {
+      "id": "dog-shiba",
+      "name": "柴犬",
+      "category": "dog",
+      "url": "/images/avatars/dog-shiba.png"
+    },
+    {
+      "id": "blade-arrow",
+      "name": "刀箭",
+      "category": "weapon",
+      "url": "/images/avatars/blade-arrow.png"
+    },
+    {
+      "id": "general",
+      "name": "将军",
+      "category": "general",
+      "url": "/images/avatars/general.png"
+    },
+    {
+      "id": "alan-walker-smug",
+      "name": "嘉豪",
+      "category": "character",
+      "url": "/images/avatars/alan-walker-smug.png"
+    },
+    {
+      "id": "hoodie-girl-smug",
+      "name": "嘉欣",
+      "category": "character",
+      "url": "/images/avatars/hoodie-girl-smug.png"
+    }
+  ]
+}

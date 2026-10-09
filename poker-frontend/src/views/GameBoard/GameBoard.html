@@ -48,7 +48,8 @@
 
       <div class="gb-seat-avatar-wrap">
         <div class="gb-seat-avatar">
-          {{ (player.userId || '?').slice(0, 1).toUpperCase() }}
+          <img v-if="player.avatar" :src="player.avatar" :alt="`${player.userId} 的头像`" />
+          <template v-else>{{ (player.userId || '?').slice(0, 1).toUpperCase() }}</template>
         </div>
       </div>
 

@@ -22,6 +22,7 @@ import {
   sendFriendRequest,
   socialFriendIds,
   socialIncomingFriendRequestIds,
+  socialOverview,
   socialDrawerOpen,
   toggleWaitingFriendDrawer,
 } from "@/store/socialStore.js";
@@ -38,6 +39,7 @@ const displayPlayers = computed(() => {
       isReady: isReady.value,
       isBot: false,
       isSelf: true,
+      avatar: canUseSocial.value ? socialOverview.value.avatar : "",
       orderSeed: -1,
     });
   }
@@ -144,7 +146,7 @@ const seatSlots = computed(() => {
 
 const occupiedCount = computed(() => displayPlayers.value.length);
 
-// 默认头像池（暂无头像系统时按座位序号循环使用）
+// 游客和脚本 AI 沿用按座位轮换的默认头像，注册账号使用服务端保存的头像。
 const DEFAULT_AVATARS = [
   "/images/emojis/01_xiao.png",
   "/images/emojis/02_kaixin.png",

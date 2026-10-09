@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class Player {
     private String userId;
+    private String avatar;
     private List<Card> handCards;
     private String status;
     private int penaltyCount;

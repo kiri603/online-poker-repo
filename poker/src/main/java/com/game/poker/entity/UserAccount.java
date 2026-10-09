@@ -27,6 +27,9 @@ public class UserAccount {
     @Column(nullable = false, length = 20)
     private String nickname;
 
+    @Column(name = "avatar_id", length = 40)
+    private String avatarId;
+
     @Column(nullable = false, length = 20)
     private String status;
 
@@ -80,6 +83,14 @@ public class UserAccount {
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public String getAvatarId() {
+        return avatarId;
+    }
+
+    public void setAvatarId(String avatarId) {
+        this.avatarId = avatarId;
     }
 
     public String getStatus() {

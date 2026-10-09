@@ -238,6 +238,9 @@
   min-height: 42px;
 }
 
+.gb-seat-avatar { overflow: hidden; }
+.gb-seat-avatar img { width: 100%; height: 100%; object-fit: contain; }
+
 /* 昵称文本：仅对"名字"这一行做裁剪，绝不影响兄弟节点（如徽章、气泡） */
 .gb-seat-name-text {
   display: inline-block;

@@ -43,6 +43,8 @@ import {
   openFriendConversation,
   backToFriendList,
   formatTime,
+  accountAvatar, avatarPreview, avatarOptions, selectedAvatarId, avatarLoading,
+  avatarSaving, avatarError, avatarMessage, loadAvatarOptions, saveSelectedAvatar, trapHubFocus,
 } from "./AccountHub.js";
 
 const _exposeToHtml = {
@@ -87,6 +89,8 @@ const _exposeToHtml = {
   openFriendConversation,
   backToFriendList,
   formatTime,
+  accountAvatar, avatarPreview, avatarOptions, selectedAvatarId, avatarLoading,
+  avatarSaving, avatarError, avatarMessage, loadAvatarOptions, saveSelectedAvatar, trapHubFocus,
 };
 </script>
 

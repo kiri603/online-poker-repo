@@ -10,6 +10,8 @@ import com.game.poker.service.GameRecordService;
 import com.game.poker.service.GameService;
 import com.game.poker.service.ScriptedAiService;
 import com.game.poker.service.UserService;
+import com.game.poker.service.AvatarService;
+import org.springframework.transaction.event.TransactionalEventListener;
 import jakarta.annotation.PreDestroy;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +84,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AvatarService avatarService;
 
     @Autowired
     private com.game.poker.service.AuthTokenService authTokenService;
@@ -1080,6 +1085,24 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+    @TransactionalEventListener
+    public void onAvatarChanged(AvatarService.AvatarChanged event) throws Exception {
+        for (GameRoom room : gameService.getAllRooms()) {
+            synchronized (actionLock(room.getRoomId())) {
+                boolean changed = false;
+                synchronized (room) {
+                    for (var player : room.getPlayers()) {
+                        if (!player.isBot() && event.username().equals(player.getUserId())) {
+                            player.setAvatar(event.url());
+                            changed = true;
+                        }
+                    }
+                }
+                if (changed) broadcastGameState(room.getRoomId());
+            }
+        }
+    }
+
     private void broadcastGameState(String roomId) throws Exception {
         GameRoom room = gameService.getRoom(roomId);
         if (room == null) return;
@@ -1110,6 +1133,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             for (com.game.poker.model.Player p : room.getPlayers()) {
                 Map<String, Object> pInfo = new java.util.HashMap<>();
                 pInfo.put("userId", p.getUserId());
+                if (p.getAvatar() == null && !p.isBot()) {
+                    var avatar = avatarService.getForUser(p.getUserId());
+                    p.setAvatar(avatar == null ? "" : avatar.url());
+                }
+                pInfo.put("avatar", p.getAvatar());
                 pInfo.put("cardCount", p.getHandCards().size());
                 pInfo.put("status", p.getStatus());
                 pInfo.put("isReady", p.isReady());

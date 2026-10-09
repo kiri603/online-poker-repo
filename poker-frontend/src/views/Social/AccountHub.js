@@ -1,6 +1,11 @@
 import { computed, nextTick, ref, watch } from "vue";
 import { authUser } from "@/store/gameState.js";
 import { logout } from "@/store/authStore.js";
+import { socialOverview } from "@/store/socialStore.js";
+import {
+  avatarOptions, selectedAvatarId, avatarLoading, avatarSaving, avatarError, avatarMessage,
+  loadAvatarOptions, saveSelectedAvatar,
+} from "@/store/avatarStore.js";
 import {
   canUseSocial,
   closeProfilePanel,
@@ -36,6 +41,34 @@ const profile = computed(() => socialProfile.value || {});
 const records = computed(() => profile.value.recentRecords || []);
 
 const isViewingSelf = computed(() => profile.value.self !== false);
+
+const accountAvatar = computed(() => socialOverview.value.avatar || "/images/emojis/01_xiao.png");
+const avatarPreview = computed(() => avatarOptions.value.find((avatar) => avatar.id === selectedAvatarId.value));
+
+watch(
+  [() => socialProfileVisible.value, () => socialActiveTab.value, () => profile.value.userId],
+  async ([visible, tab]) => {
+    if (!visible || tab !== "account" || !isViewingSelf.value) return;
+    selectedAvatarId.value = profile.value.avatarId || "xiaotao-smile";
+    avatarError.value = "";
+    avatarMessage.value = "";
+    await loadAvatarOptions();
+  },
+);
+
+const trapHubFocus = (event) => {
+  const items = Array.from(event.currentTarget.querySelectorAll(
+    "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex='0']",
+  )).filter((element) => element.getClientRects().length > 0);
+  const first = items[0], last = items.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last?.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first?.focus();
+  }
+};
 
 const displayInitial = computed(() => {
   const raw = authUser.value?.nickname || authUser.value?.username || "";
@@ -175,4 +208,6 @@ export {
   openFriendConversation,
   backToFriendList,
   formatTime,
+  accountAvatar, avatarPreview, avatarOptions, selectedAvatarId, avatarLoading,
+  avatarSaving, avatarError, avatarMessage, loadAvatarOptions, saveSelectedAvatar, trapHubFocus,
 };

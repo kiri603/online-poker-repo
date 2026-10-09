@@ -44,6 +44,7 @@ public class SocialService {
     private final RoomInviteRepository roomInviteRepository;
     private final LoginSessionRegistry loginSessionRegistry;
     private final GameService gameService;
+    private final AvatarCatalog avatarCatalog;
 
     public SocialService(UserAccountRepository userAccountRepository,
                          UserStatsRepository userStatsRepository,
@@ -53,7 +54,8 @@ public class SocialService {
                          DirectMessageRepository directMessageRepository,
                          RoomInviteRepository roomInviteRepository,
                          LoginSessionRegistry loginSessionRegistry,
-                         GameService gameService) {
+                         GameService gameService,
+                         AvatarCatalog avatarCatalog) {
         this.userAccountRepository = userAccountRepository;
         this.userStatsRepository = userStatsRepository;
         this.gameRecordRepository = gameRecordRepository;
@@ -63,6 +65,7 @@ public class SocialService {
         this.roomInviteRepository = roomInviteRepository;
         this.loginSessionRegistry = loginSessionRegistry;
         this.gameService = gameService;
+        this.avatarCatalog = avatarCatalog;
     }
 
     @Transactional(readOnly = true)
@@ -75,6 +78,8 @@ public class SocialService {
         long notificationCount = unreadMessageCount + pendingFriendRequests.size() + pendingInvites.size();
 
         body.put("notificationCount", notificationCount);
+        userAccountRepository.findByUsername(currentUserId).ifPresent(user ->
+                body.put("avatar", avatarCatalog.resolve(user.getAvatarId()).url()));
         body.put("unreadMessageCount", unreadMessageCount);
         body.put("pendingFriendRequestCount", pendingFriendRequests.size());
         body.put("pendingInviteCount", pendingInvites.size());
@@ -131,6 +136,9 @@ public class SocialService {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("userId", account.getUsername());
         body.put("nickname", account.getNickname());
+        AvatarCatalog.Avatar avatar = avatarCatalog.resolve(account.getAvatarId());
+        body.put("avatarId", avatar.id());
+        body.put("avatar", avatar.url());
         body.put("self", self);
         body.put("registeredAt", account.getCreatedAt());
         body.put("totalGames", stats.getTotalGames());

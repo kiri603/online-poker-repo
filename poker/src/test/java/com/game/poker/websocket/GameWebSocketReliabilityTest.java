@@ -51,6 +51,7 @@ class GameWebSocketReliabilityTest {
         UserService users = mock(UserService.class);
         when(users.isSessionVersionCurrent(any(SessionUser.class))).thenReturn(true);
         ReflectionTestUtils.setField(handler, "userService", users);
+        ReflectionTestUtils.setField(handler, "avatarService", mock(com.game.poker.service.AvatarService.class));
         ReflectionTestUtils.setField(handler, "authTokenService", tokens);
     }
 
