@@ -690,6 +690,24 @@
 
   <button v-if="!tutorialMode" @click="exitGame" class="exit-btn gb-btn--exit">退出房间</button>
 
+  <dialog
+    v-if="!tutorialMode"
+    ref="exitDialog"
+    class="gb-exit-dialog"
+    aria-labelledby="gb-exit-title"
+    aria-describedby="gb-exit-description"
+    @cancel.prevent="cancelExitGame"
+    @keydown="trapExitFocus"
+    @click.self="cancelExitGame"
+  >
+    <h2 id="gb-exit-title">退出房间？</h2>
+    <p id="gb-exit-description">确定要退出当前房间并返回大厅吗？</p>
+    <div class="gb-exit-actions">
+      <button type="button" class="gb-btn gb-btn--pass" autofocus @click="cancelExitGame">留在房间</button>
+      <button type="button" class="gb-btn gb-exit-confirm" @click="confirmExitGame">确认退出</button>
+    </div>
+  </dialog>
+
   <div v-if="winner && !tutorialMode" class="game-over-modal">
     <div class="gb-gameover-wrap">
       <div class="modal-content">

@@ -4,7 +4,7 @@
 import BattleEffectsLayer from "./BattleEffectsLayer.vue";
 import BattlePhaseNotice from "./BattlePhaseNotice.vue";
 // 【核心修复 1】：移除了 onMounted 中的 playBGM("Normal")。
-import { computed } from "vue";
+import { computed, ref, watch, nextTick, onUnmounted } from "vue";
 import * as liveBindings from "./GameBoard.js";
 import { cardLabel as boardCardLabel } from "@/tutorial/tutorialMatch.js";
 const props = defineProps({ session: { type: Object, default: null } });
@@ -94,8 +94,31 @@ const {
   tieqiJudgeCards,
 } = props.session?.bindings || liveBindings;
 
+const { showExitConfirm, cancelExitGame, confirmExitGame } = liveBindings;
+const exitDialog = ref(null);
+const trapExitFocus = (event) => {
+  if (event.key !== "Tab") return;
+  const buttons = [...event.currentTarget.querySelectorAll("button")];
+  if (event.shiftKey && document.activeElement === buttons[0]) {
+    event.preventDefault();
+    buttons.at(-1)?.focus();
+  } else if (!event.shiftKey && document.activeElement === buttons.at(-1)) {
+    event.preventDefault();
+    buttons[0]?.focus();
+  }
+};
+watch(showExitConfirm, async (open) => {
+  await nextTick();
+  if (open) exitDialog.value?.showModal();
+  else exitDialog.value?.close();
+});
+onUnmounted(() => {
+  if (!tutorialMode) cancelExitGame();
+});
+
 // ====== 【核心修复 2：防脱发防白屏机制】 ======
 const _exposeToHtml = {
+  exitDialog, showExitConfirm, cancelExitGame, confirmExitGame, trapExitFocus,
   tutorialMode, tutorialPhase, battleSession, canBoardAction, cardIsSelectable, cardIsTarget, actionIsTarget, boardCardId, boardCardLabel,
   phaseNotice,
   effectsSettingsOpen,

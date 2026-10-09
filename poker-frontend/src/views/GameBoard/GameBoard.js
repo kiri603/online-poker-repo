@@ -211,10 +211,17 @@ const sendEmoji = (emoji) => {
 };
 
 // ====== 房间控制 ======
+const showExitConfirm = ref(false);
 const exitGame = () => {
-  if (confirm("确定要退出当前房间吗？(游戏中退出会导致对局中止)")) {
-    disconnectWebSocket();
-  }
+  showExitConfirm.value = true;
+};
+const cancelExitGame = () => {
+  showExitConfirm.value = false;
+};
+const confirmExitGame = () => {
+  if (!showExitConfirm.value) return;
+  showExitConfirm.value = false;
+  disconnectWebSocket();
 };
 const returnToRoom = () => sendMsg("RETURN_TO_ROOM", null);
 // ====== 新增：五谷丰登的 UI 交互 ======
@@ -308,6 +315,9 @@ export {
   toggleEmojiPanel,
   sendEmoji,
   exitGame,
+  showExitConfirm,
+  cancelExitGame,
+  confirmExitGame,
   returnToRoom,
   onlyHasScrolls,
   soundStatus,

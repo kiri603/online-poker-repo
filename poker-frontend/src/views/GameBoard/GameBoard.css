@@ -943,6 +943,57 @@
   background: linear-gradient(180deg, #7e2a2e 0%, #5e1a1e 55%, #3f1013 100%);
 }
 
+.gb-exit-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  box-sizing: border-box;
+  margin: auto;
+  padding: 24px;
+  overflow-y: auto;
+  border: 1px solid var(--gb-gold-dark);
+  border-radius: 12px;
+  background: var(--gb-red-deep);
+  color: var(--gb-paper);
+  font-family: inherit;
+  text-align: center;
+}
+
+.gb-exit-dialog::backdrop {
+  background: rgba(10, 6, 4, 0.72);
+}
+
+.gb-exit-dialog h2 {
+  margin: 0 0 16px;
+  color: var(--gb-gold-light);
+  font-size: 22px;
+}
+
+.gb-exit-dialog p {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.gb-exit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.gb-exit-confirm {
+  background: var(--gb-red-primary);
+  border-color: var(--gb-gold-dark);
+  color: var(--gb-paper);
+}
+
+.gb-exit-actions button:focus-visible {
+  outline: 2px solid var(--gb-gold-light);
+  outline-offset: 3px;
+}
+
 .return-room-btn,
 .gb-btn--return {
   background: linear-gradient(180deg, #27ae60 0%, #1d8649 55%, #0f5e31 100%);
