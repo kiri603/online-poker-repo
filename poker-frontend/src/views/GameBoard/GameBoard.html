@@ -571,11 +571,11 @@
         {{ activeActionTexts[userId].text }}
       </div>
     </transition>
-
-    <div v-if="activeEmojis[userId]" class="emoji-bubble me">
-      <img :src="`/images/emojis/${activeEmojis[userId]}`" />
-    </div>
   </section>
+
+  <div v-if="activeEmojis[userId]" class="emoji-bubble me gb-self-emoji">
+    <img :src="`/images/emojis/${activeEmojis[userId]}`" alt="我的表情" />
+  </div>
 
   <aside class="gb-tools" aria-label="牌桌工具">
   <div class="right-side-controls gb-right-side-controls">

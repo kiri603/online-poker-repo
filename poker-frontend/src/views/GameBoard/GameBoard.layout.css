@@ -135,6 +135,21 @@
 }
 .gb-shell .gb-hand > .card:first-child { margin-left: max(0px, calc((100% - var(--hand-width, 100%)) / 2)); }
 .gb-shell .gb-hand > .card.selected { transform: translateY(calc(-1 * var(--card-lift))); }
+/* Keep the sender bubble outside the scrolling hand, including when observing. */
+.gb-shell .gb-self-emoji {
+  --emoji-size: clamp(42px, calc(var(--board-height, var(--page-height)) * .1), 64px);
+  grid-area: 1 / 1 / 2 / 2;
+  position: absolute;
+  left: 12px;
+  bottom: 24px;
+  margin: 0;
+  width: var(--emoji-size);
+  height: var(--emoji-size);
+  box-sizing: border-box;
+  padding: 6px;
+  pointer-events: none;
+  z-index: 60;
+}
 .gb-shell .gb-tools {
   grid-area: 1 / 2 / 4 / 3;
   min-height: 0;
