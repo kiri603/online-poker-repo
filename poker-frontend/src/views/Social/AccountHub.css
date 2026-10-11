@@ -222,8 +222,8 @@
   display: grid;
   place-items: center;
   padding:
-    max(20px, env(safe-area-inset-top)) 20px
-    max(20px, env(safe-area-inset-bottom));
+    20px 20px
+    20px;
   background: rgba(10, 6, 4, 0.62);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -1790,8 +1790,8 @@
 
   .hub-overlay {
     padding:
-      max(12px, env(safe-area-inset-top)) 10px
-      max(12px, env(safe-area-inset-bottom));
+      12px 10px
+      12px;
   }
 
   .hub-panel {
@@ -2084,6 +2084,16 @@
 }
 
 /* Landscape short-screen tweaks */
+.hub-root .hub-overlay .hub-panel { max-height: min(820px, calc(var(--page-height) * .86)); box-sizing: border-box; }
+.hub-root .hub-overlay { padding: 16px; box-sizing: border-box; }
+@media (max-width: 768px) {
+  .hub-tabs-bar { gap: 6px; }
+  .hub-tab-btn { font-size: 12px; padding: 6px 10px; min-height: 36px; letter-spacing: 1px; }
+  .hub-logout { font-size: 12px; padding: 6px 8px; min-height: 36px; }
+  .hub-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .hub-summary-card { min-width: 0; padding: 10px; }
+  .hub-summary-value { font-size: 18px; overflow-wrap: anywhere; }
+}
 @media (max-height: 540px) and (orientation: landscape) {
   .hub-overlay {
     padding: 8px;
@@ -2126,6 +2136,23 @@
     min-height: 180px;
     max-height: 42vh;
   }
+  .account-hub { top: 8px; right: 52px; }
+  .account-trigger { height: 36px; padding: 0 8px 0 4px; gap: 6px; }
+  .account-trigger-avatar { width: 26px; height: 26px; }
+  .account-trigger-name { max-width: 70px; font-size: 12px; }
+  .hub-header { padding: 8px 12px 0; }
+  .hub-header-top { margin-bottom: 6px; }
+  .hub-header-meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 6px; }
+  .hub-subtitle, .hub-level { min-width: 0; padding: 4px 8px; box-sizing: border-box; }
+  .hub-subtitle-label, .hub-subtitle-value, .hub-level-desc { font-size: 11px; }
+  .hub-level-value { font-size: 18px; }
+  .hub-level-row { flex-wrap: wrap; gap: 2px 6px; }
+  .hub-level-track { height: 5px; margin-top: 4px; }
+  .hub-tabs-bar { margin-top: 6px; gap: 6px; }
+  .hub-tabs { padding: 2px; }
+  .hub-tab-btn { min-height: 36px; padding: 4px 10px; font-size: 12px; letter-spacing: 1px; }
+  .hub-logout { min-height: 36px; font-size: 12px; padding: 4px 8px; }
+  .hub-body { padding: 10px 12px 12px; }
 }
 
 /* ============================================================

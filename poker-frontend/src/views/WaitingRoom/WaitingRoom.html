@@ -14,17 +14,7 @@
     <span class="wh-petal wh-petal--7"></span>
   </div>
 
-  <!-- 看板娘独立动态图层 -->
-  <div class="wh-mascot-layer" aria-hidden="true">
-    <img
-      class="wh-mascot-img"
-      src="/images/waiting-mascot.png"
-      alt=""
-      draggable="false"
-    />
-  </div>
-
-  <!-- 顶栏：仅左侧房号 / ID（右侧按钮挪到独立锚点，避免与全局 AccountHub 重叠） -->
+  <!-- 顶栏保留房号，账号信息由右上角 AccountHub 展示。 -->
   <header class="wh-topbar">
     <div class="wh-topbar-left">
       <div class="wh-pill wh-pill--accent">
@@ -35,10 +25,6 @@
         </svg>
         <span class="wh-pill-label">房间号:</span>
         <span class="wh-pill-value">{{ roomId }}</span>
-      </div>
-      <div class="wh-pill">
-        <span class="wh-pill-label">我的ID:</span>
-        <span class="wh-pill-value">{{ userId }}</span>
       </div>
     </div>
   </header>
@@ -196,6 +182,11 @@
     </div>
   </div>
 
+  <div class="wh-stage">
+  <!-- 横屏完整立绘独立占位，竖屏上半身位于玩家面板上方。 -->
+  <div class="wh-mascot-layer" aria-hidden="true">
+    <img class="wh-mascot-img" src="/images/waiting-mascot.png" alt="" draggable="false" />
+  </div>
   <!-- 主内容：标题 + 座位网格 + 操作区 -->
   <main class="wh-main">
     <section class="wh-title-area">
@@ -413,6 +404,7 @@
       </button>
     </footer>
   </main>
+  </div>
 
   <!-- 邀请好友弹窗（点击空位 + 号触发） -->
   <div

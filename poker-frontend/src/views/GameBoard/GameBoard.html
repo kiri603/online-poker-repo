@@ -1,4 +1,4 @@
-<div class="game-board gb-shell" :class="{ 'gb-tutorial': tutorialMode }" :data-tutorial-phase="tutorialPhase">
+<div ref="boardElement" class="game-board gb-shell" :class="{ 'gb-tutorial': tutorialMode, 'gb-observing': isSpectator || myStatus === 'LOST' }" :data-tutorial-phase="tutorialPhase">
   <BattleEffectsLayer :session="battleSession" />
   <div class="gb-scene-bg" aria-hidden="true"></div>
   <div class="gb-vignette" aria-hidden="true"></div>
@@ -21,6 +21,9 @@
     </div>
   </div>
 
+  <div class="gb-arena">
+  <div class="gb-arena-heading">
+  <button v-if="!tutorialMode" type="button" @click="exitGame" class="exit-btn gb-btn--exit gb-board-exit">退出房间</button>
   <header
     class="gb-top-seats other-players-container"
     v-if="otherPlayers.length > 0"
@@ -122,6 +125,7 @@
       </div>
     </div>
   </header>
+  </div>
 
   <div
     v-if="jdsrTarget"
@@ -158,7 +162,7 @@
     <div class="gb-table-frame">
       <div class="gb-table-felt">
         <div class="table-center">
-          <div v-if="phaseNotice" class="played-cards gb-phase-display" data-tutorial-target="phase">
+          <div v-if="phaseNotice" class="played-cards gb-phase-display" :class="{ 'gb-phase-display--scroll': ['WJQF', 'NMRQ'].includes(currentAoeType) }" data-tutorial-target="phase">
             <BattlePhaseNotice :notice="phaseNotice" :countdown="countdown" :unlimited="tutorialMode" />
             <div v-if="currentAoeType === 'GUANXING'" class="card-display-row gb-phase-cards">
               <div
@@ -208,6 +212,8 @@
     </div>
   </section>
 
+  </div>
+  <div class="gb-action-region">
   <div
     v-if="isSpectator || myStatus === 'LOST'"
     class="spectator-hint gb-spectator-hint"
@@ -503,6 +509,13 @@
       </template>
     </template>
   </div>
+  <div class="my-card-count-vertical gb-count-chip" data-tutorial-target="count" :aria-label="`剩余 ${handCards.length} 张`">
+    <span>剩</span>
+    <span>余</span>
+    <span class="num">{{ handCards.length }}</span>
+    <span>张</span>
+  </div>
+  </div>
 
   <div class="aoe-anim-layer">
     <div
@@ -517,6 +530,7 @@
   </div>
 
   <section
+    ref="handElement"
     class="hand-cards-container gb-hand"
     :data-seat-user="userId"
     :class="{ 'danger-pulse': warningUserId === userId }"
@@ -563,6 +577,7 @@
     </div>
   </section>
 
+  <aside class="gb-tools" aria-label="牌桌工具">
   <div class="right-side-controls gb-right-side-controls">
     <button
       type="button"
@@ -634,12 +649,6 @@
       <label class="gb-feedback-quality">特效 <select v-model="effectsQuality"><option value="full">完整演出</option><option value="lite">轻量演出</option></select></label>
       <a class="gb-feedback-credits" href="/effects/CREDITS.md" target="_blank" rel="noopener">音效来源与署名</a>
     </div>
-    <div class="my-card-count-vertical gb-count-chip" data-tutorial-target="count">
-      <span>剩</span>
-      <span>余</span>
-      <span class="num">{{ handCards.length }}</span>
-      <span>张</span>
-    </div>
   </div>
 
   <aside v-if="!tutorialMode" class="emoji-sidebar gb-emoji-sidebar">
@@ -688,7 +697,7 @@
     </button>
   </aside>
 
-  <button v-if="!tutorialMode" @click="exitGame" class="exit-btn gb-btn--exit">退出房间</button>
+  </aside>
 
   <dialog
     v-if="!tutorialMode"
@@ -720,8 +729,7 @@
         >
           <p class="kill-text">{{ killText }}</p>
           <div
-            class="card-display-row"
-            style="justify-content: center; transform: scale(0.9)"
+            class="card-display-row gb-winning-cards"
           >
             <div
               v-for="(card, index) in sortedWinningCards"
@@ -733,15 +741,17 @@
             </div>
           </div>
         </div>
+        <div class="gb-result-footer">
         <button
           @click="returnToRoom"
           class="return-room-btn gb-btn gb-btn--play"
         >
           返回房间准备
         </button>
-      </div>
 
-      <!-- 看板娘动态图层：胜利欢呼 / 失败叹气，相对于结算框右下角固定 -->
+        </div>
+      </div>
+      <!-- 外框为看板娘预留右下空间，返回按钮在面板内居中。 -->
       <div class="gb-result-mascot-layer" aria-hidden="true">
         <img
           v-if="winner === userId"

@@ -15,6 +15,7 @@ const props = defineProps({ host: Object, targets: { type: Array, default: () =>
 const rectangles = ref([]), size = ref({ width: 1, height: 1 });
 const maskId = `tutorial-mask-${useId()}`;
 let observer = null, disposed = false, generation = 0, frame = null, transitionUntil = 0;
+let measureFrame = null;
 const measure = () => {
   if (!props.host || disposed) return;
   const bounds = props.host.getBoundingClientRect();
@@ -32,6 +33,14 @@ const measure = () => {
     const z = Number(getComputedStyle(element).zIndex);
     const covering = cards.filter((other) => Number(getComputedStyle(other).zIndex) > z).map(localRect);
     return visibleCardRects(rect, covering);
+  });
+};
+// The board updates card spacing in an animation frame. Read positions after
+// that update, including moves that do not change a card's own width or height.
+const scheduleMeasure = () => {
+  if (disposed || measureFrame !== null) return;
+  measureFrame = requestAnimationFrame(() => {
+    measureFrame = requestAnimationFrame(() => { measureFrame = null; measure(); });
   });
 };
 const observeTargets = () => {
@@ -55,16 +64,18 @@ watch(() => [props.host, props.targets], async () => {
   await nextTick();
   if (disposed || current !== generation) return;
   observeTargets();
-  measure();
+  scheduleMeasure();
 }, { immediate: true });
 onMounted(() => {
-  observer = new ResizeObserver(measure); observeTargets(); measure();
-  window.addEventListener("resize", measure); window.addEventListener("scroll", measure, true);
+  observer = new ResizeObserver(scheduleMeasure); observeTargets(); scheduleMeasure();
+  window.addEventListener("resize", scheduleMeasure); window.addEventListener("scroll", scheduleMeasure, true);
+  props.host?.addEventListener("game-board-layout", scheduleMeasure);
   props.host?.addEventListener("transitionrun", trackTransition);
 });
 onUnmounted(() => {
-  disposed = true; generation++; observer?.disconnect(); cancelAnimationFrame(frame);
-  window.removeEventListener("resize", measure); window.removeEventListener("scroll", measure, true);
+  disposed = true; generation++; observer?.disconnect(); cancelAnimationFrame(frame); cancelAnimationFrame(measureFrame);
+  window.removeEventListener("resize", scheduleMeasure); window.removeEventListener("scroll", scheduleMeasure, true);
+  props.host?.removeEventListener("game-board-layout", scheduleMeasure);
   props.host?.removeEventListener("transitionrun", trackTransition);
 });
 </script>

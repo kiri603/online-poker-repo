@@ -90,7 +90,7 @@ onUnmounted(() => { autoPlayer.dispose(); if (previousFocus?.isConnected) previo
 .guide-stage { position: absolute; inset: 0; color: #fbf3dd; font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; }
 .guide-portrait { position: absolute; left: 3%; bottom: 205px; width: clamp(250px, 29vw, 430px); height: min(57vh, 510px); overflow: hidden; pointer-events: none; filter: drop-shadow(0 12px 24px #0008); }
 .guide-portrait img { width: 100%; height: auto; display: block; }
-.guide-window { position: absolute; left: 31%; right: 5%; bottom: 205px; padding: 20px 26px 18px; border: 1px solid #cba761; border-radius: 10px 10px 20px 10px; background: linear-gradient(145deg, #48181af5, #220e10f8); box-shadow: 0 18px 50px #0009, inset 0 0 0 5px #d6b5680b; text-align: left; display: flex; flex-direction: column; max-height: calc(100dvh - 235px); box-sizing: border-box; }
+.guide-window { position: absolute; left: 31%; right: 5%; bottom: 205px; padding: 20px 26px 18px; border: 1px solid #cba761; border-radius: 10px 10px 20px 10px; background: linear-gradient(145deg, #48181af5, #220e10f8); box-shadow: 0 18px 50px #0009, inset 0 0 0 5px #d6b5680b; text-align: left; display: flex; flex-direction: column; max-height: calc(var(--page-height) - 235px); box-sizing: border-box; }
 .guide-window::before { content: ""; position: absolute; left: -1px; top: 24px; width: 3px; height: 38px; background: #e9b949; }
 .guide-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; flex-shrink: 0; }
 .guide-name { font: 600 20px/1.4 "Noto Serif SC", "KaiTi", serif; letter-spacing: 3px; color: #ffde9a; }
@@ -114,7 +114,7 @@ button:focus-visible { outline: 2px solid #fff4c4; outline-offset: 4px; }
 .guide-stage--invitation .guide-window { bottom: 10%; }
 .guide-stage--invitation .guide-portrait { bottom: 10%; }
 @media (max-width: 600px) and (orientation: portrait) {
-  .guide-window { left: 12px; right: 12px; bottom: 170px; padding: 14px 16px; max-height: calc(100dvh - 210px); }
+  .guide-window { left: 12px; right: 12px; bottom: 170px; padding: 14px 16px; max-height: calc(var(--page-height) - 210px); }
   .guide-portrait { left: 6px; bottom: 360px; width: 170px; height: 230px; }
   .guide-heading { gap: 8px; }
   .guide-name { font-size: 17px; }
@@ -127,15 +127,15 @@ button:focus-visible { outline: 2px solid #fff4c4; outline-offset: 4px; }
   .guide-page { font-size: 10px; letter-spacing: 0; }
   .guide-primary, .guide-secondary { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
   .guide-buttons { gap: 8px; margin-left: auto; flex-shrink: 0; }
-  .guide-stage--invitation .guide-window { bottom: 28px; max-height: calc(100dvh - 80px); }
+  .guide-stage--invitation .guide-window { bottom: 28px; max-height: calc(var(--page-height) - 80px); }
   .guide-stage--invitation .guide-portrait { bottom: 250px; }
 }
 @media (max-width: 600px) and (orientation: portrait) and (max-height: 650px) {
-  .guide-portrait { width: 145px; height: 150px; bottom: min(360px, calc(100dvh - 170px)); }
-  .guide-stage--invitation .guide-portrait { bottom: min(250px, calc(100dvh - 170px)); }
+  .guide-portrait { width: 145px; height: 150px; bottom: min(360px, calc(var(--page-height) - 170px)); }
+  .guide-stage--invitation .guide-portrait { bottom: min(250px, calc(var(--page-height) - 170px)); }
 }
 @media (max-height: 540px) and (orientation: landscape) {
-  .guide-window { left: 56%; right: 3%; bottom: 128px; padding: 10px 14px; max-height: calc(100dvh - 160px); }
+  .guide-window { left: 56%; right: 3%; bottom: 128px; padding: 10px 14px; max-height: calc(var(--page-height) - 160px); }
   .guide-portrait { left: 1%; bottom: 125px; width: 190px; height: min(63vh, 260px); }
   .guide-name { font-size: 16px; letter-spacing: 1px; }
   .guide-caption { font-size: 10px; letter-spacing: 0; }
@@ -146,7 +146,7 @@ button:focus-visible { outline: 2px solid #fff4c4; outline-offset: 4px; }
   .guide-page { display: none; }
   .guide-buttons { margin-left: auto; }
   .guide-primary, .guide-secondary { min-height: 36px; font-size: 12px; padding: 6px 10px; }
-  .guide-stage--invitation .guide-window { left: 32%; bottom: 24px; max-height: calc(100dvh - 48px); }
+  .guide-stage--invitation .guide-window { left: 32%; bottom: 24px; max-height: calc(var(--page-height) - 48px); }
   .guide-stage--invitation .guide-portrait { bottom: 24px; }
 }
 </style>

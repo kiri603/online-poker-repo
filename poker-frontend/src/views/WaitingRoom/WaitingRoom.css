@@ -11,8 +11,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 0;
   overflow: hidden;
   box-sizing: border-box;
   color: #fff5e6;
@@ -660,6 +659,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+.wh-main > * { flex-shrink: 0; }
 
 /* ---------- 标题区 ---------- */
 .wh-title-area {
@@ -1377,13 +1377,13 @@
 .wh-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 2000;
   background: rgba(10, 6, 4, 0.58);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: grid;
   place-items: center;
-  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  padding: 16px 16px 16px;
   animation: whOverlayIn 180ms ease-out;
 }
 
@@ -1395,8 +1395,7 @@
 .wh-modal {
   position: relative;
   width: min(480px, 100%);
-  max-height: calc(100dvh - 32px);
-  max-height: calc(100vh - 32px);
+  max-height: calc(var(--page-height) - 32px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1779,7 +1778,7 @@
     flex-direction: row;
     align-items: center;
     flex-wrap: nowrap;
-    top: max(8px, env(safe-area-inset-top));
+    top: 8px;
     left: 10px;
     /* 右侧：sound 34px + AccountHub ~88px（仅注册用户显示）+ 10px 间距 */
     right: 52px;
@@ -1796,14 +1795,14 @@
 
   /* 声音按钮锚点：与 Lobby 手机端同位（34x34，right:10, top:10） */
   .wh-sound-anchor {
-    top: max(10px, env(safe-area-inset-top));
+    top: 10px;
     right: 10px;
     gap: 8px;
   }
 
   /* 房间设置 / 好友邀请锚点：声音按钮下方，贴右 */
   .wh-action-anchor {
-    top: calc(max(10px, env(safe-area-inset-top)) + 34px + 8px);
+    top: calc(10px + 34px + 8px);
     right: 10px;
     gap: 8px;
   }
@@ -1862,13 +1861,10 @@
     height: 12px;
   }
 
-  /* 主区：紧凑垂直节奏
-     padding-top 对齐 safe-area-inset-top，确保无论有无状态栏/刘海，
-     主内容（标题 + 座位）整体与右上角「房间设置/好友邀请」按钮一起下移，
-     避免在真实手机（刘海/灵动岛/状态栏）上出现重叠错位 */
+  /* 主区：紧凑垂直节奏；四边安全区由 App 统一预留。 */
   .wh-main {
-    padding: calc(46px + env(safe-area-inset-top, 0px)) 10px
-      max(10px, env(safe-area-inset-bottom)) 10px;
+    padding: 46px 10px
+      10px 10px;
     gap: 8px;
     justify-content: flex-start;
   }
@@ -2149,14 +2145,14 @@
   /* 设置浮层：紧贴「房间设置」按钮下方
      声音锚点 max(10, safe-inset-top) + sound 34 + 8 + 设置 30 + 6 */
   .wh-settings-panel {
-    top: calc(max(10px, env(safe-area-inset-top)) + 34px + 8px + 30px + 6px);
+    top: calc(10px + 34px + 8px + 30px + 6px);
   }
 
   /* 好友抽屉：必须避开「好友邀请」按钮，否则抽屉盖住自己的触发按钮
      声音锚点 + sound 34 + 8 + 设置 30 + gap 8 + 好友 30 + gap 6 */
   .wh-friend-drawer {
     top: calc(
-      max(10px, env(safe-area-inset-top)) + 34px + 8px + 30px + 8px + 30px + 6px
+      10px + 34px + 8px + 30px + 8px + 30px + 6px
     );
   }
 }
@@ -2309,7 +2305,7 @@
 }
 
 /* 手机横屏：高度很小的场景（如 iPhone 横握 ~400px 高） */
-@media screen and (max-width: 900px) and (orientation: landscape) and (max-height: 540px) {
+@media screen and (orientation: landscape) and (max-height: 540px) {
   .wh-main {
     padding: 40px 12px 6px 12px;
     gap: 4px;
@@ -2408,11 +2404,129 @@
     max-height: none;
     transform-origin: 90% 92%;
   }
+
+  /* Navigation owns its row; players scroll locally while the footer stays reachable. */
+  .wh-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto 144px 44px; grid-template-rows: auto minmax(0, 1fr); column-gap: 6px; }
+  .wh-topbar { position: relative; inset: auto; grid-area: 1 / 1; min-width: 0; padding: 8px; }
+  .wh-topbar-left { min-width: 0; flex-wrap: wrap; gap: 4px; overflow: visible; }
+  .wh-pill { min-width: 0; height: 28px; padding: 0 8px; font-size: 11px; gap: 4px; box-sizing: border-box; }
+  .wh-pill-label, .wh-pill-value { font-size: 11px; letter-spacing: 0; }
+  .wh-pill-value { max-width: 110px; }
+  .wh-action-anchor { position: relative; inset: auto; grid-area: 1 / 2; align-self: start; margin-top: 8px; flex-direction: row; gap: 6px; }
+  .wh-settings-btn, .wh-friend-drawer-toggle { height: 36px; font-size: 12px; padding: 0 8px; letter-spacing: 0; }
+  .wh-sound-anchor { position: relative; inset: auto; grid-area: 1 / 4; align-self: start; margin: 8px 8px 0 0; }
+  .wh-icon-btn { width: 36px; height: 36px; }
+  .wh-main { grid-area: 2 / 1 / 3 / -1; min-height: 0; padding: 4px 8px 8px; gap: 6px; overflow: hidden; }
+  .wh-title-area { gap: 2px; }
+  .wh-title { margin: 0; }
+  .wh-title-text { font-size: 24px; }
+  .wh-subtitle, .wh-please-ready { display: block; font-size: 11px; letter-spacing: 1px; margin: 0; }
+  .wh-seats { flex: 1 1 0; min-height: 0; max-width: 100%; margin: 0; padding: 6px 8px; gap: 4px; box-sizing: border-box; overflow: auto; overscroll-behavior: contain; }
+  .wh-seat-grid, .wh-seats-head, .wh-seats-hint { flex-shrink: 0; }
+  .wh-seat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .wh-seat { aspect-ratio: auto; min-height: 120px; padding: 6px; gap: 4px; }
+  .wh-seat-no { position: static; transform: none; width: 26px; height: 20px; min-height: 20px; padding: 0; margin: 0; font-size: 11px; line-height: 20px; flex-shrink: 0; }
+  .wh-seat-avatar-wrap { width: 36px; height: 36px; margin: 0; flex-shrink: 0; }
+  .wh-seat-name { font-size: 11px; margin: 0; min-height: 16px; }
+  .wh-seat-badges { gap: 4px; }
+  .wh-badge { min-height: 18px; padding: 1px 4px; font-size: 11px; box-sizing: border-box; }
+  .wh-seat-action { min-height: 36px; font-size: 12px; padding: 4px 6px; }
+  .wh-seat-plus-wrap { width: 36px; height: 36px; }
+  .wh-seat-plus { width: 24px; height: 24px; }
+  .wh-seat-empty-text, .wh-seat-empty-sub { font-size: 11px; margin: 0; }
+  .wh-seats-hint { display: block; font-size: 11px; margin: 0; letter-spacing: 0; }
+  .wh-actions { margin: 0; gap: 6px; }
+  .wh-btn { font-size: 12px; padding: 4px 12px; }
+  .wh-spectators { max-height: 64px; padding: 4px 8px; box-sizing: border-box; overflow: auto; }
+  .wh-spectators-title { margin-bottom: 2px; font-size: 11px; }
+  .wh-spectator-tag { font-size: 11px; padding: 2px 6px; }
 }
 
-/* ============================================================
-   Reduced Motion 守护：动画敏感用户自动禁用所有连续动画
-   ============================================================ */
+/* 导航与完整看板娘各自占位，座位信息在剩余空间内滚动。 */
+.wh-shell { display: grid; grid-template-columns: minmax(0, 1fr) 220px 44px; grid-template-rows: auto auto minmax(0, 1fr); column-gap: 6px; }
+.wh-topbar { position: relative; inset: auto; grid-area: 1 / 1; min-width: 0; min-height: 64px; padding: 8px; box-sizing: border-box; }
+.wh-topbar-left { min-width: 0; flex-wrap: wrap; gap: 4px; overflow: visible; }
+.wh-pill { min-width: 0; height: 28px; padding: 0 8px; gap: 4px; box-sizing: border-box; }
+.wh-pill-label, .wh-pill-value { font-size: 11px; letter-spacing: 0; }
+.wh-action-anchor { position: relative; inset: auto; grid-area: 2 / 1 / 3 / -1; justify-self: end; flex-direction: row; margin: 0 8px 8px; gap: 6px; }
+.wh-settings-btn, .wh-friend-drawer-toggle { min-height: 36px; height: auto; font-size: 14px; padding: 4px 8px; letter-spacing: 0; }
+.wh-sound-anchor { position: relative; inset: auto; grid-area: 1 / 3; align-self: start; margin: 8px 8px 0 0; }
+.wh-icon-btn { width: 36px; height: 36px; }
+.wh-settings-panel, .wh-friend-drawer { position: relative; inset: auto; grid-area: 3 / 1 / 4 / -1; justify-self: end; align-self: start; min-height: 0; max-height: 100%; margin: 0 8px; box-sizing: border-box; overflow: auto; }
+.wh-friend-drawer-head { position: sticky; top: -14px; background: #14223c; z-index: 1; }
+.wh-friend-drawer-close { min-width: 36px; min-height: 36px; }
+.wh-stage { grid-area: 3 / 1 / 4 / -1; display: grid; grid-template-columns: clamp(80px, 26%, 320px) minmax(0, 1fr); min-height: 0; min-width: 0; }
+.wh-stage .wh-mascot-layer { position: relative; inset: auto; width: 100%; height: 100%; min-height: 0; padding: 8px; box-sizing: border-box; align-items: center; overflow: visible; opacity: 1; }
+.wh-stage .wh-mascot-img { width: 100%; height: 100%; max-height: 100%; object-fit: contain; transform-origin: center; }
+.wh-stage .wh-main { grid-area: auto; min-height: 0; min-width: 0; padding: 4px 8px 8px; gap: 6px; overflow: hidden; }
+.wh-stage .wh-title { margin: 0; }
+.wh-stage .wh-seats { flex: 1 1 0; min-height: 0; max-width: 100%; margin: 0; padding: 6px 8px; gap: 4px; box-sizing: border-box; overflow: auto; overscroll-behavior: contain; }
+.wh-stage .wh-seat-grid, .wh-stage .wh-seats-head, .wh-stage .wh-seats-hint { flex-shrink: 0; }
+.wh-stage .wh-seat { gap: 4px; padding: 6px; }
+.wh-stage .wh-seat > * { flex-shrink: 0; }
+.wh-stage .wh-seat-no { position: static; transform: none; width: 26px; height: 20px; min-height: 20px; padding: 0; margin: 0; font-size: 11px; line-height: 20px; }
+.wh-stage .wh-seat-avatar-wrap { margin: 0; }
+.wh-stage .wh-seat-plus-wrap { min-width: 36px; min-height: 36px; box-sizing: border-box; }
+.wh-stage .wh-seat-name { font-size: 12px; }
+.wh-stage .wh-badge { font-size: 11px; }
+.wh-stage .wh-seat-action { min-height: 36px; font-size: 12px; }
+.wh-stage .wh-actions { margin: 0; gap: 6px; }
+.wh-stage .wh-btn { padding: 4px 10px; letter-spacing: 1px; }
+@media (max-width: 1023px) {
+  .wh-stage .wh-title-area { gap: 2px; }
+  .wh-stage .wh-title-text { font-size: clamp(24px, 5vw, 40px); letter-spacing: 3px; background: none; color: #ffe3a1; -webkit-text-fill-color: #ffe3a1; -webkit-text-stroke: .4px #482409; text-shadow: 0 2px 3px #1a0a06; }
+  .wh-stage .wh-title-flourish { width: clamp(16px, 3vw, 30px); }
+  .wh-stage .wh-subtitle { font-size: 11px; letter-spacing: 0; }
+  .wh-stage .wh-seats-head { font-size: 12px; letter-spacing: 0; }
+  .wh-stage .wh-seats-hint { font-size: 11px; letter-spacing: 0; }
+}
+@media (max-width: 768px) {
+  .wh-shell { grid-template-columns: minmax(0, 1fr) 160px 44px; }
+  .wh-topbar { min-height: 52px; }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+  .wh-shell { grid-template-columns: minmax(0, 1fr) auto 144px 44px; grid-template-rows: auto minmax(0, 1fr); }
+  .wh-topbar { min-height: 52px; }
+  .wh-action-anchor { grid-area: 1 / 2; margin: 8px 0 0; }
+  .wh-sound-anchor { grid-area: 1 / 4; }
+  .wh-stage { grid-area: 2 / 1 / 3 / -1; grid-template-columns: clamp(80px, 20%, 240px) minmax(0, 1fr); }
+  .wh-stage .wh-title-text { font-size: 24px; }
+  .wh-settings-panel, .wh-friend-drawer { grid-area: 2 / 1 / 3 / -1; }
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .wh-shell { grid-template-rows: auto minmax(0, 1fr); }
+  .wh-action-anchor { grid-area: 2 / 1 / 3 / -1; align-self: start; margin: 0 8px; z-index: 20; }
+  .wh-settings-panel, .wh-friend-drawer { grid-area: 2 / 1 / 3 / -1; margin-top: 44px; max-height: calc(100% - 44px); }
+  .wh-stage { grid-area: 2 / 1 / 3 / -1; position: relative; grid-template-columns: minmax(0, 1fr); --waiting-hero-height: clamp(110px, calc(var(--page-height) * .25), 230px); }
+  .wh-stage .wh-mascot-layer { position: absolute; inset: 0 auto auto 8px; width: min(58%, calc(var(--waiting-hero-height) * 1.3)); height: auto; padding: 0; align-items: flex-start; }
+  .wh-stage .wh-mascot-img { width: 100%; height: auto; max-height: none; object-fit: contain; transform-origin: 50% 25%; }
+  .wh-stage .wh-main { position: relative; width: 100%; height: 100%; padding: 0 8px 8px; z-index: 5; }
+  .wh-stage .wh-title-area { min-height: var(--waiting-hero-height); height: var(--waiting-hero-height); padding: 46px 0 12px 42%; justify-content: flex-start; box-sizing: border-box; flex-shrink: 0; }
+  .wh-stage .wh-title-text { font-size: clamp(28px, 7.5vw, 36px); letter-spacing: 2px; }
+  .wh-stage .wh-title-flourish { display: none; }
+  .wh-stage .wh-subtitle { font-size: 14px; line-height: 1.5; }
+  .wh-stage .wh-seats { position: relative; z-index: 1; flex: 0 0 auto; max-height: calc(100% - var(--waiting-hero-height) - 56px); background: linear-gradient(160deg, #4a2620ed, #180e0bf5); }
+  .wh-stage .wh-seats-head { font-size: 16px; }
+  .wh-stage .wh-seat { min-height: 144px; aspect-ratio: auto; justify-content: center; }
+  .wh-stage .wh-seat-no { position: absolute; top: 5px; left: 6px; width: 28px; height: 18px; min-height: 18px; line-height: 18px; }
+  .wh-stage .wh-seat-name { font-size: 14px; line-height: 1.3; }
+  .wh-stage .wh-badge { font-size: 12px; }
+  .wh-stage .wh-seat-empty-text { font-size: 14px; }
+  .wh-stage .wh-seats-hint { font-size: 12px; line-height: 1.5; }
+  .wh-stage .wh-seat-action, .wh-stage .wh-btn { font-size: 14px; }
+  .wh-pill-value { font-size: 13px; }
+  .wh-stage .wh-actions { flex-shrink: 0; }
+}
+.wh-stage .wh-btn:disabled { opacity: 1; color: #ddd3c3; background: linear-gradient(180deg, #494345, #2b282b); border-color: #958469; box-shadow: none; text-shadow: 0 1px 2px #100b08; }
+
+@media (min-height: 350px) and (max-height: 540px) and (orientation: landscape) {
+  .wh-stage .wh-seat-name, .wh-stage .wh-btn { font-size: 14px; }
+  .wh-stage .wh-badge { font-size: 12px; }
+  .wh-stage .wh-seats-head { font-size: 14px; }
+}
+
+/* 连续动画与操作过渡尊重系统的减少动态效果设置。 */
 @media (prefers-reduced-motion: reduce) {
   .wh-mascot-img,
   .wh-petal,

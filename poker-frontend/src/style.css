@@ -1,4 +1,11 @@
 :root {
+  --app-height: 100vh;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --page-height: calc(var(--app-height) - var(--safe-top) - var(--safe-bottom));
+  --page-width: calc(var(--app-width, 100vw) - var(--safe-left) - var(--safe-right));
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
@@ -157,15 +164,66 @@ code {
 }
 
 #app {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  border: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+}
+
+@supports (height: 100dvh) {
+  :root { --app-height: 100dvh; }
+}
+
+.app-viewport {
+  position: absolute;
+  inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Fixed overlays use the same visible rectangle as the page, including keyboards.
+   The page boundary already owns safe-area padding; children only add normal gaps. */
+.game-container .app-viewport :is(.auth-modal-overlay, .info-overlay, .wh-modal-overlay, .hub-overlay, .daily-signin-overlay, .connection-recovery, .tutorial-selector, .tutorial-invitation) {
+  top: calc(var(--app-top, 0px) + var(--safe-top));
+  left: calc(var(--app-left, 0px) + var(--safe-left));
+  right: auto;
+  bottom: auto;
+  width: var(--page-width);
+  height: var(--page-height);
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+.game-container .app-viewport :is(.auth-modal, .info-panel, .wh-modal, .hub-panel, .daily-signin-card, .tutorial-selector-panel) {
+  max-width: 100%;
+  max-height: calc(var(--page-height) - 24px);
+  min-height: 0;
+  box-sizing: border-box;
+}
+.game-container .app-viewport :is(.info-body, .wh-modal-body, .hub-body) { min-height: 0; overflow-y: auto; }
+.game-container .app-viewport :is(.info-panel-tabs, .info-actions, .wh-modal-head, .hub-header, .hub-tabs, .wh-modal-footer) { flex-shrink: 0; }
+.game-container .app-viewport :is(.modal-close, .info-close, .wh-modal-close, .hub-close) { min-width: 36px; min-height: 36px; }
+.game-container .app-viewport input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+.game-container .app-viewport textarea { font-size: 16px; }
+.game-container .app-viewport .account-hub { position: absolute; }
+.game-container .app-viewport .auth-modal .modal-close { position: sticky; top: 0; align-self: flex-end; flex-shrink: 0; margin-bottom: -36px; z-index: 1; }
+.game-container .app-viewport .auth-modal > * { flex-shrink: 0; }
+.game-container .app-viewport .tutorial-selector-heading { position: sticky; top: -20px; z-index: 1; background: #48181a; }
+.game-container .app-viewport .tutorial-selector-heading button { min-height: 36px; }
+.game-container .app-viewport :is(.info-actions button, .modal-submit, .cta, .wh-btn) { min-height: 44px; }
+.game-container .app-viewport :is(.info-actions button, .modal-submit, .cta) { font-size: 12px; }
+.game-container .app-viewport .wh-main { height: 100%; min-height: 0; overflow-y: auto; box-sizing: border-box; }
+.game-container .app-viewport .wh-main > * { flex-shrink: 0; }
+.game-container .app-viewport .daily-signin-card { overflow-y: auto; }
+@media (max-height: 540px) {
+  .game-container .app-viewport .hub-header { padding-top: 8px; padding-bottom: 8px; }
+  .game-container .app-viewport :is(.info-actions button, .modal-submit, .cta, .wh-btn) { min-height: 36px; }
 }
 
 #center {

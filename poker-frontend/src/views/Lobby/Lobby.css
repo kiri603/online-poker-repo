@@ -8,8 +8,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 0;
   overflow: hidden;
   box-sizing: border-box;
   color: #fff5e6;
@@ -272,6 +271,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+.lobby-main > .lobby-title, .lobby-main > .lobby-stage { flex-shrink: 0; }
 
 .lobby-title {
   margin: 0;
@@ -334,6 +334,7 @@
   align-items: start;
   justify-content: center;
 }
+.lobby-stage > article { min-width: 0; box-sizing: border-box; }
 
 /* ---------- room entry card ---------- */
 
@@ -702,8 +703,7 @@
 .info-panel {
   position: relative;
   width: min(520px, 100%);
-  max-height: calc(100dvh - 32px);
-  max-height: calc(100vh - 32px);
+  max-height: calc(var(--page-height) - 32px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1410,6 +1410,91 @@
     font-size: 11px;
     letter-spacing: 1.5px;
   }
+}
+
+/* Portrait navigation has its own row; room content scrolls below it. */
+@media (max-width: 768px) and (orientation: portrait) {
+  .lobby-shell { display: flex; flex-direction: column; }
+  .lobby-top-left {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    flex: none;
+    box-sizing: border-box;
+    padding: 10px 10px 0;
+    display: grid;
+    grid-template-rows: 44px auto;
+    gap: 8px;
+  }
+  .lobby-brand { min-width: 0; width: fit-content; align-self: start; }
+  .brand-frame { padding: 6px 10px; }
+  .brand-main { font-size: 16px; letter-spacing: 1px; }
+  .brand-sub { font-size: 11px; letter-spacing: 1px; }
+  .lobby-side-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; gap: 6px; }
+  .side-btn { min-width: 0; width: 100%; height: 44px; box-sizing: border-box; justify-content: center; padding: 0 6px; gap: 4px; font-size: 14px; letter-spacing: 0; }
+  .side-btn-icon { width: 16px; height: 16px; }
+  .global-sound-btn { width: 36px; height: 36px; }
+  .lobby-main { flex: 1; min-height: 0; height: auto; padding: 10px 10px 14px; gap: 12px; align-items: center; }
+  .lobby-title { align-self: center; padding: 0; }
+  .lobby-title-text { font-size: clamp(32px, 9vw, 44px); letter-spacing: 3px; -webkit-text-stroke-width: .5px; }
+  .lobby-stage { width: 100%; max-width: 560px; margin: 0; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .room-entry-card { padding: 12px; gap: 10px; }
+  .room-entry-hint { font-size: 14px; line-height: 1.5; letter-spacing: 0; }
+  .room-entry-input { min-height: 44px; padding: 10px 12px; }
+  .room-entry-action { height: 44px; font-size: 16px; letter-spacing: 1px; }
+  .room-list-card { max-height: none; padding: 12px; gap: 10px; }
+  .room-list-header { flex-shrink: 0; padding: 0 0 8px; gap: 6px; }
+  .room-list-title { font-size: 14px; white-space: normal; text-align: center; letter-spacing: 0; }
+  .room-list-header .ornament { font-size: 11px; letter-spacing: 0; }
+  .room-list { overflow: visible; flex: none; padding: 0; gap: 8px; }
+  .room-card { grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 8px; padding: 6px 8px; line-height: 1.3; }
+  .room-card-num { grid-column: 1; grid-row: 1; font-size: 18px; text-align: left; }
+  .room-card-mode { grid-column: 1; grid-row: 2; justify-self: start; font-size: 11px; padding: 2px 6px; }
+  .room-card-people { grid-column: 2; grid-row: 2; font-size: 12px; }
+  .room-card-status { grid-column: 2; grid-row: 1; font-size: 11px; padding: 2px 6px; }
+  .room-card-join { grid-column: 3; grid-row: 1 / 3; min-width: 48px; height: 40px; font-size: 13px; letter-spacing: 0; }
+  .room-list-refresh { min-height: 40px; font-size: 14px; }
+}
+
+/* Short landscape screens use both columns, including phones wider than 900px. */
+@media (max-height: 540px) and (orientation: landscape) {
+  .lobby-shell::before { background-image: url('/images/lobby-bg.png'); background-position: left center; }
+  .lobby-top-left { top: 8px; left: 8px; width: 132px; gap: 8px; max-height: calc(100% - 16px); overflow-y: auto; }
+  .brand-frame { padding: 6px 10px; box-sizing: border-box; }
+  .brand-main { font-size: 16px; letter-spacing: 1px; }
+  .brand-sub { font-size: 11px; letter-spacing: 2px; }
+  .lobby-side-buttons { gap: 6px; margin-top: 0; }
+  .side-btn { width: 100%; min-width: 0; height: 36px; padding: 0 8px; font-size: 12px; letter-spacing: 1px; gap: 6px; }
+  .side-btn-icon { width: 16px; height: 16px; }
+  .lobby-top-right { top: 8px; right: 8px; }
+  .global-sound-btn { width: 36px; height: 36px; }
+  .lobby-main { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 44px 8px 8px 148px; gap: 6px; min-height: 0; }
+  .lobby-title-text { font-size: clamp(24px, 7vh, 36px); letter-spacing: 3px; -webkit-text-stroke: .5px rgba(46, 16, 4, .92); }
+  .lobby-stage { width: 100%; max-width: none; height: 100%; min-height: 0; margin: 0; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 8px; align-items: stretch; }
+  .room-entry-card, .room-list-card { min-width: 0; min-height: 0; max-height: 100%; padding: 8px; gap: 6px; box-sizing: border-box; border-radius: 14px; }
+  .room-entry-card { justify-content: center; align-self: center; height: auto; overflow-y: auto; }
+  .room-entry-hint { font-size: 11px; line-height: 1.4; letter-spacing: 0; }
+  .room-entry-input { font-size: 16px; min-height: 40px; padding: 8px; box-sizing: border-box; }
+  .room-entry-action { height: auto; min-height: 36px; padding: 4px 6px; font-size: 12px; letter-spacing: 1px; flex-shrink: 0; }
+  .room-entry-action-icon { width: 16px; height: 16px; }
+  .room-list-header { gap: 4px; padding: 0 0 4px; font-size: 11px; letter-spacing: 0; flex-shrink: 0; }
+  .room-list-title { white-space: normal; text-align: center; }
+  .room-list-header .ornament { font-size: 11px; letter-spacing: 0; }
+  .room-list { padding: 0 2px; gap: 6px; }
+  .room-card { flex-shrink: 0; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; padding: 6px; }
+  .room-card-num { font-size: 16px; }
+  .room-card-mode, .room-card-people, .room-card-status { font-size: 11px; padding: 2px 4px; }
+  .room-card-join { grid-column: 2; grid-row: 2 / 4; min-width: 44px; height: 36px; font-size: 12px; letter-spacing: 0; }
+  .room-list-refresh { min-height: 36px; font-size: 12px; padding: 4px 8px; flex-shrink: 0; }
+}
+
+@media (min-height: 350px) and (max-height: 540px) and (orientation: landscape) {
+  .side-btn { min-height: 40px; height: auto; font-size: 14px; }
+  .room-entry-card { padding: 14px 10px; gap: 10px; }
+  .room-entry-hint, .room-entry-action, .room-list-title, .room-list-refresh { font-size: 14px; }
+  .room-entry-input, .room-entry-action, .room-list-refresh { min-height: 44px; }
+  .room-card-people, .room-card-status { font-size: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

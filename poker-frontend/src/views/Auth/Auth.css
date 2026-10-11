@@ -3,8 +3,8 @@
 .auth-shell {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 0;
   box-sizing: border-box;
   overflow: hidden;
   color: #fff5e6;
@@ -153,11 +153,18 @@
 }
 
 .auth-cta-row {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(18px, calc(var(--page-height) * .04), 32px);
+  transform: translateX(-50%);
+  z-index: 3;
+  width: min(560px, 92%);
   display: flex;
-  flex-wrap: wrap;
+  justify-content: center;
   gap: 16px;
-  margin-top: 6px;
+  margin: 0;
 }
+.auth-cta-row .cta { flex: 1; min-width: 0; justify-content: center; }
 
 .cta {
   position: relative;
@@ -252,7 +259,7 @@
   z-index: 10;
   display: grid;
   place-items: center;
-  padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  padding: 20px 20px 20px;
   background: rgba(10, 6, 4, 0.68);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -264,8 +271,7 @@
 .auth-modal {
   position: relative;
   width: min(440px, 92vw);
-  max-height: calc(100vh - 40px);
-  max-height: calc(100dvh - 40px);
+  max-height: calc(var(--page-height) - 40px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -593,7 +599,7 @@
     padding:
       clamp(48px, 9vh, 88px)
       clamp(20px, 5vw, 40px)
-      calc(170px + env(safe-area-inset-bottom, 0px));
+      0;
     box-sizing: border-box;
     gap: 14px;
     align-items: center;
@@ -619,9 +625,9 @@
   }
 
   .auth-cta-row {
-    position: fixed;
+    position: absolute;
     left: 50%;
-    bottom: calc(clamp(18px, 3.5vh, 32px) + env(safe-area-inset-bottom, 0px));
+    bottom: clamp(18px, 3.5vh, 32px);
     transform: translateX(-50%);
     z-index: 3;
     flex-direction: column;
@@ -636,13 +642,12 @@
   }
 
   .auth-modal-overlay {
-    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+    padding: 12px 12px 12px;
   }
 
   .auth-modal {
     width: min(420px, 100%);
-    max-height: calc(100vh - 24px);
-    max-height: calc(100dvh - 24px);
+    max-height: calc(var(--page-height) - 24px);
     padding: 26px 20px 20px;
     gap: 10px;
     border-radius: 20px;
@@ -711,12 +716,12 @@
     padding:
       clamp(36px, 7vh, 68px)
       clamp(16px, 4vw, 28px)
-      calc(150px + env(safe-area-inset-bottom, 0px));
+      0;
     gap: 10px;
   }
 
   .auth-cta-row {
-    bottom: calc(clamp(14px, 3vh, 24px) + env(safe-area-inset-bottom, 0px));
+    bottom: clamp(14px, 3vh, 24px);
     width: min(320px, 88vw);
     gap: 10px;
   }
@@ -744,7 +749,7 @@
   .cta {
     padding: 12px 18px;
     min-width: 0;
-    height: 54px;
+    height: 56px;
   }
 
   .cta-main {
@@ -753,7 +758,7 @@
   }
 
   .cta-sub {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 2px;
   }
 
@@ -794,28 +799,45 @@
   }
 }
 
-@media (max-height: 600px) and (max-width: 768px) {
+@media (max-height: 540px) {
   .auth-hero {
-    padding-top: clamp(16px, 4vh, 32px);
-    padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    top: 0;
+    transform: none;
+    max-width: 100%;
+    padding: 12px 20px 0;
     gap: 6px;
+    align-items: center;
+    text-align: center;
   }
 
   .auth-title-text {
     font-size: clamp(32px, 8vw, 48px);
   }
 
+  .cta { height: 48px; padding: 0 14px; }
+}
+
+/* Use the matching artwork orientation; contain keeps every edge visible. */
+@media (orientation: landscape) {
+  .auth-shell::before {
+    background-image: url('/images/auth-bg.png');
+    background-size: contain;
+    background-position: center;
+  }
   .auth-cta-row {
     flex-direction: row;
-    width: min(560px, 92vw);
+    width: min(560px, 92%);
     gap: 10px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    bottom: 12px;
   }
+  .auth-cta-row .cta { width: auto; padding: 8px; }
+}
 
-  .cta {
-    height: 48px;
-    padding: 0 14px;
-  }
+@media (max-width: 768px) and (orientation: portrait) {
+  .auth-cta-row .cta { flex: none; }
+  .auth-title-text { -webkit-text-stroke-width: .5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

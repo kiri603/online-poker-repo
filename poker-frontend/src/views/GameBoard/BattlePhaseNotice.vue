@@ -15,7 +15,7 @@
 defineProps({ notice: { type: Object, required: true }, countdown: { type: Number, default: -1 }, unlimited: Boolean });
 </script>
 <style scoped>
-.phase-notice { width: min(390px, 82vw); padding: 10px 22px 11px; background: linear-gradient(90deg, transparent, #17140de6 12%, #17140de6 88%, transparent); border: 0; border-radius: 0; text-align: left; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; color: #e8dcc7; }
+.phase-notice { width: min(390px, 100%); box-sizing: border-box; padding: 10px 12px 11px; background: linear-gradient(90deg, transparent, #17140de6 12%, #17140de6 88%, transparent); border: 0; border-radius: 0; text-align: left; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; color: #e8dcc7; }
 .phase-notice-heading { display: flex; align-items: baseline; gap: 10px; padding-bottom: 7px; border-bottom: 1px solid #bda26d45; font-size: 13px; }
 .phase-notice-title { color: #ead397; font-weight: 600; white-space: nowrap; }
 .phase-notice-owner { color: #a79d8c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; flex: 1; }
@@ -26,6 +26,6 @@ defineProps({ notice: { type: Object, required: true }, countdown: { type: Numbe
 .phase-notice-action > span:first-child { flex: 1; }
 .phase-notice-progress { color: #aba08b; font: 12px Arial, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .phase-notice-progress.is-ready { color: #f0deaf; }
-@media (max-width: 600px) { .phase-notice { width: min(300px, 80vw); padding: 9px 17px; } .phase-notice-action { font-size: 12px; } }
+@media (max-width: 600px) { .phase-notice { width: min(300px, 100%); padding: 9px 8px; } .phase-notice-action { font-size: 12px; } }
 @media (max-height: 500px) and (orientation: landscape) { .phase-notice { padding: 7px 19px; } .phase-notice-heading { padding-bottom: 5px; } .phase-notice-action { padding-top: 5px; } }
 </style>

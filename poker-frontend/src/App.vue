@@ -1,5 +1,6 @@
 <template>
   <div class="game-container">
+    <div class="app-viewport">
     <ErrorToast />
     <RulesDetail v-if="showRuleDetail" />
     <AccountHub
@@ -60,11 +61,13 @@
         <button @click="disconnectWebSocket()">返回大厅</button>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted, watch } from "vue";
+import { observeViewport } from "@/layout/viewport.js";
 import {
   bootstrapAuth,
   claimDailySignIn,
@@ -99,6 +102,17 @@ import { showTutorial, tutorialKind, openTutorial, closeTutorial } from "@/store
 
 let authHeartbeat = null;
 let socialHeartbeat = null;
+let stopViewport = null;
+
+onMounted(() => {
+  stopViewport = observeViewport(window, ({ width, height, left, top }) => {
+    const style = document.documentElement.style;
+    style.setProperty('--app-width', `${width}px`);
+    style.setProperty('--app-height', `${height}px`);
+    style.setProperty('--app-left', `${left}px`);
+    style.setProperty('--app-top', `${top}px`);
+  });
+});
 
 onMounted(async () => {
   await bootstrapAuth();
@@ -130,6 +144,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  stopViewport?.();
   if (authHeartbeat) {
     clearInterval(authHeartbeat);
     authHeartbeat = null;
@@ -186,8 +201,11 @@ body,
 }
 
 .game-container {
-  width: 100vw;
-  height: 100vh;
+  position: fixed;
+  left: var(--app-left, 0px);
+  top: var(--app-top, 0px);
+  width: var(--app-width, 100vw);
+  height: var(--app-height);
   background-color: #2c3e50;
   color: white;
   display: flex;
@@ -200,19 +218,26 @@ body,
 .game-table {
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   position: relative;
 }
 
+.game-table > .header {
+  padding: 2px 8px;
+  gap: 4px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  flex-wrap: wrap;
+}
+
 .header {
-  padding: 15px 20px;
+  padding: 3px 12px;
   background: rgba(10, 10, 10, 0.2);
   display: flex;
   gap: 20px;
   align-items: center;
-  font-size: 18px;
+  font-size: 12px;
 }
 
 .daily-signin-overlay {
