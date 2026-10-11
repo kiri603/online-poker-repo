@@ -52,8 +52,6 @@
 @keyframes tutorial-glow { 50% { outline-color: #e9b94980; } }
 @media (max-width: 900px) {
   .tutorial-task { top: 255px; width: min(380px, calc(100% - 32px)); left: 50%; transform: translateX(-50%); padding: 10px 14px; }
-  .tutorial-view[data-focus="pool"] .tutorial-task { top: 62px; }
-  .tutorial-view[data-focus="pool"][data-phase="operation"] .skill-action-overlay { top: 155px; }
 }
 @media (max-width: 600px) and (orientation: portrait) {
   .tutorial-view .gb-tutorial { padding-top: 54px; }
@@ -72,7 +70,6 @@
   .tutorial-view[data-focus="pool"] .wgfd-card-row { margin: 8px 0; gap: 10px; }
   .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-window { left: 12px; right: 12px; bottom: 20px; max-height: calc(var(--page-height) - 313px); }
   .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-portrait { left: 6px; bottom: 265px; width: 135px; height: 185px; }
-  .tutorial-view[data-focus="pool"] .tutorial-task { top: 56px; }
   .tutorial-task { top: 192px; padding: 9px 12px; gap: 10px; }
   .tutorial-task-number { font-size: 25px; }
   .tutorial-task-title { font-size: 12px; }
@@ -111,8 +108,6 @@
   .tutorial-view[data-focus="pool"] .wgfd-card-row { margin: 8px 0; gap: 10px; }
   .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-window { bottom: 16px; max-height: calc(var(--page-height) - 80px); }
   .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-portrait { bottom: 8px; left: 4%; width: 90px; height: 64px; }
-  .tutorial-view[data-focus="pool"][data-phase="operation"] .skill-action-overlay { top: 50px; }
-  .tutorial-view[data-focus="pool"] .tutorial-task { top: 52px; left: 52%; width: 44%; }
   .tutorial-view .gb-top-seats { min-height: 70px; padding-top: 0; }
   .tutorial-task { top: 48px; left: 12px; transform: none; width: 180px; padding: 8px 10px; gap: 8px; }
   .tutorial-task-number { font-size: 22px; }
@@ -204,4 +199,59 @@
   .tutorial-view[data-phase][data-focus] .guide-footer { gap: 4px; flex-wrap: wrap; margin-top: 6px; padding-top: 6px; }
   .tutorial-view[data-phase][data-focus] .guide-body h2 { font-size: 18px; margin: 4px 0; }
   .tutorial-view[data-focus="pool"][data-phase="dialogue"] .skill-action-overlay { left: 0; right: 0; bottom: 0; }
+}
+
+/* The pool lesson needs the same side-by-side space at both phone landscape heights. */
+@media (max-height: 540px) and (orientation: landscape) {
+  .tutorial-view[data-focus="pool"] {
+    grid-template-columns: minmax(120px, 26%) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .tutorial-view[data-focus="pool"] > .tutorial-topbar { grid-area: 1 / 1 / 2 / -1; }
+  .tutorial-view[data-focus="pool"] > .tutorial-task {
+    grid-area: 2 / 1 / 3 / 2;
+    width: auto;
+    min-height: 0;
+    max-height: 100%;
+    margin: 0 0 6px 8px;
+    flex-wrap: wrap;
+    align-self: stretch;
+    align-content: start;
+    overflow-y: auto;
+  }
+  .tutorial-view[data-focus="pool"] > .game-board.gb-tutorial { grid-area: 2 / 2 / 3 / 3; }
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] > .game-board.gb-tutorial { grid-column: 1; width: auto; }
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] .skill-action-overlay { inset: 0; }
+  .tutorial-view[data-focus="pool"][data-phase="dialogue"] .guide-window {
+    left: 51%; right: 8px; top: 48px; bottom: 8px; max-height: none;
+  }
+  .tutorial-view[data-focus="pool"] .wgfd-content {
+    display: grid;
+    grid-template-columns: minmax(100px, .8fr) minmax(0, 1.4fr);
+    grid-template-areas: "title cards" "status cards" "confirm cards" "limit cards";
+    gap: 4px 10px;
+    width: min(460px, 100%);
+    padding: 8px !important;
+  }
+  .tutorial-view[data-focus="pool"] .wgfd-title { grid-area: title; font-size: 20px; line-height: 1.25; letter-spacing: 1px; margin: 0; }
+  .tutorial-view[data-focus="pool"] .wgfd-status { grid-area: status; font-size: 12px; line-height: 1.4; margin: 0; }
+  .tutorial-view[data-focus="pool"] .wgfd-card-row {
+    grid-area: cards;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-self: center;
+    justify-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 26px 3px 3px;
+  }
+  .tutorial-view[data-focus="pool"] .wgfd-card-row > .card {
+    width: min(100%, calc(min(112px, var(--board-height) * .4) * .714286));
+    height: auto;
+    aspect-ratio: 5 / 7;
+    box-sizing: border-box;
+  }
+  .tutorial-view[data-focus="pool"] .wgfd-confirm-btn { grid-area: confirm; min-height: 36px; padding: 6px 10px; font-size: 12px; letter-spacing: 1px; }
+  .tutorial-view[data-focus="pool"] .tutorial-wgfd-unlimited { grid-area: limit; font-size: 11px; line-height: 1.4; margin: 0; }
 }
