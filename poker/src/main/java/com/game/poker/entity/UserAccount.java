@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +38,7 @@ public class UserAccount {
     private String avatarId;
 
     @Column(name = "avatar_source", nullable = false, length = 16)
+    @ColumnDefault("'CATALOG'")
     private String avatarSource = "CATALOG";
 
     @Column(name = "wechat_avatar_asset_id", unique = true, length = 36)
