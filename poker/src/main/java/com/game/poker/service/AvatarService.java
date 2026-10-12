@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 
 @Service
 public class AvatarService {
-    public record AvatarChanged(String username, String url) {}
+    public record AvatarChanged(String username, String url, String nickname) {
+        public AvatarChanged(String username, String url) { this(username, url, null); }
+    }
 
     private final UserAccountRepository accounts;
     private final AvatarCatalog catalog;
@@ -25,7 +27,18 @@ public class AvatarService {
 
     @Transactional(readOnly = true)
     public AvatarCatalog.Avatar getForUser(String username) {
-        return accounts.findByUsername(username).map(user -> catalog.resolve(user.getAvatarId())).orElse(null);
+        return accounts.findByUsername(username).map(this::resolve).orElse(null);
+    }
+
+    public AvatarCatalog.Avatar resolve(com.game.poker.entity.UserAccount user) {
+        if ("WECHAT".equals(user.getAvatarSource()) && user.getWechatAvatarAssetId() != null) {
+            return new AvatarCatalog.Avatar("wechat", "微信头像", "微信", "/api/media/avatars/" + user.getWechatAvatarAssetId());
+        }
+        return catalog.resolve(user.getAvatarId());
+    }
+
+    public String getNickname(String username) {
+        return accounts.findByUsername(username).map(com.game.poker.entity.UserAccount::getNickname).orElse(username);
     }
 
     @Transactional

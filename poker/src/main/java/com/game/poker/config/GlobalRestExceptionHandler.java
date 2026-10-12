@@ -13,6 +13,14 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalRestExceptionHandler {
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleUnreadableRequest(org.springframework.http.converter.HttpMessageNotReadableException exception) {
+        return ResponseEntity.badRequest().body(errorBody("请求参数不合法"));
+    }
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleAccountConflict(org.springframework.dao.DataIntegrityViolationException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorBody("账号或绑定已存在，请刷新后重试"));
+    }
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<Map<String, String>> handleAuthException(AuthException exception) {
         return ResponseEntity.status(exception.getStatus()).body(errorBody(exception.getMessage()));

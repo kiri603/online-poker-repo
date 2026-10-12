@@ -38,6 +38,18 @@ public class UserService {
         return userAccountRepository.findById(id);
     }
 
+    public UserAccount lockAccount(Long id) {
+        return userAccountRepository.findLockedById(id).orElseThrow();
+    }
+
+    public Optional<UserAccount> findByLoginName(String loginName) {
+        return userAccountRepository.findByLoginNameKey(loginName.toLowerCase(java.util.Locale.ROOT));
+    }
+
+    public boolean existsByLoginName(String loginName) {
+        return userAccountRepository.existsByLoginNameKey(loginName.toLowerCase(java.util.Locale.ROOT));
+    }
+
     public boolean existsByUsername(String username) {
         return userAccountRepository.existsByUsername(username);
     }
@@ -46,6 +58,7 @@ public class UserService {
     public UserAccount createUser(String username, String passwordHash) {
         UserAccount user = new UserAccount();
         user.setUsername(username);
+        user.setLoginName(passwordHash == null ? null : username);
         user.setNickname(username);
         user.setPasswordHash(passwordHash);
         user.setStatus("ACTIVE");
@@ -120,9 +133,9 @@ public class UserService {
         if (sessionUser.getId() == null || sessionUser.getSessionVersion() == null || sessionUser.getSessionVersion().isBlank()) {
             return false;
         }
-        return userAccountRepository.findById(sessionUser.getId())
-                .map(user -> sessionUser.getSessionVersion().equals(user.getSessionVersion()))
-                .orElse(false);
+        // A scalar query sees the committed version even inside an afterCommit callback with cached entities.
+        return userAccountRepository.existsByIdAndUsernameAndSessionVersionAndStatus(sessionUser.getId(),
+                sessionUser.getUsername(), sessionUser.getSessionVersion(), "ACTIVE");
     }
 
     public void saveLoginLog(UserAccount user, String username, String ip, String userAgent, boolean success) {

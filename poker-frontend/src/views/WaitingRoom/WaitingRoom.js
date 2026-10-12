@@ -36,6 +36,7 @@ const displayPlayers = computed(() => {
   if (!isSpectator.value) {
     players.push({
       userId: userId.value,
+      nickname: authUser.value?.nickname || userId.value,
       isReady: isReady.value,
       isBot: false,
       isSelf: true,

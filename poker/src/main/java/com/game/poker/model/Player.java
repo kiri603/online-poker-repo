@@ -9,6 +9,7 @@ import java.util.List;
 public class Player {
     private String userId;
     private String avatar;
+    private String nickname;
     private List<Card> handCards;
     private String status;
     private int penaltyCount;

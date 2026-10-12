@@ -51,13 +51,13 @@
 
       <div class="gb-seat-avatar-wrap">
         <div class="gb-seat-avatar">
-          <img v-if="player.avatar" :src="player.avatar" :alt="`${player.userId} 的头像`" />
+          <PlayerAvatar v-if="player.avatar" :src="player.avatar" :alt="`${player.nickname || player.userId} 的头像`" />
           <template v-else>{{ (player.userId || '?').slice(0, 1).toUpperCase() }}</template>
         </div>
       </div>
 
       <div class="gb-seat-name player-name">
-        <span class="gb-seat-name-text">{{ player.userId }}</span>
+        <span class="gb-seat-name-text" :title="player.nickname || player.userId">{{ player.nickname || player.userId }}</span>
         <span
           v-if="currentTurn === player.userId && !currentAoeType && player.status !== 'WON' && player.status !== 'LOST'"
           class="turn-badge"

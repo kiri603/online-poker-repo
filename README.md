@@ -102,6 +102,61 @@ java -jar target/poker-0.0.1-SNAPSHOT.jar
 
 头像选择保存在 `user_account.avatar_id`，旧账号为空时使用小桃笑脸。默认 H2 开发配置通过 Hibernate 更新字段；使用 Flyway 的 MySQL 配置通过 `V3__user_avatar.sql` 增加字段，按现有数据库发布流程执行迁移并重启后端。
 
+### 微信登录与私有 OSS 头像
+
+微信小游戏与网页版使用同一份 `UserAccount`。`id` 和 `username` 是固定玩家标识，战绩、经验、签到、好友、私聊与对局关联继续使用原值；网页登录按 `loginName` 查询，旧账号回填原用户名，登录请求仍提交 `username` 字段。登录名按大小写不敏感的 `login_name_key` 保持唯一。微信新账号没有密码，固定玩家 ID 为随机 `wx_` 标识，在小游戏账号设置中可首次开通网页登录名和密码。
+
+微信首次登录遇到未绑定身份时，必须选择绑定已有账号或创建新账号。绑定需要原账号密码和验证码；已登录时只能绑定当前账号。绑定冲突拒绝覆盖，首版不支持解绑、换绑或两个已有账号的进度合并。`unionid` 仅保存，不据此自动合并。微信登录、密码登录和绑定成功共用事务提交后的 Session、remember Cookie、`tabToken` 和顶号流程。启动先恢复 `/api/auth/me`；被顶下线后等待玩家主动登录。
+
+新增接口如下，错误继续使用 `{ "message": "..." }`。成功登录的 `AuthUserResponse` 增加 `loginName`、`wechatBound`、`passwordLoginEnabled`，其中 `username` 仍是固定玩家 ID。
+
+| 接口 | 请求与用途 |
+| --- | --- |
+| `GET /api/auth/wechat/config` | 仅返回 `enabled`、`avatarEnabled` 开关，不返回凭据 |
+| `POST /api/auth/wechat/exchange` | `{ code, purpose }`，用途为 `AUTH`、`CREDENTIALS` 或 `PROFILE`；返回 `{ ticket, bound, expiresIn: 300 }` |
+| `POST /api/auth/wechat/login` | `{ ticket }`，登录已经绑定的账号 |
+| `POST /api/auth/wechat/register` | `{ ticket }`，创建免密正式账号、统计记录和绑定 |
+| `POST /api/auth/wechat/bind` | `{ ticket, loginName, password, captchaCode }`，验证密码与验证码后绑定 |
+| `POST /api/auth/credentials` | 当前正式登录态及 `{ ticket, loginName, password }`，仅首次开通密码登录 |
+| `POST /api/auth/wechat/profile` | 当前正式登录态及 `{ ticket, rawData, signature, syncNickname, syncAvatar }`，同步所选资料 |
+| `GET /api/media/avatars/{assetId}` | 读取已发布的头像，支持 ETag 和一天缓存 |
+
+票据为随机的一次性凭据，有效期五分钟，失败、过期、重复或用途不符后须重新调用 `wx.login` 换票。`CREDENTIALS`、`PROFILE` 还绑定当前账号和 `sessionVersion`。生产使用 `app.auth.redis-enabled=true` 的 Redis，原子取出并删除；Redis 不可用时拒绝换票，不降级到各实例内存。本地关闭 Redis 时使用内存票据，重启即失效。微信换票、建号、资料同步分别限流，密码绑定复用原密码失败限制与验证码。
+
+小游戏启动先调用官方 [`wx.requirePrivacyAuthorize`](https://developers.weixin.qq.com/minigame/dev/api/open-api/privacy/wx.requirePrivacyAuthorize.html)，收到成功回调后才恢复 `/api/auth/me`、获取验证码、换票或发送其他账号请求。使用微信官方统一弹窗，未注册自定义 `wx.onNeedPrivacyAuthorization` 监听；授权状态由微信决定，不用本地勾选标志代替。拒绝后可查看游戏规则、体验本地教学，主动点击“同意并继续”才再次申请；资料设置提供 `wx.openPrivacyContract` 指引入口。需在 MP 后台声明处理的昵称、头像及实际使用的其他个人信息，并按[小游戏隐私合规开发指南](https://developers.weixin.qq.com/minigame/dev/guide/open-ability/privacy.html)配置官方隐私弹窗。文档说明官方组件启用后不可关闭，后台配置应先在测试环境核对。
+
+头像、昵称授权与账号登录分别处理。绑定了微信的账号首次进入大厅时，先提示通过官方 [`wx.createUserInfoButton`](https://developers.weixin.qq.com/minigame/dev/api/open-api/user-info/wx.createUserInfoButton.html) 授权资料，玩家主动点击后才获取昵称和头像；可暂时跳过或拒绝，再从账号设置进入。首次提示按账号和设备记录展示标志，该标志不代表授权。后端验证 `SHA1(rawData + session_key)` 及当前微信绑定；昵称最多 64 个 Unicode 字符。数据库 `nickname` 使用 128 容量兼容 H2 的 UTF-16 计数。玩家可分别选择同步昵称、头像，拒绝资料授权仍可登录与游戏。小游戏使用原生授权按钮，小程序的 `chooseAvatar` 和 `input type="nickname"` WXML 组件不直接用于 Cocos 小游戏。
+
+头像下载仅接受 `qlogo.cn` 及其子域的 HTTPS 地址，禁止跳转和内网解析；限制下载时间、2 MiB 大小及 2048×2048 原图尺寸，再裁剪并编码为 256×256 JPEG。后端上传至私有 OSS 的 `avatars/wechat/{userId}/{随机UUID}.jpg`，成功后更新数据库并通知牌桌。下载、上传或数据库提交失败保留原资料，清理未发布的新对象；清理失败会记录对象键供后续核对。旧头像对象暂不自动删除，不能对整个头像前缀设置会删除仍被账号引用对象的到期规则。
+
+客户端保存后端稳定头像地址，不保存 OSS 签名 URL，不持有 OSS 凭据。私有 Bucket 的已发布游戏头像通过后端公开读取，以支持游客牌桌显示；此接口不提供任意对象访问。切回目录头像沿用 `POST /api/avatars/me`，头像加载失败回退默认图。
+
+服务端配置可通过环境变量，或服务器工作目录下的私有 `config/application.properties` 注入。外部配置目录使用 `700`、配置文件使用 `600` 权限；替换 JAR 时保留该文件。默认不启用功能，不将真实值写入仓库或客户端：
+
+| 环境变量 | 配置 |
+| --- | --- |
+| `POKER_WECHAT_ENABLED` | 默认 `false`；验收后再启用 |
+| `POKER_WECHAT_APP_ID`、`POKER_WECHAT_APP_SECRET` | 对应小游戏的服务端凭据 |
+| `POKER_AVATAR_OSS_ENABLED` | 默认 `false`，独立控制头像同步 |
+| `POKER_AVATAR_OSS_ENDPOINT` | HTTPS OSS Endpoint |
+| `POKER_AVATAR_OSS_REGION`、`POKER_AVATAR_OSS_BUCKET` | 例如 `cn-hangzhou` 与私有 Bucket 名 |
+| `OSS_ACCESS_KEY_ID`、`OSS_ACCESS_KEY_SECRET` | 后端 RAM 身份凭据 |
+| `OSS_SECURITY_TOKEN` | 使用 STS 时填写；当前凭据不会自动刷新，须由运行环境在过期前更新并重启服务 |
+
+RAM 权限只授予目标 Bucket 的 `avatars/wechat/*` 对象所需 `oss:PutObject`、`oss:GetObject`、`oss:DeleteObject`；上传携带私有对象 ACL，部署时按官方权限说明核对 `oss:PutObjectAcl` 是否需要。不要授予 Bucket 公共读写或账户全权限。接口与权限依据[阿里云 OSS Java SDK](https://www.alibabacloud.com/help/en/oss/developer-reference/oss-java-sdk/)及[OSS 访问控制说明](https://www.alibabacloud.com/help/en/oss/user-guide/permissions-and-access-control-overview)。
+
+发布前在隔离测试库校验 `V4__wechat_accounts.sql` 和 MySQL 专用 `V5__wechat_opaque_identity.sql`。后者将微信标识设为 `ascii_bin`，保证大小写敏感。迁移前检查旧用户名是否仅大小写不同，否则新登录名唯一索引会拒绝迁移；人工确定登录名时必须保留玩家 ID 和进度关联，不得自动合并。默认 H2 的兼容启动逻辑补齐旧字段；H2 到 MySQL 导入工具兼容没有微信表的旧源库，并保留已存在的微信绑定。MySQL 实例上的迁移验收仍需实际执行，不以 H2 兼容模式结果替代。
+
+正式联调还需 HTTPS/WSS 游戏域名、微信请求与下载合法域名、MP 后台隐私声明，以及真实微信和 OSS 服务端配置。微信头像预览使用的 `qlogo.cn` 具体子域也需按实际返回地址配置下载域名。反向代理应只信任受控代理的转发信息，确保 `request.getRemoteAddr()` 是有效客户端地址，否则会共享微信 IP 限流额度。生产数据库迁移、开关启用与部署另行执行。
+
+GitHub Actions 在前端构建和后端测试通过后发布，发布包携带 SHA256 校验值。当前 H2 服务器使用 `scripts/deploy-poker.sh`：只停止 `/poker` 中的游戏 Java 进程，将旧 JAR、前端、外部配置及关闭后的数据库备份到独立的 `/poker/backups/` 目录；在数据库副本上启动新版并核对账号、统计、好友、私聊、邀请和战绩的行数及数据校验值，通过后才替换正式程序。启动或接口检查失败时恢复旧程序，数据库备份保留；不会覆盖已产生的新数据。该脚本针对现有 H2 服务器，切换 MySQL 前须调整相应发布检查。
+
+相关回归可在 `poker` 目录运行：
+
+```powershell
+./mvnw.cmd test '-Dtest=LoginNameIntegrationTest,WechatAuthIntegrationTest,WechatProfileIntegrationTest,WechatTicketStoreTest,WechatAvatarDownloaderTest,WechatSchemaMigrationTest,WechatDataImportTest,AuthServiceIntegrationTest,AuthTokenServiceTest,AvatarSystemIntegrationTest,GameWebSocketReliabilityTest'
+```
+
 ### 小桃教程配音
 
 教程共 38 段配音，覆盖邀请、基础教程、锦囊教程、完成、退出和异常提示。对白由 `Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign` 直接生成，开场邀请已按“呀，主公你来啦！”重新配音，原始试音仍保存在源目录。邀请和锦囊开场沿用最初选中的“元气甜妹”声音描述，其他修正版按试听反馈使用自然语气，基础教程完成对白使用平静、轻柔的鼓励语气。逐句声音描述、语气和随机种子记录在 `voice.json` 的 `delivery_profiles` 和 `line_profiles` 中。游戏从 `poker-frontend/public/audios/xiaotao/` 播放音频，换句会停止上一句，静音和暂停保留进度，退出时清理播放。

@@ -1094,6 +1094,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     for (var player : room.getPlayers()) {
                         if (!player.isBot() && event.username().equals(player.getUserId())) {
                             player.setAvatar(event.url());
+                            if (event.nickname() != null) player.setNickname(event.nickname());
                             changed = true;
                         }
                     }
@@ -1133,6 +1134,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             for (com.game.poker.model.Player p : room.getPlayers()) {
                 Map<String, Object> pInfo = new java.util.HashMap<>();
                 pInfo.put("userId", p.getUserId());
+                if (p.getNickname() == null) p.setNickname(p.isBot() ? p.getUserId() : avatarService.getNickname(p.getUserId()));
+                pInfo.put("nickname", p.getNickname());
                 if (p.getAvatar() == null && !p.isBot()) {
                     var avatar = avatarService.getForUser(p.getUserId());
                     p.setAvatar(avatar == null ? "" : avatar.url());

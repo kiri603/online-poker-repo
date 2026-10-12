@@ -9,7 +9,7 @@
       @click="handleAccountClick"
     >
       <span class="account-trigger-avatar" aria-hidden="true">
-        <img v-if="canUseSocial" :src="accountAvatar" alt="" />
+        <PlayerAvatar v-if="canUseSocial" :src="accountAvatar" alt="" />
         <template v-else>{{ displayInitial }}</template>
       </span>
       <span class="account-trigger-name">{{
@@ -175,11 +175,16 @@
         aria-labelledby="hub-account-tab"
       >
         <div class="hub-avatar-current">
-          <img :src="profile.avatar || accountAvatar" alt="当前头像" />
+          <PlayerAvatar :src="profile.avatar || accountAvatar" alt="当前头像" />
           <div>
             <h3 class="hub-section-title">{{ profile.nickname || authUser?.nickname }}</h3>
             <p class="hub-avatar-note">账号 ID：{{ profile.userId }}</p>
           </div>
+        </div>
+        <div class="hub-login-methods">
+          <p>网页登录名：{{ profile.loginName || authUser?.loginName || '尚未开通' }}</p>
+          <p>微信：{{ authUser?.wechatBound ? '已绑定' : '尚未绑定' }}</p>
+          <p class="hub-avatar-note">微信绑定、开通网页登录与微信资料同步，请在微信版的“登录方式与微信资料”中设置。</p>
         </div>
         <form @submit.prevent="saveSelectedAvatar" :aria-busy="avatarSaving">
           <fieldset class="hub-avatar-fieldset" :disabled="avatarSaving">
@@ -234,7 +239,7 @@
         </div>
 
         <div class="hub-avatar-current">
-          <img :src="profile.avatar || accountAvatar" :alt="`${profile.userId || ''} 的头像`" />
+          <PlayerAvatar :src="profile.avatar || accountAvatar" :alt="`${profile.nickname || profile.userId || ''} 的头像`" />
           <h3 class="hub-section-title">{{ profile.nickname || profile.userId }}</h3>
         </div>
         <div class="hub-summary-grid">
@@ -438,7 +443,7 @@
               :class="{ active: socialChatFriendId === friend.userId }"
             >
               <div class="hub-row-main">
-                <strong class="hub-row-id">{{ friend.userId }}</strong>
+                <strong class="hub-row-id" :title="friend.userId">{{ friend.nickname || friend.userId }}</strong>
                 <span
                   class="hub-status-pill"
                   :class="{ online: friend.online }"

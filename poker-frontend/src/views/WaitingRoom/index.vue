@@ -1,6 +1,7 @@
 <template src="./WaitingRoom.html"></template>
 
 <script setup>
+import PlayerAvatar from '@/components/PlayerAvatar.vue';
 import {
   showSettings,
   roomSettings,

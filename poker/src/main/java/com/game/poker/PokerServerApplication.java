@@ -37,6 +37,10 @@ public class PokerServerApplication {
             jdbcTemplate.execute("UPDATE USER_STATS SET EXPERIENCE = 0 WHERE EXPERIENCE IS NULL");
             jdbcTemplate.execute("ALTER TABLE USER_STATS ALTER COLUMN EXPERIENCE SET DEFAULT 0");
             jdbcTemplate.execute("ALTER TABLE USER_STATS ALTER COLUMN EXPERIENCE SET NOT NULL");
+            // local-h2 uses Hibernate update rather than Flyway; preserve old password accounts there too.
+            jdbcTemplate.execute("ALTER TABLE USER_ACCOUNT ALTER COLUMN PASSWORD_HASH DROP NOT NULL");
+            jdbcTemplate.execute("ALTER TABLE USER_ACCOUNT ALTER COLUMN NICKNAME VARCHAR(128) NOT NULL");
+            jdbcTemplate.update("UPDATE USER_ACCOUNT SET LOGIN_NAME=USERNAME, LOGIN_NAME_KEY=LOWER(USERNAME) WHERE LOGIN_NAME IS NULL AND PASSWORD_HASH IS NOT NULL");
             log.info("已完成 H2 旧版 user_stats 兼容迁移检查");
         };
     }

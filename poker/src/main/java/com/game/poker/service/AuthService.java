@@ -9,6 +9,8 @@ import com.game.poker.dto.auth.CaptchaResponse;
 import com.game.poker.entity.RememberLoginToken;
 import com.game.poker.entity.UserAccount;
 import com.game.poker.repository.RememberLoginTokenRepository;
+import com.game.poker.repository.WechatIdentityRepository;
+import com.game.poker.config.WechatProperties;
 import com.game.poker.websocket.GameWebSocketHandler;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +22,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -54,6 +58,8 @@ public class AuthService {
     private final GameWebSocketHandler gameWebSocketHandler;
     private final LoginSessionRegistry loginSessionRegistry;
     private final AuthTokenService authTokenService;
+    private final WechatIdentityRepository wechatIdentities;
+    private final WechatProperties wechatProperties;
     private final SecureRandom secureRandom = new SecureRandom();
     private final Set<String> activeGuestUsernames = ConcurrentHashMap.newKeySet();
 
@@ -65,7 +71,9 @@ public class AuthService {
                        GameService gameService,
                        GameWebSocketHandler gameWebSocketHandler,
                        LoginSessionRegistry loginSessionRegistry,
-                       AuthTokenService authTokenService) {
+                       AuthTokenService authTokenService,
+                       WechatIdentityRepository wechatIdentities,
+                       WechatProperties wechatProperties) {
         this.userService = userService;
         this.captchaService = captchaService;
         this.authRateLimitService = authRateLimitService;
@@ -75,6 +83,8 @@ public class AuthService {
         this.gameWebSocketHandler = gameWebSocketHandler;
         this.loginSessionRegistry = loginSessionRegistry;
         this.authTokenService = authTokenService;
+        this.wechatIdentities = wechatIdentities;
+        this.wechatProperties = wechatProperties;
     }
 
     public CaptchaResponse createCaptcha(HttpSession session) {
@@ -91,46 +101,45 @@ public class AuthService {
         );
 
         String username = normalizeUsername(request.getUsername());
-        releaseGuestIfNeeded(session);
         validateUsername(username);
         validatePassword(request.getPassword());
-        if (userService.existsByUsername(username)) {
+        if (userService.existsByUsername(username) || userService.existsByLoginName(username)) {
             throw new AuthException(HttpStatus.CONFLICT, "用户名已存在");
         }
 
         UserAccount user = userService.createUser(username, passwordEncoder.encode(request.getPassword()));
-        userService.updateLastLogin(user);
-        userService.saveLoginLog(user, username, ip, userAgent, true);
-        persistLogin(session, response, user, httpRequest.isSecure());
-        return AuthUserResponse.from(user, authTokenService.issueToken(SessionUser.from(user)), userService.hasDailySignInAvailable(user.getId()));
+        return finishAuthenticatedLogin(user, session, httpRequest, response, ip, userAgent);
     }
 
     @Transactional
     public AuthUserResponse login(AuthRequest request, HttpSession session, HttpServletRequest httpRequest,
                                   HttpServletResponse response, String ip, String userAgent) {
+        UserAccount user = verifyPassword(request, session, ip, userAgent);
+        return finishAuthenticatedLogin(user, session, httpRequest, response, ip, userAgent);
+    }
+
+    public UserAccount verifyPassword(AuthRequest request, HttpSession session, String ip, String userAgent) {
         captchaService.validateCaptcha(session, request.getCaptchaCode());
         String username = normalizeUsername(request.getUsername());
-        releaseGuestIfNeeded(session);
         authRateLimitService.assertLoginAllowed(ip, username);
 
-        UserAccount user = userService.findByUsername(username)
+        UserAccount found = userService.findByLoginName(username)
                 .orElseThrow(() -> {
                     authRateLimitService.recordLoginFailure(username);
                     userService.saveLoginLog(null, username, ip, userAgent, false);
                     return new AuthException(HttpStatus.UNAUTHORIZED, "用户名或密码错误");
                 });
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+        UserAccount user = userService.lockAccount(found.getId());
+        if (!user.hasPasswordLogin() || !"ACTIVE".equals(user.getStatus())
+                || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             authRateLimitService.recordLoginFailure(username);
             userService.saveLoginLog(user, username, ip, userAgent, false);
             throw new AuthException(HttpStatus.UNAUTHORIZED, "用户名或密码错误");
         }
 
         authRateLimitService.clearLoginFailures(username);
-        userService.updateLastLogin(user);
-        userService.saveLoginLog(user, username, ip, userAgent, true);
-        persistLogin(session, response, user, httpRequest.isSecure());
-        return AuthUserResponse.from(user, authTokenService.issueToken(SessionUser.from(user)), userService.hasDailySignInAvailable(user.getId()));
+        return user;
     }
 
     public synchronized AuthUserResponse guestLogin(HttpSession session, HttpServletResponse response, boolean secureCookie) {
@@ -151,7 +160,7 @@ public class AuthService {
                 endGuestVisit(headerUser, readTabAuthToken(request));
                 throw new AuthException(HttpStatus.UNAUTHORIZED, "游客登录仅当前访问有效，请重新进入");
             }
-            return AuthUserResponse.from(headerUser, authTokenService.issueToken(headerUser), userService.hasDailySignInAvailable(headerUser.getId()));
+            return describe(userService.findById(headerUser.getId()).orElseThrow(), authTokenService.issueToken(headerUser));
         }
 
         SessionUser sessionUser = sessionUserFromSession(session);
@@ -165,7 +174,7 @@ public class AuthService {
             }
             ensureActiveSession(sessionUser, session, response, request.isSecure());
             loginSessionRegistry.register(sessionUser.getUsername(), session);
-            return AuthUserResponse.from(sessionUser, authTokenService.issueToken(sessionUser), userService.hasDailySignInAvailable(sessionUser.getId()));
+            return describe(userService.findById(sessionUser.getId()).orElseThrow(), authTokenService.issueToken(sessionUser));
         }
 
         String rememberToken = readCookie(request, REMEMBER_COOKIE);
@@ -183,12 +192,13 @@ public class AuthService {
 
         UserAccount user = userService.findById(storedToken.getUserId())
                 .orElseThrow(() -> new AuthException(HttpStatus.UNAUTHORIZED, "账号不存在"));
+        if (!"ACTIVE".equals(user.getStatus())) throw new AuthException(HttpStatus.UNAUTHORIZED, "账号不可用");
 
         storedToken.setLastUsedAt(LocalDateTime.now());
         rememberLoginTokenRepository.save(storedToken);
         session.setAttribute(AuthSessionKeys.LOGIN_USER, SessionUser.from(user));
         loginSessionRegistry.register(user.getUsername(), session);
-        return AuthUserResponse.from(user, authTokenService.issueToken(SessionUser.from(user)), userService.hasDailySignInAvailable(user.getId()));
+        return describe(user, authTokenService.issueToken(SessionUser.from(user)));
     }
 
     @Transactional
@@ -199,6 +209,16 @@ public class AuthService {
             return; // 不注销共享 Cookie 中的正式账号或其他页面。
         }
         authTokenService.revokeToken(readTabAuthToken(request));
+        SessionUser loggedOut = headerUser != null ? headerUser : sessionUserFromSession(session);
+        if (loggedOut != null && !loggedOut.isGuest() && userService.isSessionVersionCurrent(loggedOut)) {
+            UserAccount account = userService.lockAccount(loggedOut.getId());
+            if (java.util.Objects.equals(account.getSessionVersion(), loggedOut.getSessionVersion())) {
+                account.setSessionVersion(generateRawToken());
+                userService.save(account);
+                revokeRememberTokens(account.getId());
+                afterCommit(() -> gameWebSocketHandler.forceLogoutUser(account.getUsername(), "账号已退出登录，请重新登录"));
+            }
+        }
         releaseGuestIfNeeded(session);
         loginSessionRegistry.unregister(session);
         String rememberToken = readCookie(request, REMEMBER_COOKIE);
@@ -271,7 +291,7 @@ public class AuthService {
         }
     }
 
-    private void validateUsername(String username) {
+    public void validateUsername(String username) {
         if (!USERNAME_PATTERN.matcher(username).matches()) {
             throw new AuthException(HttpStatus.BAD_REQUEST, "用户名需为4到20位中文、字母、数字或下划线");
         }
@@ -281,8 +301,8 @@ public class AuthService {
         }
     }
 
-    private void validatePassword(String password) {
-        if (!PASSWORD_PATTERN.matcher(password).matches()) {
+    public void validatePassword(String password) {
+        if (password == null || !PASSWORD_PATTERN.matcher(password).matches()) {
             throw new AuthException(HttpStatus.BAD_REQUEST, "密码至少8位，且必须包含字母和数字");
         }
     }
@@ -291,13 +311,27 @@ public class AuthService {
         return username == null ? "" : username.trim();
     }
 
-    private void persistLogin(HttpSession session, HttpServletResponse response, UserAccount user, boolean secureCookie) {
+    public SessionUser currentFormalUserIfPresent(HttpServletRequest request, HttpSession session) {
+        if (readTabAuthToken(request) == null && sessionUserFromSession(session) == null) return null;
+        SessionUser user = requireAuthenticatedUser(request, session, true);
+        return user.isGuest() ? null : user;
+    }
+
+    public AuthUserResponse describe(UserAccount user, String token) {
+        return AuthUserResponse.from(user, token, userService.hasDailySignInAvailable(user.getId()))
+                .withWechatBound(wechatIdentities.existsByUserIdAndAppId(user.getId(), wechatProperties.getAppId()));
+    }
+
+    @Transactional
+    public AuthUserResponse finishAuthenticatedLogin(UserAccount user, HttpSession session, HttpServletRequest request,
+                                                     HttpServletResponse response, String ip, String userAgent) {
+        if (!"ACTIVE".equals(user.getStatus())) throw new AuthException(HttpStatus.UNAUTHORIZED, "账号不可用");
+        userService.updateLastLogin(user);
+        userService.saveLoginLog(user, user.getLoginName(), ip, userAgent, true);
         String sessionVersion = generateRawToken();
         user.setSessionVersion(sessionVersion);
         userService.save(user);
         revokeRememberTokens(user.getId());
-        session.setAttribute(AuthSessionKeys.LOGIN_USER, SessionUser.from(user));
-        loginSessionRegistry.register(user.getUsername(), session);
         String rawToken = generateRawToken();
         RememberLoginToken token = new RememberLoginToken();
         token.setUserId(user.getId());
@@ -309,13 +343,34 @@ public class AuthService {
 
         ResponseCookie cookie = ResponseCookie.from(REMEMBER_COOKIE, rawToken)
                 .httpOnly(true)
-                .secure(secureCookie)
+                .secure(request.isSecure())
                 .path("/")
                 .sameSite("Lax")
                 .maxAge(REMEMBER_DAYS * 24L * 3600L)
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        gameWebSocketHandler.forceLogoutUser(user.getUsername(), "账号已在其他设备登录，请重新登录");
+        SessionUser principal = SessionUser.from(user);
+        AuthUserResponse result = describe(user, null);
+        afterCommit(() -> {
+            if (!userService.isSessionVersionCurrent(principal)) {
+                throw new AuthException(HttpStatus.UNAUTHORIZED, "账号已在其他设备登录，请重新登录");
+            }
+            releaseGuestIfNeeded(session);
+            if (request.getSession(false) != null) request.changeSessionId();
+            session.setAttribute(AuthSessionKeys.LOGIN_USER, principal);
+            loginSessionRegistry.register(user.getUsername(), session);
+            result.setTabToken(authTokenService.issueToken(principal));
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+            gameWebSocketHandler.forceLogoutUser(user.getUsername(), "账号已在其他设备登录，请重新登录");
+        });
+        return result;
+    }
+
+    private void afterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { action.run(); }
+            });
+        } else action.run();
     }
 
     private void clearRememberCookie(HttpServletResponse response, boolean secureCookie) {

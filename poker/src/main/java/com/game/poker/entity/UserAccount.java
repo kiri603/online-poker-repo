@@ -21,14 +21,32 @@ public class UserAccount {
     @Column(nullable = false, unique = true, length = 20)
     private String username;
 
-    @Column(name = "password_hash", nullable = false, length = 100)
+    @Column(name = "login_name", length = 20)
+    private String loginName;
+
+    @Column(name = "login_name_key", unique = true, length = 20)
+    private String loginNameKey;
+
+    @Column(name = "password_hash", length = 100)
     private String passwordHash;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 128)
     private String nickname;
 
     @Column(name = "avatar_id", length = 40)
     private String avatarId;
+
+    @Column(name = "avatar_source", nullable = false, length = 16)
+    private String avatarSource = "CATALOG";
+
+    @Column(name = "wechat_avatar_asset_id", unique = true, length = 36)
+    private String wechatAvatarAssetId;
+
+    @Column(name = "wechat_avatar_key", length = 255)
+    private String wechatAvatarKey;
+
+    @Column(name = "wechat_avatar_etag", length = 64)
+    private String wechatAvatarEtag;
 
     @Column(nullable = false, length = 20)
     private String status;
@@ -47,6 +65,7 @@ public class UserAccount {
 
     @PrePersist
     public void onCreate() {
+        if (loginName == null && passwordHash != null) setLoginName(username);
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
@@ -72,6 +91,24 @@ public class UserAccount {
     public String getPasswordHash() {
         return passwordHash;
     }
+
+    public String getLoginName() { return loginName; }
+
+    public void setLoginName(String loginName) {
+        this.loginName = loginName;
+        this.loginNameKey = loginName == null ? null : loginName.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    public boolean hasPasswordLogin() { return loginName != null && passwordHash != null; }
+
+    public String getAvatarSource() { return avatarSource; }
+    public void setAvatarSource(String value) { avatarSource = value; }
+    public String getWechatAvatarAssetId() { return wechatAvatarAssetId; }
+    public void setWechatAvatarAssetId(String value) { wechatAvatarAssetId = value; }
+    public String getWechatAvatarKey() { return wechatAvatarKey; }
+    public void setWechatAvatarKey(String value) { wechatAvatarKey = value; }
+    public String getWechatAvatarEtag() { return wechatAvatarEtag; }
+    public void setWechatAvatarEtag(String value) { wechatAvatarEtag = value; }
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;

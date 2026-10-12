@@ -38,7 +38,8 @@ public class DataMigrationService {
             "DIRECT_MESSAGE",
             "ROOM_INVITE",
             "GAME_RECORD",
-            "GAME_RECORD_PARTICIPANT"
+            "GAME_RECORD_PARTICIPANT",
+            "WECHAT_IDENTITY"
     );
 
     private final DataSource targetDataSource;
@@ -77,6 +78,9 @@ public class DataMigrationService {
             try {
                 for (String table : TABLE_ORDER) {
                     migrateTable(source, target, table, report);
+                }
+                try (var backfill = target.prepareStatement("UPDATE user_account SET login_name=username, login_name_key=LOWER(username) WHERE login_name IS NULL AND password_hash IS NOT NULL")) {
+                    backfill.executeUpdate();
                 }
                 collectCounts(target, report.getTargetCountsAfter());
                 validateCounts(report);
@@ -134,7 +138,9 @@ public class DataMigrationService {
     }
 
     private long queryCount(Connection connection, String table) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM " + table);
+        String actual = existingTable(connection, table);
+        if (actual == null && "WECHAT_IDENTITY".equals(table)) return 0;
+        try (PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM " + actual);
              ResultSet resultSet = statement.executeQuery()) {
             resultSet.next();
             return resultSet.getLong(1);
@@ -142,6 +148,8 @@ public class DataMigrationService {
     }
 
     private void migrateTable(Connection source, Connection target, String table, DataMigrationReport report) throws SQLException {
+        String sourceTable = existingTable(source, table), targetTable = existingTable(target, table);
+        if (sourceTable == null && "WECHAT_IDENTITY".equals(table)) return;
         List<String> columns = resolveColumns(source, table);
         if (columns.isEmpty()) {
             throw new IllegalStateException("表 " + table + " 没有可迁移列");
@@ -154,8 +162,8 @@ public class DataMigrationService {
             placeholderJoiner.add("?");
         }
 
-        String selectSql = "SELECT " + columnJoiner + " FROM " + table;
-        String insertSql = "INSERT INTO " + table + " (" + columnJoiner + ") VALUES (" + placeholderJoiner + ")";
+        String selectSql = "SELECT " + columnJoiner + " FROM " + sourceTable;
+        String insertSql = "INSERT INTO " + targetTable + " (" + columnJoiner + ") VALUES (" + placeholderJoiner + ")";
         int migratedRows = 0;
         try (PreparedStatement select = source.prepareStatement(selectSql);
              ResultSet resultSet = select.executeQuery();
@@ -182,7 +190,7 @@ public class DataMigrationService {
 
     private List<String> resolveColumns(Connection connection, String table) throws SQLException {
         List<String> columns = new ArrayList<>();
-        try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM " + table + " WHERE 1 = 0");
+        try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM " + existingTable(connection, table) + " WHERE 1 = 0");
              ResultSet resultSet = statement.executeQuery()) {
             ResultSetMetaData metadata = resultSet.getMetaData();
             for (int index = 1; index <= metadata.getColumnCount(); index++) {
@@ -190,6 +198,16 @@ public class DataMigrationService {
             }
         }
         return columns;
+    }
+
+    private String existingTable(Connection connection, String table) throws SQLException {
+        try (var tables = connection.getMetaData().getTables(connection.getCatalog(), null, null, new String[]{"TABLE"})) {
+            while (tables.next()) {
+                String name = tables.getString("TABLE_NAME");
+                if (table.equalsIgnoreCase(name)) return name;
+            }
+        }
+        return null;
     }
 
     private void validateCounts(DataMigrationReport report) {
@@ -214,7 +232,7 @@ public class DataMigrationService {
                         SELECT COUNT(*)
                         FROM GAME_RECORD_PARTICIPANT participant
                         JOIN GAME_RECORD record ON record.ID = participant.GAME_RECORD_ID
-                        """
+                        """.toLowerCase(Locale.ROOT)
         ); ResultSet resultSet = statement.executeQuery()) {
             resultSet.next();
             long joinedCount = resultSet.getLong(1);
@@ -245,7 +263,7 @@ public class DataMigrationService {
                         LEFT JOIN USER_STATS stats ON stats.USER_ID = account.ID
                         ORDER BY account.ID
                         LIMIT 3
-                        """
+                        """.toLowerCase(Locale.ROOT)
         ); ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 Map<String, Object> sample = new LinkedHashMap<>();

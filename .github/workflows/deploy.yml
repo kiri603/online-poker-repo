@@ -4,10 +4,19 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: poker-production
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: 📥 拉取最新代码
@@ -17,11 +26,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: poker-frontend/package-lock.json
 
       - name: 📦 前端依赖安装与打包
         run: |
           cd poker-frontend
-          npm install
+          npm ci
           npm run build
 
       - name: ☕ 配置 Java 环境
@@ -29,11 +40,21 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "25"
+          cache: maven
 
-      - name: ⚙️ 后端 Maven 编译打包
+      - name: ⚙️ 后端测试与打包
         run: |
           cd poker
-          mvn clean package -DskipTests
+          mvn -B verify -Dlogging.level.com.game.poker=WARN
+
+      - name: 准备发布文件和校验值
+        run: |
+          mkdir release
+          cp poker/target/poker-0.0.1-SNAPSHOT.jar release/
+          cp scripts/deploy-poker.sh scripts/WechatDataCheck.java release/
+          tar -czf release/frontend.tar.gz -C poker-frontend/dist .
+          cd release
+          sha256sum poker-0.0.1-SNAPSHOT.jar frontend.tar.gz deploy-poker.sh WechatDataCheck.java > SHA256SUMS
 
       - name: 📤 上传构建产物到阿里云
         uses: appleboy/scp-action@v0.1.7
@@ -41,40 +62,22 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "poker-frontend/dist/*,poker/target/poker-0.0.1-SNAPSHOT.jar"
-          target: "/tmp"
+          source: "release/*"
+          target: "/tmp/poker-release-${{ github.run_id }}-${{ github.run_attempt }}"
+          strip_components: 1
 
-      - name: 🔄 远程执行替换与重启脚本
+      - name: 🔄 验证旧数据、备份并切换服务
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 10m
           script: |
-            echo "1. 停止旧版后端..."
-            killall -9 java || true
-            sleep 3
-
-            echo "2. 备份旧版本..."
-            mkdir -p /root/backup/frontend /root/backup/backend /root/backup/database
-            rm -rf /root/backup/frontend/* /root/backup/backend/* /root/backup/database/*
-            cp -r /var/www/html/. /root/backup/frontend/ 2>/dev/null || true
-            cp /poker/poker-0.0.1-SNAPSHOT.jar /root/backup/backend/ 2>/dev/null || true
-            cp /poker/data/poker-auth.mv.db /root/backup/database/ 2>/dev/null || true
-            cp /poker/data/poker-auth.trace.db /root/backup/database/ 2>/dev/null || true
-
-            echo "3. 部署新版本..."
-            mkdir -p /var/www/html /poker /poker/data
-            rm -rf /var/www/html/*
-            mv /tmp/poker-frontend/dist/* /var/www/html/
-            mv /tmp/poker/target/poker-0.0.1-SNAPSHOT.jar /poker/
-
-            echo "4. 启动后端并重启 Nginx..."
-            cd /poker
-            rm -f /poker/data/poker-auth.lock.db
-            nohup java -jar poker-0.0.1-SNAPSHOT.jar > game.log 2>&1 &
-            systemctl restart nginx
-
-            echo "5. 清理临时垃圾..."
-            rm -rf /tmp/poker-frontend /tmp/poker
-            echo "✅ 部署大功告成！"
+            set -eu
+            stage=/tmp/poker-release-${{ github.run_id }}-${{ github.run_attempt }}
+            if [ "$(id -u)" = 0 ]; then
+              bash "$stage/deploy-poker.sh" "$stage"
+            else
+              sudo -n bash "$stage/deploy-poker.sh" "$stage"
+            fi

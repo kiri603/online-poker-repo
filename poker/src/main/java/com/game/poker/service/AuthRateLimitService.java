@@ -46,6 +46,11 @@ public class AuthRateLimitService {
         delete("login:fail:" + safe(username));
     }
 
+    public void assertWechatAllowed(String operation, String subject) {
+        int max = "register".equals(operation) ? 5 : "profile".equals(operation) ? 10 : 30;
+        checkLimit("wechat:" + operation + ":" + safe(subject), max, Duration.ofMinutes(10), "微信操作过于频繁，请稍后再试");
+    }
+
     private void checkLimit(String key, int max, Duration window, String message) {
         long count = increment(key, window);
         if (count > max) {

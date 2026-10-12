@@ -44,7 +44,7 @@ public class SocialService {
     private final RoomInviteRepository roomInviteRepository;
     private final LoginSessionRegistry loginSessionRegistry;
     private final GameService gameService;
-    private final AvatarCatalog avatarCatalog;
+    private final AvatarService avatars;
 
     public SocialService(UserAccountRepository userAccountRepository,
                          UserStatsRepository userStatsRepository,
@@ -55,7 +55,7 @@ public class SocialService {
                          RoomInviteRepository roomInviteRepository,
                          LoginSessionRegistry loginSessionRegistry,
                          GameService gameService,
-                         AvatarCatalog avatarCatalog) {
+                         AvatarService avatars) {
         this.userAccountRepository = userAccountRepository;
         this.userStatsRepository = userStatsRepository;
         this.gameRecordRepository = gameRecordRepository;
@@ -65,7 +65,7 @@ public class SocialService {
         this.roomInviteRepository = roomInviteRepository;
         this.loginSessionRegistry = loginSessionRegistry;
         this.gameService = gameService;
-        this.avatarCatalog = avatarCatalog;
+        this.avatars = avatars;
     }
 
     @Transactional(readOnly = true)
@@ -79,7 +79,7 @@ public class SocialService {
 
         body.put("notificationCount", notificationCount);
         userAccountRepository.findByUsername(currentUserId).ifPresent(user ->
-                body.put("avatar", avatarCatalog.resolve(user.getAvatarId()).url()));
+                body.put("avatar", avatars.resolve(user).url()));
         body.put("unreadMessageCount", unreadMessageCount);
         body.put("pendingFriendRequestCount", pendingFriendRequests.size());
         body.put("pendingInviteCount", pendingInvites.size());
@@ -136,10 +136,12 @@ public class SocialService {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("userId", account.getUsername());
         body.put("nickname", account.getNickname());
-        AvatarCatalog.Avatar avatar = avatarCatalog.resolve(account.getAvatarId());
+        AvatarCatalog.Avatar avatar = avatars.resolve(account);
         body.put("avatarId", avatar.id());
         body.put("avatar", avatar.url());
         body.put("self", self);
+        body.put("avatarSource", account.getAvatarSource());
+        if (self) { body.put("loginName", account.getLoginName()); body.put("passwordLoginEnabled", account.hasPasswordLogin()); }
         body.put("registeredAt", account.getCreatedAt());
         body.put("totalGames", stats.getTotalGames());
         body.put("wins", stats.getWins());
@@ -171,6 +173,7 @@ public class SocialService {
                     Map<String, Object> item = new LinkedHashMap<>();
                     item.put("userId", user.getUsername());
                     item.put("nickname", user.getNickname());
+                    item.put("avatar", avatars.resolve(user).url());
                     item.put("online", loginSessionRegistry.isOnline(user.getUsername()));
                     item.put("alreadyFriend", areFriends(currentUserId, user.getUsername()));
                     item.put("pendingIncoming", latestPendingRequest(user.getUsername(), currentUserId).isPresent());
@@ -363,6 +366,9 @@ public class SocialService {
                 .map(friendId -> {
                     Map<String, Object> item = new LinkedHashMap<>();
                     item.put("userId", friendId);
+                    userAccountRepository.findByUsername(friendId).ifPresent(friend -> {
+                        item.put("nickname", friend.getNickname()); item.put("avatar", avatars.resolve(friend).url());
+                    });
                     item.put("online", loginSessionRegistry.isOnline(friendId));
                     item.put("unreadCount", directMessageRepository.countUnreadFromFriend(currentUserId, friendId));
                     return item;

@@ -1,6 +1,7 @@
 <template src="./AccountHub.html"></template>
 
 <script setup>
+import PlayerAvatar from '@/components/PlayerAvatar.vue';
 import {
   authUser,
   canUseSocial,

@@ -10,6 +10,9 @@ public class AuthUserResponse {
     private boolean guest;
     private String tabToken;
     private boolean dailySignInAvailable;
+    private String loginName;
+    private boolean passwordLoginEnabled;
+    private boolean wechatBound;
 
     public AuthUserResponse() {
     }
@@ -24,7 +27,10 @@ public class AuthUserResponse {
     }
 
     public static AuthUserResponse from(UserAccount user, String tabToken, boolean dailySignInAvailable) {
-        return new AuthUserResponse(user.getId(), user.getUsername(), user.getNickname(), false, tabToken, dailySignInAvailable);
+        AuthUserResponse response = new AuthUserResponse(user.getId(), user.getUsername(), user.getNickname(), false, tabToken, dailySignInAvailable);
+        response.loginName = user.getLoginName();
+        response.passwordLoginEnabled = user.hasPasswordLogin();
+        return response;
     }
 
     public static AuthUserResponse from(SessionUser user, String tabToken, boolean dailySignInAvailable) {
@@ -54,4 +60,10 @@ public class AuthUserResponse {
     public boolean isDailySignInAvailable() {
         return dailySignInAvailable;
     }
+
+    public String getLoginName() { return loginName; }
+    public boolean isPasswordLoginEnabled() { return passwordLoginEnabled; }
+    public boolean isWechatBound() { return wechatBound; }
+    public AuthUserResponse withWechatBound(boolean bound) { wechatBound = bound; return this; }
+    public void setTabToken(String token) { tabToken = token; }
 }

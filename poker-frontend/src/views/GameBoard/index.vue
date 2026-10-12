@@ -1,6 +1,7 @@
 <template src="./GameBoard.html"></template>
 
 <script setup>
+import PlayerAvatar from '@/components/PlayerAvatar.vue';
 import BattleEffectsLayer from "./BattleEffectsLayer.vue";
 import BattlePhaseNotice from "./BattlePhaseNotice.vue";
 // 【核心修复 1】：移除了 onMounted 中的 playBGM("Normal")。

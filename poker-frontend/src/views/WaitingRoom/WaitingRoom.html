@@ -170,7 +170,7 @@
         :key="friend.userId"
         class="wh-friend-drawer-item"
       >
-        <span class="wh-friend-drawer-name">{{ friend.userId }}</span>
+        <span class="wh-friend-drawer-name" :title="friend.userId">{{ friend.nickname || friend.userId }}</span>
         <button
           type="button"
           class="wh-friend-invite-btn"
@@ -252,10 +252,10 @@
           <!-- 占用 -->
           <template v-else>
             <div class="wh-seat-avatar-wrap">
-              <img
+              <PlayerAvatar
                 class="wh-seat-avatar"
                 :src="avatarForPlayer(slot.player, slot.index)"
-                :alt="`${slot.player.userId} 的头像`"
+                :alt="`${slot.player.nickname || slot.player.userId} 的头像`"
                 draggable="false"
               />
               <span
@@ -266,8 +266,8 @@
               >
             </div>
 
-            <div class="wh-seat-name" :title="slot.player.userId">
-              {{ slot.player.userId }}{{ slot.player.isSelf ? " (你)" : "" }}
+            <div class="wh-seat-name" :title="slot.player.nickname || slot.player.userId">
+              {{ slot.player.nickname || slot.player.userId }}{{ slot.player.isSelf ? " (你)" : "" }}
             </div>
 
             <div class="wh-seat-badges">
