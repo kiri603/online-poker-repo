@@ -1,0 +1,103 @@
+<dialog ref="pageDialog" class="rules-pop-page" aria-labelledby="pop-rules-title" @cancel.prevent="emit('close')" @keydown="chapterShortcut">
+  <header class="game-header">
+    <h1 id="pop-rules-title">详细规则</h1>
+    <div class="header-actions">
+      <button class="search-toggle" type="button" aria-label="查找规则" @click="openSearch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>
+        <span>查规则</span>
+      </button>
+      <button class="back-button" type="button" aria-label="返回大厅" @click="emit('close')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg>
+        <span>返回大厅</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="rules-layout press-layout">
+    <section v-for="(chapter, chapterIndex) in chapters" :key="chapter.id" class="press-chapter" :data-rule-chapter="chapter.id">
+      <h2>
+        <button type="button" class="press-toggle" :aria-expanded="openChapter === chapterIndex" :aria-controls="'pop-panel-' + chapter.id" @click="toggleChapter(chapterIndex)">
+          {{ chapter.title }}<span aria-hidden="true">{{ openChapter === chapterIndex ? '−' : '＋' }}</span>
+        </button>
+      </h2>
+      <div :id="'pop-panel-' + chapter.id" :hidden="openChapter !== chapterIndex">
+        <div v-if="openChapter === chapterIndex" :id="'pop-reading-' + chapterIndex" class="reading-content" tabindex="-1" :aria-label="chapter.title">
+          <p v-if="chapter.id === 'cards'" class="chapter-intro">标准牌库 54 张，锦囊模式 58 张。</p>
+          <p v-else-if="chapter.intro" class="chapter-intro">{{ chapter.intro }}</p>
+
+          <div v-if="chapter.id === 'skills' || chapter.id === 'tricks'" class="entry-picker" role="group" :aria-label="chapter.title + '选择'">
+            <button v-for="(entry, index) in chapter.entries" :key="entry.name" type="button" :aria-pressed="entryIndex === index" @click="selectEntry(index)">{{ entry.name }}</button>
+          </div>
+
+          <section v-for="{ entry, index } in entriesFor(chapter)" :key="entry.name" class="rule-entry" :class="{ 'key-rule': chapter.id === 'pass' && index === 0, 'card-types': chapter.id === 'cards' && index === 1, 'selected-entry': chapter.id === 'skills' || chapter.id === 'tricks' }" :data-rule-entry="index" tabindex="-1">
+            <div class="entry-heading">
+              <h3><RuleText :text="entry.name" /></h3>
+              <span v-if="entry.tag" class="entry-tag">{{ entry.tag }}</span>
+            </div>
+
+            <template v-if="chapter.id === 'cards' && index === 1">
+              <div class="type-picker" role="group" aria-label="牌型选择">
+                <button v-for="(cardType, index) in types" :key="cardType.name" type="button" :aria-pressed="typeIndex === index" @click="selectType(index)">{{ cardType.name }}</button>
+              </div>
+              <div class="type-example">
+                <div class="type-card-row" :aria-label="type.name + '示例'">
+                  <span v-for="(rank, cardIndex) in type.ranks" :key="typeIndex + '-' + cardIndex" class="playing-card" :class="{ red: redCard(rank, cardIndex), joker: rank === '小王' || rank === '大王' }" :aria-label="rank + cardSuit(rank, cardIndex)">
+                    <span class="card-corner">{{ rank }}<small>{{ cardSuit(rank, cardIndex) }}</small></span>
+                    <span class="card-suit" aria-hidden="true">{{ cardSuit(rank, cardIndex) || '王' }}</span>
+                    <span class="card-bottom" aria-hidden="true">{{ rank }}</span>
+                  </span>
+                </div>
+                <p>{{ type.desc }}</p>
+              </div>
+            </template>
+            <p v-else-if="entry.text" :class="{ 'rank-order': chapter.id === 'cards' }"><RuleText :text="entry.text" /></p>
+            <p v-if="entry.effect" class="entry-effect"><RuleText :text="entry.effect" /></p>
+
+            <div v-if="entry.note || (chapter.id === 'pass' && index === 0)" :class="{ 'support-actions': chapter.id === 'pass' && index === 0 }">
+              <details v-if="chapter.id === 'pass' && index === 0" class="example">
+                <summary>看例子<span aria-hidden="true">↗</span></summary>
+                <div class="pass-demo">
+                  <div class="demo-reading">
+                    <span>手牌 <b class="demo-count">{{ drawn ? 10 : 8 }}</b> 张</span>
+                    <button class="demo-action" type="button" @click="demonstratePass">
+                      <span>{{ drawn ? '再演示' : '演示过牌' }}</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                    </button>
+                  </div>
+                  <div class="hand" aria-label="演示手牌">
+                    <span v-for="(rank, cardIndex) in hand" :key="cardIndex" class="playing-card" :class="{ red: redCard(rank, cardIndex), 'drawn-card': cardIndex >= 8 }" :aria-label="rank + cardSuit(rank, cardIndex)">
+                      <span class="card-corner">{{ rank }}<small>{{ cardSuit(rank, cardIndex) }}</small></span>
+                      <span class="card-suit" aria-hidden="true">{{ cardSuit(rank, cardIndex) }}</span>
+                      <span class="card-bottom" aria-hidden="true">{{ rank }}</span>
+                    </span>
+                  </div>
+                  <p class="demo-result" role="status">{{ drawn ? '过牌后，8 张 → 10 张，回合交给下家。' : '过牌前，手牌共 8 张。' }}</p>
+                </div>
+              </details>
+              <details v-if="entry.note && !(chapter.id === 'cards')" class="fine-print">
+                <summary>{{ entry.noteLabel || '细则' }}<span aria-hidden="true">＋</span></summary>
+                <p><RuleText :text="entry.note" /></p>
+              </details>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog ref="searchDialog" class="search-dialog" aria-labelledby="pop-search-title" @cancel.prevent.stop="closeSearch" @keydown.esc.prevent.stop="closeSearch" @click="dismissOutside">
+    <div class="search-dialog-top"><h2 id="pop-search-title">查找规则</h2><button type="button" class="search-close" aria-label="关闭查找" @click="closeSearch">×</button></div>
+    <label class="search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>
+      <input ref="searchInput" v-model="query" type="search" placeholder="输入技能、牌型或规则" aria-label="规则关键词" autocomplete="off">
+    </label>
+    <div class="search-results" aria-live="polite">
+      <button v-for="result in results" :key="result.chapterIndex + '-' + result.entryIndex + '-' + result.typeIndex" type="button" @click="selectResult(result)">
+        <span>{{ result.section }}</span><strong>{{ result.name }}</strong>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+      </button>
+      <p v-if="!results.length" class="no-results">没有找到相关规则。</p>
+    </div>
+  </dialog>
+  <div class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement }}</div>
+</dialog>

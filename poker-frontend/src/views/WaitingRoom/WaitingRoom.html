@@ -1,4 +1,5 @@
-<div class="wh-shell">
+<WaitingRoomPop v-if="uiTheme === 'pop'" />
+<div v-else class="wh-shell">
   <!-- 背景图层：纯净三国庭院背景 -->
   <div class="wh-scene-bg" aria-hidden="true"></div>
   <div class="wh-vignette" aria-hidden="true"></div>
@@ -29,41 +30,9 @@
     </div>
   </header>
 
-  <!-- 声音按钮：与联机大厅完全同位（右上角，紧邻 AccountHub 右侧） -->
+  <!-- 设置入口：与联机大厅同位，紧邻账号入口。 -->
   <div class="wh-sound-anchor">
-    <button
-      type="button"
-      class="wh-icon-btn wh-sound-btn"
-      :class="{ 'is-muted': !soundStatus }"
-      @click="toggleSound"
-      :aria-label="soundStatus ? '静音背景音乐' : '开启背景音乐'"
-    >
-      <svg
-        v-if="soundStatus"
-        class="wh-sound-icon"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          fill="currentColor"
-          d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
-        />
-        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.5 8.5a5 5 0 0 1 0 7" />
-        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M19 5a10 10 0 0 1 0 14" />
-      </svg>
-      <svg
-        v-else
-        class="wh-sound-icon"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          fill="currentColor"
-          d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
-        />
-        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="m15.5 9.5 6 6M21.5 9.5l-6 6" />
-      </svg>
-    </button>
+    <SettingsButton compact class="wh-icon-btn wh-sound-btn" />
   </div>
 
   <!-- 房间设置 / 好友邀请：顶栏下方右侧，避开 AccountHub / 声音按钮 -->

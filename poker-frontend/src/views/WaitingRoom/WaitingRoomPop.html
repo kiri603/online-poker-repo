@@ -1,0 +1,91 @@
+<section ref="shell" class="garden-room" :class="{ enter: room.entered, 'ambient-paused': room.cardPlayPaused }" aria-label="等待房间">
+  <div class="garden-content">
+    <header class="room-header">
+      <button type="button" class="brand" aria-label="返回大厅" @click="room.open('leave')"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 33C4 27 6 11 18 16C17 4 31 6 30 16C41 22 30 31 20 33Z" fill="currentColor"/><path d="M20 25c1-6 5-9 10-10" fill="none" stroke="var(--page)" stroke-width="1.6"/></svg></button>
+      <button type="button" class="room-code" :aria-label="'复制房间号 '+room.roomId" @click="room.copyRoomId"><span>房间</span><strong>{{ room.roomId }}</strong><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1"/><path d="M15 4H4v11"/></svg></button>
+      <div class="header-actions">
+        <button type="button" class="text-action invite-action" aria-haspopup="dialog" @click="room.open('invite')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M18 7v6m-3-3h6"/></svg><span>邀好友</span></button>
+        <button type="button" class="text-action room-settings-action" aria-haspopup="dialog" @click="room.open('settings')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v6m8 0v6M9 15v6" stroke-width="3"/></svg><span>房间设置</span></button>
+        <SettingsButton compact class="garden-global-settings" />
+        <button v-if="room.canUseSocial" type="button" class="self-avatar" :data-user-id="room.userId" :aria-label="'个人中心：'+(room.authUser?.nickname || room.userId)" @click="room.openAccount"><PlayerAvatar :src="room.ownAvatar" alt="" /><i v-if="room.socialNotificationCount" class="account-notice" aria-label="有新的社交提醒">{{ room.socialNotificationCount }}</i></button>
+        <span v-else class="self-avatar" :data-user-id="room.userId"><PlayerAvatar :src="room.ownAvatar" alt="你的头像" /></span>
+      </div>
+    </header>
+
+    <main>
+      <h1 class="sr-only">等待房间</h1>
+      <div class="scene-meta"><span class="connection"><i aria-hidden="true"></i>等待开局</span><span class="mode-summary">{{ room.mode }}</span></div>
+      <div class="scene">
+        <section class="garden-stage stage" aria-label="房间座位与准备状态">
+          <div class="ambient" aria-hidden="true"><span class="ambient-light"></span><span class="ambient-dots"></span><span class="accent-orbit"></span><span class="accent-leaf"></span></div>
+          <div class="table-assembly" aria-hidden="true">
+            <div class="table-shadow"></div><div class="table-layer layer-back"></div><div class="table-layer layer-edge"></div>
+            <div class="table-surface"><div class="table-grain"></div><div class="table-inset"></div><span class="table-watermark">♠</span><div class="table-light"></div></div>
+            <span class="table-rivet rivet-one"></span><span class="table-rivet rivet-two"></span>
+          </div>
+          <GardenCardPlay :seats="room.seatSlots" :paused="room.cardPlayPaused" />
+          <div class="garden-seats seat-list">
+            <button v-for="slot in room.seatSlots" :key="slot.index" type="button" class="seat" :class="['seat-'+slot.index,slot.player?'occupied':'empty',{'is-ready':room.ready(slot.player),'is-self':slot.player?.isSelf}]" :data-user-id="slot.player?.userId" :data-seat="slot.index" :aria-label="slot.player ? '查看'+(slot.player.nickname || slot.player.userId)+'，'+(room.ready(slot.player)?'已准备':'未准备') : '第 '+slot.seatNo+' 号空位，邀请好友或添加AI'" @click="room.selectSeat(slot)">
+              <span class="seat-index">0{{ slot.seatNo }}</span><span class="seat-suit" aria-hidden="true">{{ ['♠','♥','♣','♦'][slot.index] }}</span>
+              <span class="avatar-frame"><PlayerAvatar v-if="slot.player" :src="room.avatarForPlayer(slot.player,slot.index)" :alt="(slot.player.nickname || slot.player.userId)+'的头像'" draggable="false" /><svg v-else viewBox="0 0 40 40" aria-hidden="true"><path d="M20 8v24M8 20h24"/></svg></span>
+              <span class="seat-name">{{ slot.player ? slot.player.nickname || slot.player.userId : '邀请入席' }}<small v-if="slot.player?.isSelf">你</small></span>
+              <span v-if="slot.player && (slot.player.userId===room.ownerId || slot.player.isBot)" class="seat-role">{{ slot.player.userId===room.ownerId?'房主':'脚本 AI' }}</span>
+              <span v-if="slot.player" class="ready-mark" :class="{stamped:room.ready(slot.player)}"><svg v-if="room.ready(slot.player)" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>{{ room.ready(slot.player)?'已准备':'未准备' }}</span>
+            </button>
+          </div>
+          <span class="stage-spark spark-one" aria-hidden="true"></span><span class="stage-spark spark-two" aria-hidden="true"></span>
+        </section>
+      </div>
+      <footer class="room-footer">
+        <div class="attendance"><strong>{{ room.occupiedCount }}<span>/4</span></strong><div><span>已入席</span><small role="status" aria-live="polite">{{ room.readiness }}</small></div><span class="seat-meter" aria-hidden="true"><i v-for="seatNo in 4" :key="seatNo" :class="{ filled: seatNo<=room.occupiedCount }"></i></span></div>
+        <div class="secondary-actions">
+          <button type="button" class="text-action chat-open" aria-haspopup="dialog" @click="room.open('chat')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4V4Z"/><path d="M8 8h8m-8 4h5"/></svg><span>聊天室</span></button>
+          <button v-if="room.isOwner" type="button" class="text-action ai-add" :disabled="room.occupiedCount>=4 || room.isReconnecting" @click="room.addAi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M12 3v4M1 12h3m16 0h3M8 16h8"/><circle cx="8" cy="11" r=".8"/><circle cx="16" cy="11" r=".8"/></svg><span>添加AI</span></button>
+          <button type="button" class="text-action leave-action" @click="room.open('leave')">离开房间 <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="start-group"><button type="button" class="primary-action" :disabled="room.isReconnecting || (!room.isManager && (room.isSpectator || room.isOwner && !room.canStart))" @click="room.primary"><span>{{ room.primaryLabel }}</span><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 16h22M17 6l10 10-10 10"/></svg></button></div>
+      </footer>
+      <div class="room-bottom"><button v-if="room.spectators.length" type="button" @click="room.open('spectators')">旁观 {{ room.spectators.length }} 人</button><span v-else></span></div>
+    </main>
+  </div>
+
+  <div v-for="bubble in room.speech" :key="bubble.key" v-show="bubble.visible" class="speech avatar-speech" :class="{'message-pop':bubble.animate}" :data-bubble-user="bubble.userId" :style="bubble.style" role="status" :aria-label="room.nameFor(bubble.userId)+'：'+(bubble.emoji?'表情':bubble.text)">
+    <svg class="speech-outline" :viewBox="'0 0 '+bubble.width+' '+bubble.height" aria-hidden="true"><path :d="bubble.path"/></svg>
+    <img v-if="bubble.emoji" class="speech-emoji" :src="'/images/emojis/'+bubble.text" alt="表情" /><span v-else>{{ bubble.text }}</span>
+  </div>
+
+  <dialog data-dialog="settings" aria-labelledby="garden-settings-title" @close="room.onClose" @click="room.dismiss">
+    <button type="button" class="dialog-close" data-close aria-label="关闭房间设置" @click="room.close">×</button><h2 id="garden-settings-title">房间设置</h2>
+    <label class="toggle-row"><span>癞子牌 <small>开发中</small></span><input type="checkbox" :checked="room.roomSettings.enableWildcard" disabled /></label>
+    <label class="toggle-row"><span>锦囊牌</span><input v-model="room.roomSettings.enableScrollCards" type="checkbox" :disabled="!room.isOwner || room.isReconnecting" @change="room.saveSettings" /></label>
+    <label class="toggle-row"><span>武将技能</span><input v-model="room.roomSettings.enableSkills" type="checkbox" :disabled="!room.isOwner || room.isReconnecting" @change="room.saveSettings" /></label>
+    <p v-if="!room.isOwner" class="dialog-note">仅房主可调整本局设置</p>
+  </dialog>
+  <dialog data-dialog="invite" aria-labelledby="garden-invite-title" @close="room.onClose" @click="room.dismiss">
+    <button type="button" class="dialog-close" data-close aria-label="关闭邀请" @click="room.close">×</button><h2 id="garden-invite-title">邀请好友</h2>
+    <button type="button" class="share-number" @click="room.copyRoomId"><span>房间号</span><strong>{{ room.roomId }}</strong><span>复制 ↗</span></button>
+    <div v-if="room.canUseSocial" class="friend-list"><div v-for="friend in room.waitingRoomFriendList" :key="friend.userId" class="friend"><PlayerAvatar :src="friend.avatar" alt="" /><span>{{ friend.nickname || friend.userId }}<small>在线</small></span><button type="button" :disabled="room.occupiedCount>=4 || room.displayPlayers.some(player=>player.userId===friend.userId)" @click="room.inviteFromModal(friend.userId)">{{ room.displayPlayers.some(player=>player.userId===friend.userId)?'已入席':'邀请' }}</button></div><p v-if="!room.waitingRoomFriendList.length" class="dialog-note">暂无在线好友</p></div>
+    <p v-else class="dialog-note">游客可分享房间号邀请朋友</p>
+    <button v-if="room.isOwner" type="button" class="dialog-secondary" :disabled="room.occupiedCount>=4 || room.isReconnecting" @click="room.addAi">添加AI</button>
+  </dialog>
+  <dialog data-dialog="player" aria-labelledby="garden-player-title" @close="room.onClose" @click="room.dismiss">
+    <button type="button" class="dialog-close" data-close aria-label="关闭玩家资料" @click="room.close">×</button>
+    <PlayerAvatar v-if="room.selectedPlayer" class="player-profile" :src="room.avatarForPlayer(room.selectedPlayer,room.displayPlayers.indexOf(room.selectedPlayer))" alt="" />
+    <h2 id="garden-player-title">{{ room.nameFor(room.selectedUserId) }}</h2><p v-if="room.selectedPlayer">{{ room.ready(room.selectedPlayer)?'已准备':'未准备' }}</p>
+    <p v-else-if="!room.selectedSpectator">该玩家已离开房间</p>
+    <button v-if="room.selectedPlayer && room.canQuickAddFriend(room.selectedPlayer)" type="button" class="dialog-secondary" @click="room.quickAddFriend(room.selectedPlayer)">加好友</button>
+    <button v-if="room.canManageSelected && (room.selectedPlayer || room.selectedSpectator)" type="button" class="dialog-secondary" @click="room.kick">移出房间</button>
+  </dialog>
+  <dialog data-dialog="chat" aria-labelledby="garden-chat-title" @close="room.onClose" @click="room.dismiss">
+    <button type="button" class="dialog-close" data-close aria-label="关闭聊天室" @click="room.close">×</button><h2 id="garden-chat-title">聊天室</h2>
+    <div v-if="room.roomChatMessages.length" class="room-chat-history"><p v-for="(message,index) in room.roomChatMessages" :key="index"><small>{{ room.nameFor(message.userId) }}</small><span>{{ message.text }}</span></p></div>
+    <div class="quick-chat"><button v-for="text in ['准备了','稍等','开始吧']" :key="text" type="button" :disabled="room.isReconnecting" @click="room.sendChat(text)">{{ text }}</button></div>
+    <form @submit.prevent="room.sendChat()"><label class="field">消息<input v-model="room.draft" maxlength="24" placeholder="最多 24 个字" required /></label><button type="submit" class="dialog-primary" :disabled="!room.draft.trim() || room.isReconnecting">发送</button></form>
+  </dialog>
+  <dialog data-dialog="spectators" aria-labelledby="garden-spectators-title" @close="room.onClose" @click="room.dismiss">
+    <button type="button" class="dialog-close" data-close aria-label="关闭旁观者列表" @click="room.close">×</button><h2 id="garden-spectators-title">旁观者</h2>
+    <div v-for="id in room.spectators" :key="id" class="friend"><span>{{ id==='room_manager'?'系统巡查员':room.nameFor(id) }}{{ id===room.userId?' · 你':'' }}</span><button v-if="(room.isOwner || room.isManager) && id!==room.userId && id!=='room_manager'" type="button" @click="room.kickPlayer(id)">移出</button></div>
+  </dialog>
+  <dialog data-dialog="leave" aria-labelledby="garden-leave-title" @close="room.onClose" @click="room.dismiss"><button type="button" class="dialog-close" data-close aria-label="关闭离开提示" @click="room.close">×</button><h2 id="garden-leave-title">离开房间？</h2><button type="button" class="dialog-primary" @click="room.leave">离开</button><button type="button" class="dialog-secondary" @click="room.close">取消</button></dialog>
+  <div v-if="room.copyFeedback" class="toast visible" role="status">{{ room.copyFeedback }}</div>
+</section>

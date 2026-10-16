@@ -9,31 +9,43 @@ const readLevels = () => {
   try {
     const saved = JSON.parse(window.localStorage.getItem("poker:audio-levels") || "{}");
     return Object.fromEntries(Object.entries(DEFAULT_LEVELS).map(([key, fallback]) =>
-      [key, typeof saved[key] === "number" ? Math.max(0, Math.min(1, saved[key])) : fallback],
+      [key, Number.isFinite(saved?.[key]) ? Math.max(0, Math.min(1, saved[key])) : fallback],
     ));
   } catch { return { ...DEFAULT_LEVELS }; }
 };
 export const audioLevels = reactive(readLevels());
+try {
+  if (window.localStorage.getItem('poker:audio-muted') === 'true') isSoundOn.value = false;
+} catch { /* The current session still works without device storage. */ }
 const activeSounds = new Set();
+const activeEffects = new Map();
 let voiceAudio = null;
 let voiceQueue = [];
 let voiceDelay = null;
 let lastAudioName = "";
 let lastAudioTime = 0;
-const musicDuckingSources = new Set();
+const musicDuckingSources = new Map();
 const updateMusicVolume = () => {
-  if (currentBGM) currentBGM.volume = audioLevels.music * Math.min(voiceAudio ? 0.38 : 1, musicDuckingSources.size ? 0.45 : 1);
+  if (currentBGM) currentBGM.volume = audioLevels.music * Math.min(voiceAudio ? 0.38 : 1, ...musicDuckingSources.values());
 };
-export const setMusicDucking = (source, enabled) => {
-  if (enabled) musicDuckingSources.add(source); else musicDuckingSources.delete(source);
+export const setMusicDucking = (source, enabled, level = 0.45) => {
+  if (enabled) musicDuckingSources.set(source, level); else musicDuckingSources.delete(source);
   updateMusicVolume();
 };
 watch(audioLevels, () => {
   try { window.localStorage.setItem("poker:audio-levels", JSON.stringify(audioLevels)); } catch { /* Storage may be disabled. */ }
   setBattleSoundVolume(audioLevels.effects);
   updateMusicVolume();
-  if (voiceAudio) voiceAudio.volume = audioLevels.voice;
-}, { deep: true });
+  if (countdownAudio) countdownAudio.volume = audioLevels.effects * 0.8;
+  for (const [audio, scale] of activeEffects) audio.volume = audioLevels.effects * scale;
+  if (voiceAudio) {
+    voiceAudio.volume = audioLevels.voice;
+    if (audioLevels.voice === 0) {
+      voiceAudio.pause();
+      voiceAudio.onended?.();
+    }
+  }
+}, { deep: true, flush: 'sync' });
 setBattleSoundVolume(audioLevels.effects);
 
 export const stopGameAudio = ({ preservePresentations = false } = {}) => {
@@ -42,6 +54,7 @@ export const stopGameAudio = ({ preservePresentations = false } = {}) => {
   voiceQueue = preservePresentations ? voiceQueue.filter((entry) => entry.onStart) : [];
   for (const audio of activeSounds) { audio.pause(); audio.currentTime = 0; }
   activeSounds.clear();
+  activeEffects.clear();
   voiceAudio = null;
   stopCountdownAudio();
   stopBattleSounds();
@@ -117,6 +130,7 @@ const resumeBGM = () => {
 
 // 监听全局声音开关：用户随时可以暂停/恢复 BGM。
 watch(isSoundOn, (newVal) => {
+  try { window.localStorage.setItem('poker:audio-muted', String(!newVal)); } catch { /* Storage may be disabled. */ }
   if (newVal) resumeBGM();
   else {
     bgmPlayAttempt++;
@@ -162,7 +176,7 @@ const playNextVoice = () => {
     return;
   }
   next.onStart?.();
-  if (!isSoundOn.value) { playNextVoice(); return; }
+  if (!isSoundOn.value || audioLevels.voice === 0) { playNextVoice(); return; }
   const audio = new Audio(`/audios/${next.filename}.mp3`);
   voiceAudio = audio;
   activeSounds.add(audio);
@@ -210,9 +224,11 @@ export const playAudio = (filename) => {
     playNextVoice();
   } else {
     const audio = new Audio(`/audios/${filename}.mp3`);
-    audio.volume = audioLevels.effects * (filename === "skill_tieqi_horse" ? 0.6 : 0.7);
+    const scale = filename === "skill_tieqi_horse" ? 0.6 : 0.7;
+    audio.volume = audioLevels.effects * scale;
+    activeEffects.set(audio, scale);
     activeSounds.add(audio);
-    const finish = () => activeSounds.delete(audio);
+    const finish = () => { activeSounds.delete(audio); activeEffects.delete(audio); };
     audio.onended = finish;
     audio.onerror = finish;
     audio.play().catch(finish);

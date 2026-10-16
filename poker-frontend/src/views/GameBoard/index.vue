@@ -1,9 +1,15 @@
 <template src="./GameBoard.html"></template>
 
 <script setup>
+import SettingsButton from '@/components/SettingsButton.vue';
 import PlayerAvatar from '@/components/PlayerAvatar.vue';
 import BattleEffectsLayer from "./BattleEffectsLayer.vue";
 import BattlePhaseNotice from "./BattlePhaseNotice.vue";
+import PopBattleTable from './PopBattleTable.vue';
+import PopCardFace from './PopCardFace.vue';
+import { uiTheme } from '@/store/uiSettings.js';
+import { roomId } from '@/store/gameState.js';
+import { measurePopBattle } from './popBattleLayout.js';
 // 【核心修复 1】：移除了 onMounted 中的 playBGM("Normal")。
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { handSpacing } from "@/layout/hand.js";
@@ -11,6 +17,7 @@ import * as liveBindings from "./GameBoard.js";
 import { cardLabel as boardCardLabel } from "@/tutorial/tutorialMatch.js";
 const props = defineProps({ session: { type: Object, default: null } });
 const tutorialMode = !!props.session;
+const isPopBattle = computed(() => uiTheme.value === 'pop' && !tutorialMode);
 const battleSession = props.session?.battleSession || null;
 const tutorialPhase = computed(() => props.session?.phase.value || "");
 const canBoardAction = (action) => props.session?.policy.canAction(action) ?? true;
@@ -100,6 +107,72 @@ const { showExitConfirm, cancelExitGame, confirmExitGame } = liveBindings;
 const exitDialog = ref(null);
 const boardElement = ref(null);
 const handElement = ref(null);
+const popEmojiDialog = ref(null);
+const popSkillArmed = ref(false);
+const skillNames = { ZHIHENG:'制衡', LUANJIAN:'乱箭', GUANXING:'观星', GUSHOU:'固守', KUROU:'苦肉', TIEQI:'铁骑', GUIXIN:'归心' };
+const popSkillName = computed(() => skillNames[mySkill.value] || '制衡');
+const popSkillRequired = computed(() => ({ZHIHENG:1,LUANJIAN:2,KUROU:2}[mySkill.value] || 0));
+const popSkillUnavailable = computed(() => !canBoardAction('replace') || jdsrTarget.value === userId.value ||
+  (mySkill.value === 'GUSHOU' && !tableCards.value.length && !onlyHasScrolls.value) ||
+  (mySkill.value === 'KUROU' && kurouUsesThisTurn.value >= 2) || (mySkill.value === 'GUIXIN' && guixinDisabled.value));
+const popSelectionText = computed(() => popSkillArmed.value ? `选择 ${popSkillRequired.value} 张牌发动${popSkillName.value}` : selectedCards.value.length ? `已选 ${selectedCards.value.length} 张` : '');
+const popPlayerName = id => id === userId.value ? '你' : otherPlayers.value.find(player => player.userId === id)?.nickname || id;
+const popCardLabel = card => card.suit === 'SCROLL' ? boardCardLabel(card) : card.suit === 'JOKER' ? card.rank : ({'♠':'黑桃','♥':'红桃','♣':'梅花','♦':'方块'}[card.suit] || card.suit) + card.rank;
+const popUseSkill = () => {
+  if (popSkillUnavailable.value) return;
+  if (popSkillRequired.value && selectedCards.value.length !== popSkillRequired.value) {
+    popSkillArmed.value = !popSkillArmed.value;
+    selectedCards.value.forEach(card => { card.selected = false; });
+    return;
+  }
+  popSkillArmed.value = false;
+  replaceCard();
+};
+const closePopEmoji = () => { showEmojiPanel.value = false; };
+watch(showEmojiPanel, async (open) => {
+  await nextTick();
+  if (!isPopBattle.value || !popEmojiDialog.value) return;
+  if (open) popEmojiDialog.value.showModal();
+  else popEmojiDialog.value.close();
+});
+const popKeydown = event => {
+  if (!isPopBattle.value || event.target.closest('dialog')) return;
+  const modal = event.target.closest('.game-over-modal,.skill-action-overlay');
+  if (modal) {
+    if (event.key === 'Tab') {
+      const controls = [...modal.querySelectorAll('button:not(:disabled),[tabindex="0"]')];
+      if (!controls.length) { event.preventDefault();return; }
+      if ((event.shiftKey && document.activeElement === controls[0]) || (!event.shiftKey && document.activeElement === controls.at(-1))) {
+        event.preventDefault();(event.shiftKey ? controls.at(-1) : controls[0])?.focus();
+      }
+    }
+    return;
+  }
+  if (event.key === 'Escape') { popSkillArmed.value = false;selectedCards.value.forEach(card => { card.selected = false; }); }
+  if (event.ctrlKey && event.key === 'Enter') { event.preventDefault();boardElement.value.querySelector('[data-tutorial-target="play"]:not(:disabled)')?.click(); }
+  if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key) || !event.target.closest('.gb-hand > .card')) return;
+  event.preventDefault();
+  const cards = [...handElement.value.querySelectorAll(':scope > .card')];
+  const index = cards.indexOf(document.activeElement);
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? cards.length-1 : (index+(event.key==='ArrowRight'?1:-1)+cards.length)%cards.length;
+  cards[next]?.focus({preventScroll:true});
+  cards[next]?.scrollIntoView({block:'nearest',inline:'nearest'});
+};
+watch(() => [currentTurn.value,currentAoeType.value,winner.value,uiTheme.value], () => {
+  if (isPopBattle.value) { popSkillArmed.value = false;closePopEmoji(); }
+  nextTick(scheduleLayout);
+});
+let popPreviousFocus;
+watch(() => !!(showSkillSelection.value || showGuanxingModal.value || showWgfdModal.value || winner.value), async (open) => {
+  if (!isPopBattle.value) return;
+  if (open) popPreviousFocus = document.activeElement;
+  await nextTick();
+  if (open) {
+    const modal = boardElement.value?.querySelector('.game-over-modal,.skill-action-overlay');
+    (modal?.querySelector('button:not(:disabled),[tabindex="0"]') || modal)?.focus();
+  }
+  else if (popPreviousFocus?.isConnected) popPreviousFocus.focus({preventScroll:true});
+});
 let layoutObserver;
 let layoutFrame = null;
 const measureLayout = () => {
@@ -111,6 +184,11 @@ const measureLayout = () => {
   board.classList.toggle('gb-landscape', board.clientWidth > height && height <= 540);
   board.classList.toggle('gb-compact', height <= 360);
   board.style.setProperty('--board-height', `${height}px`);
+  if (isPopBattle.value) {
+    measurePopBattle(board, hand, sortedHandCards.value.length);
+    board.dispatchEvent(new Event('game-board-layout', { bubbles:true }));
+    return;
+  }
   for (const strip of board.querySelectorAll('.card-backs')) {
     const card = strip.firstElementChild;
     if (!card) continue;
@@ -192,6 +270,7 @@ onUnmounted(() => {
 // ====== 【核心修复 2：防脱发防白屏机制】 ======
 const _exposeToHtml = {
   boardElement, handElement,
+  isPopBattle, roomId, PopBattleTable, PopCardFace, popEmojiDialog, closePopEmoji, popSkillArmed, popSkillName, popSkillUnavailable, popSelectionText, popPlayerName, popCardLabel, popUseSkill, popKeydown,
   exitDialog, showExitConfirm, cancelExitGame, confirmExitGame, trapExitFocus,
   tutorialMode, tutorialPhase, battleSession, canBoardAction, cardIsSelectable, cardIsTarget, actionIsTarget, boardCardId, boardCardLabel,
   phaseNotice,
@@ -274,3 +353,4 @@ const _exposeToHtml = {
 
 <style scoped src="./GameBoard.css"></style>
 <style scoped src="./GameBoard.layout.css"></style>
+<style scoped src="./GameBoardPop.css"></style>

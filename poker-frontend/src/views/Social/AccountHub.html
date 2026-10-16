@@ -1,4 +1,4 @@
-<div class="hub-root">
+<div v-if="uiTheme !== 'pop'" class="hub-root">
   <div v-if="authUser" class="account-hub">
     <button
       type="button"
@@ -592,4 +592,144 @@
       </button>
     </div>
   </div>
+</div>
+
+<div v-else class="peach-hub" aria-label="简约波普个人中心">
+  <PopAccountButton v-if="authUser && (isConnected || isReconnecting)" class="pop-floating-account" floating />
+
+  <dialog ref="popProfileDialog" class="account-dialog" aria-labelledby="pop-account-title"
+    @cancel.prevent="closeProfilePanel" @keydown.esc.stop>
+    <div class="account-layout">
+      <aside class="identity-panel">
+        <div class="avatar-portrait">
+          <PlayerAvatar :src="profile.avatar || accountAvatar" :alt="(profile.nickname || profile.userId || '')+' 的头像'" />
+          <span class="level-stamp">LV.<b>{{ profile.level || 1 }}</b></span>
+        </div>
+        <h2 class="player-name" :title="profile.nickname || profile.userId">{{ profile.nickname || profile.userId }}</h2>
+        <p class="player-id">账号 ID <span :title="profile.userId">{{ profile.userId || authUser?.username }}</span></p>
+        <div class="experience-label"><span>{{ profile.maxLevel ? '已满级' : '经验' }}</span><span>{{ profile.experience || 0 }}<template v-if="!profile.maxLevel"> / {{ profile.nextLevelExp || 0 }}</template></span></div>
+        <div class="experience-track" role="progressbar" aria-label="当前等级经验" :aria-valuenow="profile.experience || 0" aria-valuemin="0" :aria-valuemax="profile.nextLevelExp || profile.experience || 1"><span :style="levelProgressWidth"></span></div>
+        <nav v-if="isViewingSelf" class="account-tabs" aria-label="个人中心分区">
+          <button v-for="tab in popAccountTabs" :key="tab.id" type="button" :class="{ active: socialActiveTab === tab.id }"
+            :aria-current="socialActiveTab === tab.id ? 'page' : undefined" @click="socialActiveTab = tab.id">
+            {{ tab.label }}<i v-if="tab.id === 'friends' && socialFriendNotificationCount > 0">{{ socialFriendNotificationCount }}</i>
+          </button>
+        </nav>
+        <div v-if="isViewingSelf" class="identity-bottom"><button type="button" class="text-button" @click="logout">退出登录 <span aria-hidden="true">↗</span></button></div>
+      </aside>
+      <section class="account-content">
+        <header class="account-heading"><h2 id="pop-account-title">{{ popAccountTitle }}</h2>
+          <button type="button" class="icon-button" aria-label="关闭个人中心" @click="closeProfilePanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+        </header>
+        <Transition name="account-section" mode="out-in">
+        <div :key="socialActiveTab" class="account-body">
+          <aside v-if="socialInvitePrompt" class="invite-strip" role="alertdialog" aria-labelledby="pop-panel-invite-title">
+            <strong id="pop-panel-invite-title">房间 {{ socialInvitePrompt.roomId }}</strong>
+            <p>{{ socialInvitePrompt.fromUserId }} 邀请你加入{{ socialInvitePrompt.privateRoom ? '私密' : '公开' }}房间</p>
+            <p>接受将退出当前页面；对局中会按中途退出处理。</p>
+            <button type="button" class="tiny-button primary" @click="respondRoomInvite(socialInvitePrompt.id,true)">加入</button>
+            <button type="button" class="tiny-button" @click="respondRoomInvite(socialInvitePrompt.id,false)">拒绝</button>
+          </aside>
+          <p v-if="socialProfileLoading" class="friend-empty" role="status">加载中…</p>
+          <template v-else-if="socialActiveTab === 'profile'">
+            <button v-if="!isViewingSelf" type="button" class="text-button profile-return" @click="openSelfProfile">← 我的战绩</button>
+            <div class="battle-summary">
+              <div class="win-rate"><small>近 50 场胜率</small><strong :class="{ 'long-rate': String(profile.recentWinRate || 0).length > 3 }">{{ profile.recentWinRate || 0 }}<span>%</span></strong></div>
+              <div class="win-loss-grid">
+                <div class="open-stat total"><small>总局数</small><strong>{{ profile.totalGames || 0 }}</strong></div>
+                <div class="open-stat"><small>胜</small><strong>{{ profile.wins || 0 }}</strong></div>
+                <div class="open-stat"><small>负</small><strong class="loss-number">{{ profile.losses || 0 }}</strong></div>
+              </div>
+            </div>
+            <details v-if="profile.recentWinRateTip" class="stats-explanation"><summary>统计口径</summary><p>{{ profile.recentWinRateTip }}</p></details>
+            <div class="records-heading"><h3>最近对局</h3></div>
+            <p v-if="!records.length" class="friend-empty">暂无真人对局战绩</p>
+            <article v-for="(record,index) in records" :key="record.roomId+'-'+index" class="record-row">
+              <span class="record-result" :class="{ lose: !record.won }">{{ record.won ? '胜' : '负' }}</span>
+              <div><div class="record-top"><strong>{{ record.modeLabel }}</strong><time>{{ formatTime(record.startedAt) }}</time></div>
+                <div class="record-meta"><span>房间 {{ record.roomId }}</span><span>{{ record.playerCount }} 人</span>
+                  <details class="record-detail"><summary>详情</summary><p>赢家 {{ record.winnerUserId }}<br>玩家 {{ (record.participantIds || []).join('、') }}</p></details>
+                </div>
+              </div>
+            </article>
+          </template>
+
+          <template v-else-if="socialActiveTab === 'account' && isViewingSelf">
+            <div class="login-info"><div><small>网页登录名</small><strong>{{ profile.loginName || authUser?.loginName || '尚未开通' }}</strong></div>
+              <div><small>微信</small><strong>{{ authUser?.wechatBound ? '已绑定' : '未绑定' }}</strong></div>
+              <div class="registered-info"><small>注册时间</small><strong>{{ formatTime(profile.registeredAt) }}</strong></div>
+            </div>
+            <details class="account-help"><summary>登录方式说明</summary><p>微信绑定、开通网页登录与微信资料同步，请在微信版的“登录方式与微信资料”中设置。</p></details>
+            <details class="avatar-picker"><summary>更换头像</summary>
+              <form aria-label="更换头像" :aria-busy="avatarSaving" @submit.prevent="saveSelectedAvatar">
+                <p v-if="avatarLoading" class="friend-empty" role="status">加载中…</p>
+                <div v-else class="avatar-grid">
+                  <label v-for="avatar in avatarOptions" :key="avatar.id" class="avatar-option">
+                    <input v-model="selectedAvatarId" type="radio" name="pop-avatar" :value="avatar.id" :disabled="avatarSaving" />
+                    <img :src="avatar.url" alt="" loading="lazy" /><span>{{ avatar.name }}</span>
+                  </label>
+                </div>
+                <div class="avatar-save-row"><span v-if="avatarPreview" class="sr-only">已选：{{ avatarPreview.name }}</span>
+                  <button type="submit" class="ink-button" :disabled="avatarLoading || avatarSaving || !avatarOptions.length || !selectedAvatarId || selectedAvatarId === profile.avatarId">{{ avatarSaving ? '保存中…' : '保存头像' }}</button>
+                </div>
+                <p v-if="avatarMessage" class="friend-empty" role="status">{{ avatarMessage }}</p>
+                <p v-if="avatarError" class="form-error" role="alert">{{ avatarError }} <button v-if="!avatarOptions.length" type="button" class="text-button" @click="loadAvatarOptions">重试</button></p>
+              </form>
+            </details>
+            <div class="mobile-account-footer"><button type="button" class="text-button" @click="logout">退出登录</button></div>
+          </template>
+
+          <div v-else class="friends-layout" :class="{ 'chat-open': mobileFriendView === 'chat' }">
+            <div class="friend-sidebar" aria-label="好友列表与搜索">
+              <form class="friend-search" @submit.prevent="searchSocialUsers"><input v-model="socialSearchKeyword" placeholder="账号 ID" aria-label="搜索账号 ID" /><button type="submit">搜索</button></form>
+              <div v-for="result in socialSearchResults" :key="result.userId" class="search-result">
+                <strong>{{ result.nickname || result.userId }}</strong>
+                <button v-if="!result.alreadyFriend && !result.pendingOutgoing && !result.pendingIncoming" type="button" class="tiny-button primary" @click="sendFriendRequest(result.userId)">添加好友</button>
+                <span v-else>{{ result.alreadyFriend ? '已是好友' : result.pendingOutgoing ? '已申请' : '待处理' }}</span>
+              </div>
+              <p v-if="!socialSearchResults.length && socialSearchEmptyMessage" class="friend-empty">{{ socialSearchEmptyMessage }}</p>
+              <div class="friend-section-title">好友申请 <span>{{ pendingRequests.length }}</span></div>
+              <p v-if="!pendingRequests.length" class="friend-empty">暂无新的好友申请</p>
+              <div v-for="request in pendingRequests" :key="request.id" class="request-row">
+                <p><strong>{{ request.fromUserId }}</strong></p>
+                <button type="button" class="tiny-button primary" @click="respondFriendRequest(request.id,true)">接受</button>
+                <button type="button" class="tiny-button" @click="respondFriendRequest(request.id,false)">拒绝</button>
+              </div>
+              <div class="friend-section-title">我的好友 <span>{{ friends.length }} 位</span></div>
+              <p v-if="!friends.length" class="friend-empty">暂无好友</p>
+              <button v-for="friend in friends" :key="friend.userId" type="button" class="friend-item"
+                :class="{ active: socialChatFriendId === friend.userId }" @click="openFriendConversation(friend.userId)">
+                <PlayerAvatar :src="friend.avatar" alt="" /><span><strong :title="friend.userId">{{ friend.nickname || friend.userId }}</strong><small>{{ friend.online ? '在线' : '离线' }}</small></span>
+                <span v-if="friend.unreadCount > 0" class="friend-unread">{{ friend.unreadCount }}</span>
+              </button>
+            </div>
+            <div class="chat-panel" aria-label="好友私聊">
+              <header class="chat-heading">
+                <button type="button" class="text-button chat-back" @click="backToFriendList">← 好友</button>
+                <h3 :title="socialChatFriendId">{{ activeChatFriend?.nickname || socialChatFriendId || '私聊' }}</h3>
+                <template v-if="socialChatFriendId"><span class="online-label">{{ activeChatFriend?.online ? '在线' : '离线' }}</span>
+                  <button type="button" class="text-button" @click="openFriendProfile(socialChatFriendId)">资料</button>
+                  <button type="button" class="text-button" @click="confirmRemoveFriend(socialChatFriendId)">删除</button>
+                </template>
+              </header>
+              <div ref="popChatMessages" class="chat-messages">
+                <p v-if="!socialChatFriendId" class="friend-empty">选择一位好友</p>
+                <div v-for="(message,index) in socialChatMessages" v-else :key="message.createdAt+'-'+index" class="chat-bubble" :class="{ mine: message.mine }">{{ message.content }}<small>{{ formatTime(message.createdAt) }}</small></div>
+              </div>
+              <form v-if="socialChatFriendId" class="chat-compose" @submit.prevent="sendSocialMessage"><textarea v-model="socialChatDraft" maxlength="500" placeholder="消息" aria-label="私聊内容"></textarea><button type="submit" class="ink-button">发送</button></form>
+            </div>
+          </div>
+        </div>
+        </Transition>
+      </section>
+    </div>
+  </dialog>
+
+  <aside v-if="socialInvitePrompt && !socialProfileVisible" class="pop-invite-alert invite-strip" role="alertdialog" aria-labelledby="pop-invite-title">
+    <strong id="pop-invite-title">房间 {{ socialInvitePrompt.roomId }}</strong>
+    <p>{{ socialInvitePrompt.fromUserId }} 邀请你加入{{ socialInvitePrompt.privateRoom ? '私密' : '公开' }}房间</p>
+    <p>接受将退出当前页面；对局中会按中途退出处理。</p>
+    <button type="button" class="tiny-button primary" @click="respondRoomInvite(socialInvitePrompt.id,true)">加入</button>
+    <button type="button" class="tiny-button" @click="respondRoomInvite(socialInvitePrompt.id,false)">拒绝</button>
+  </aside>
 </div>

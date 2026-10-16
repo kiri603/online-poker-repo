@@ -1,4 +1,5 @@
-<div class="rules-shell">
+<RulesDetailPop v-if="uiTheme === 'pop'" @close="goBack" />
+<div v-else class="rules-shell">
   <div class="rules-bg" aria-hidden="true"></div>
   <div class="rules-vignette" aria-hidden="true"></div>
 

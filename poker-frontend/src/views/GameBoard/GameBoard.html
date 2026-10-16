@@ -1,5 +1,9 @@
-<div ref="boardElement" class="game-board gb-shell" :class="{ 'gb-tutorial': tutorialMode, 'gb-observing': isSpectator || myStatus === 'LOST' }" :data-tutorial-phase="tutorialPhase">
+<div ref="boardElement" class="game-board gb-shell" :class="{ 'gb-pop': isPopBattle, 'pop-hand-empty': isPopBattle && !handCards.length, 'gb-tutorial': tutorialMode, 'gb-observing': isSpectator || myStatus === 'LOST' }" :data-tutorial-phase="tutorialPhase" @keydown="popKeydown">
   <BattleEffectsLayer :session="battleSession" />
+  <header v-if="isPopBattle" class="pop-board-header">
+    <span>房间 {{ roomId }}</span>
+    <div><SettingsButton compact /><button type="button" class="exit-btn pop-exit" @click="exitGame">退出房间</button></div>
+  </header>
   <div class="gb-scene-bg" aria-hidden="true"></div>
   <div class="gb-vignette" aria-hidden="true"></div>
   <div class="gb-petals" aria-hidden="true">
@@ -22,8 +26,9 @@
   </div>
 
   <div class="gb-arena">
+  <PopBattleTable v-if="isPopBattle" />
   <div class="gb-arena-heading">
-  <button v-if="!tutorialMode" type="button" @click="exitGame" class="exit-btn gb-btn--exit gb-board-exit">退出房间</button>
+  <button v-if="!tutorialMode && !isPopBattle" type="button" @click="exitGame" class="exit-btn gb-btn--exit gb-board-exit">退出房间</button>
   <header
     class="gb-top-seats other-players-container"
     v-if="otherPlayers.length > 0"
@@ -58,6 +63,7 @@
 
       <div class="gb-seat-name player-name">
         <span class="gb-seat-name-text" :title="player.nickname || player.userId">{{ player.nickname || player.userId }}</span>
+        <span v-if="isPopBattle && player.skill" class="pop-seat-skill">{{ ({ZHIHENG:'制衡',LUANJIAN:'乱箭',GUANXING:'观星',GUSHOU:'固守',KUROU:'苦肉',TIEQI:'铁骑',GUIXIN:'归心'})[player.skill] || player.skill }}</span>
         <span
           v-if="currentTurn === player.userId && !currentAoeType && player.status !== 'WON' && player.status !== 'LOST'"
           class="turn-badge"
@@ -112,7 +118,7 @@
         <img :src="`/images/emojis/${activeEmojis[player.userId]}`" />
       </div>
 
-      <div class="card-backs">
+      <div v-if="!isPopBattle" class="card-backs">
         <img
           v-for="n in player.cardCount"
           :key="n"
@@ -121,7 +127,8 @@
         />
       </div>
       <div class="card-count-text gb-seat-count-chip">
-        剩余 {{ player.cardCount }} 张
+        <template v-if="isPopBattle"><svg viewBox="0 0 20 24" aria-hidden="true"><rect x="4" y="4" width="13" height="18" rx="2"/><path d="M2 17V2h11"/></svg><strong>{{ player.cardCount }}</strong><span class="pop-sr">张</span></template>
+        <template v-else>剩余 {{ player.cardCount }} 张</template>
       </div>
     </div>
   </header>
@@ -185,7 +192,7 @@
           </div>
 
           <div v-else-if="tableCards.length > 0" class="played-cards" data-tutorial-target="table">
-            <p class="table-hint gb-played-owner"><span>上一手</span>{{ lastPlayPlayer }}</p>
+            <p class="table-hint gb-played-owner"><span v-if="!isPopBattle">上一手</span>{{ isPopBattle ? popPlayerName(lastPlayPlayer) : lastPlayPlayer }}</p>
             <div
               class="card-display-row"
               :class="{ 'stacked': sortedTableCards.length > 6 }"
@@ -196,12 +203,13 @@
                 class="card mini"
                 :style="{ zIndex: index }"
               >
-                <img
+                <PopCardFace v-if="isPopBattle" :card="card" :image="getCardImageUrl(card)" />
+                <img v-else
                   :src="getCardImageUrl(card)"
                   :alt="card.suit + card.rank"
                   @error="handleImageError"
                 />
-                <span class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
+                <span v-if="!isPopBattle" class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
               </div>
             </div>
           </div>
@@ -211,15 +219,26 @@
       </div>
     </div>
   </section>
-
+  <div v-if="isPopBattle && activeEmojis[userId]" class="emoji-bubble pop-self-reaction"><img :src="'/images/emojis/'+activeEmojis[userId]" alt="我的表情" /></div>
   </div>
   <div class="gb-action-region">
+  <transition v-if="isPopBattle" name="float-text">
+    <div
+      v-if="activeActionTexts[userId]"
+      :key="activeActionTexts[userId].id"
+      class="floating-action-text my-float-text"
+      :class="activeActionTexts[userId].type"
+    >
+      {{ activeActionTexts[userId].text }}
+    </div>
+  </transition>
   <div
     v-if="isSpectator || myStatus === 'LOST'"
     class="spectator-hint gb-spectator-hint"
   >
     你正在旁观当前对局...
   </div>
+  <div v-else-if="isPopBattle && myStatus === 'WON'" class="wait-text">你已出完手牌，等待本局结束</div>
 
   <div class="action-bar gb-action-bar" :class="{ 'has-phase-notice': phaseNotice }" v-else-if="handCards.length > 0">
     <template v-if="currentAoeType === 'GUIXIN_DECISION'">
@@ -432,6 +451,7 @@
         <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 3v3a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3M7 21v-3a5 5 0 0 1 5-5 5 5 0 0 1 5 5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> 正在等待 {{ currentTurn }} 行动...
       </div>
       <template v-else>
+        <span v-if="isPopBattle" class="pop-turn-label">你的回合</span>
         <div class="countdown-timer" :class="{ hurry: !tutorialMode && countdown <= 5 }" :aria-label="tutorialMode ? '教学时间无限制' : undefined">
           <svg class="gb-icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle
@@ -457,18 +477,19 @@
               stroke-linecap="round"
             />
           </svg>
-          {{ tutorialMode ? '∞' : countdown + 's' }}
+          <template v-if="isPopBattle"><strong>{{ countdown }}</strong><small>秒</small></template><template v-else>{{ tutorialMode ? '∞' : countdown + 's' }}</template>
         </div>
         <button
           v-if="mySkill !== 'GUANXING' && mySkill !== 'TIEQI' && !(mySkill === 'KUROU' && jdsrTarget === userId)"
-          @click="replaceCard"
+          @click="isPopBattle ? popUseSkill() : replaceCard()"
           class="gb-btn"
           data-tutorial-target="replace"
           :aria-label="tutorialMode ? '制衡' : undefined"
           :data-tutorial-highlight="actionIsTarget('replace') || undefined"
-          :class="mySkill === 'KUROU' ? 'kurou-btn gb-btn--kurou' : mySkill === 'GUIXIN' ? 'guixin-btn gb-btn--guixin' : 'pass-btn gb-btn--pass'"
+          :class="[mySkill === 'KUROU' ? 'kurou-btn gb-btn--kurou' : mySkill === 'GUIXIN' ? 'guixin-btn gb-btn--guixin' : 'pass-btn gb-btn--pass', { 'pop-skill-action': isPopBattle, 'is-armed': isPopBattle && popSkillArmed }]"
+          :aria-pressed="isPopBattle ? popSkillArmed : undefined"
           :disabled="
-            !canBoardAction('replace') ? true : jdsrTarget === userId ? true :
+            isPopBattle ? popSkillUnavailable : !canBoardAction('replace') ? true : jdsrTarget === userId ? true :
             mySkill === 'ZHIHENG' ? selectedCards.length !== 1 : 
             mySkill === 'LUANJIAN' ? selectedCards.length !== 2 :
             mySkill === 'GUSHOU' ? (tableCards.length === 0 && !onlyHasScrolls) : 
@@ -477,24 +498,26 @@
             false
           "
         >
-          {{
+          <template v-if="isPopBattle"><span class="pop-skill-seal" aria-hidden="true">技</span><span class="pop-skill-copy"><small>武将技能</small><strong>{{ popSkillName }}{{ mySkill === 'KUROU' && kurouAwakened ? '·觉醒' : '' }}</strong></span><small v-if="mySkill === 'KUROU'">{{ kurouUsesThisTurn }}/2</small></template>
+          <template v-else>{{
             mySkill === 'LUANJIAN' ? '乱箭' :
             mySkill === 'GUSHOU' ? '固守' :
             mySkill === 'KUROU' ? ((kurouAwakened ? '苦肉·觉醒 ' : '苦肉 ') + kurouUsesThisTurn + '/2') :
             mySkill === 'GUIXIN' ? (guixinDisabled ? '归心禁用' : '归心') :
             '制衡'
-          }}
+          }}</template>
         </button>
         <button
           @click="passTurn"
           class="pass-btn gb-btn gb-btn--pass"
           data-tutorial-target="pass"
           :data-tutorial-highlight="actionIsTarget('pass') || undefined"
-          :style="mySkill === 'GUANXING' ? 'background: linear-gradient(180deg,#8e44ad,#6f2c91); border-color: rgba(218,133,245,0.75); box-shadow: 0 0 10px rgba(155,89,182,0.5);' : ''"
+          :class="{ 'pop-skill-action': isPopBattle && mySkill === 'GUANXING' }"
+          :style="mySkill === 'GUANXING' && !isPopBattle ? 'background: linear-gradient(180deg,#8e44ad,#6f2c91); border-color: rgba(218,133,245,0.75); box-shadow: 0 0 10px rgba(155,89,182,0.5);' : ''"
           :disabled="!canBoardAction('pass') || (tableCards.length === 0 && !onlyHasScrolls)"
         >
-          {{ (tableCards.length === 0 && !onlyHasScrolls) ? "必须出牌" :
-          (mySkill === 'GUANXING' ? "观星" : "要不起") }}
+          <template v-if="isPopBattle && mySkill === 'GUANXING'"><span class="pop-skill-seal" aria-hidden="true">技</span><span class="pop-skill-copy"><small>武将技能</small><strong>观星</strong></span></template>
+          <template v-else>{{ (tableCards.length === 0 && !onlyHasScrolls) ? "必须出牌" : (mySkill === 'GUANXING' ? "观星" : "要不起") }}</template>
         </button>
 
         <button
@@ -505,16 +528,23 @@
           :disabled="!canBoardAction('play') || selectedCards.length === 0"
         >
           出牌
+          <svg v-if="isPopBattle" viewBox="0 0 28 24" aria-hidden="true"><path d="M3 12h21m-7-7 7 7-7 7"/></svg>
         </button>
       </template>
     </template>
   </div>
-  <div class="my-card-count-vertical gb-count-chip" data-tutorial-target="count" :aria-label="`剩余 ${handCards.length} 张`">
+  <div v-if="!isPopBattle" class="my-card-count-vertical gb-count-chip" data-tutorial-target="count" :aria-label="`剩余 ${handCards.length} 张`">
     <span>剩</span>
     <span>余</span>
     <span class="num">{{ handCards.length }}</span>
     <span>张</span>
   </div>
+
+  </div>
+  <div v-if="isPopBattle" class="pop-hand-meta">
+    <span class="pop-self-count">{{ isSpectator ? '旁观' : myStatus === 'LOST' ? '已淘汰' : '你' }} <template v-if="!isSpectator"><strong>{{ handCards.length }}</strong><small>张</small></template><span v-if="mySkill === 'TIEQI' && !isSpectator" class="pop-passive-skill">铁骑 · 被动</span></span>
+    <span class="pop-selection" role="status" aria-live="polite">{{ popSelectionText }}</span>
+    <button type="button" class="pop-emoji-open" aria-haspopup="dialog" aria-controls="pop-emoji-dialog" @click="toggleEmojiPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 14a4.5 4.5 0 0 0 8 0M8.5 8.5h.01M15.5 8.5h.01"/></svg>表情</button>
   </div>
 
   <div class="aoe-anim-layer">
@@ -543,25 +573,27 @@
       :class="{ selected: card.selected }"
       :data-tutorial-target="'card:' + boardCardId(card)"
       :data-tutorial-highlight="cardIsTarget(card) || undefined"
-      :role="tutorialMode ? 'button' : undefined"
-      :aria-label="tutorialMode ? '选择 ' + boardCardLabel(card) : undefined"
-      :aria-pressed="tutorialMode ? card.selected : undefined"
-      :aria-disabled="tutorialMode ? !cardIsSelectable(card) : undefined"
-      :tabindex="tutorialMode && cardIsSelectable(card) ? 0 : undefined"
-      @keydown.enter.prevent="tutorialMode && toggleSelect(card)"
-      @keydown.space.prevent="tutorialMode && toggleSelect(card)"
+      :role="tutorialMode || isPopBattle ? 'button' : undefined"
+      :aria-label="isPopBattle ? '选择 ' + popCardLabel(card) : tutorialMode ? '选择 ' + boardCardLabel(card) : undefined"
+      :aria-pressed="tutorialMode || isPopBattle ? card.selected : undefined"
+      :aria-disabled="tutorialMode ? !cardIsSelectable(card) : isPopBattle ? !(currentTurn === userId || amIPendingAoe) : undefined"
+      :tabindex="(tutorialMode || isPopBattle) && cardIsSelectable(card) ? 0 : undefined"
+      @keydown.enter.prevent="(tutorialMode || (isPopBattle && !$event.ctrlKey && !$event.metaKey)) && toggleSelect(card)"
+      @keydown.space.prevent="(tutorialMode || isPopBattle) && toggleSelect(card)"
       @click="toggleSelect(card)"
       :style="{ zIndex: index }"
     >
-      <img
+      <PopCardFace v-if="isPopBattle" :card="card" :image="getCardImageUrl(card)" />
+      <img v-else
         :src="getCardImageUrl(card)"
         :alt="card.suit + card.rank"
         @error="handleImageError"
       />
-      <span class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
+      <span v-if="!isPopBattle" class="fallback-text">{{ card.suit }}{{ card.rank }}</span>
+      <span v-if="isPopBattle && card.selected" class="pop-selection-tick" aria-hidden="true">✓</span>
     </div>
 
-    <transition name="float-text">
+    <transition v-if="!isPopBattle" name="float-text">
       <div
         v-if="activeActionTexts[userId]"
         :key="activeActionTexts[userId].id"
@@ -573,82 +605,13 @@
     </transition>
   </section>
 
-  <div v-if="activeEmojis[userId]" class="emoji-bubble me gb-self-emoji">
+  <div v-if="!isPopBattle && activeEmojis[userId]" class="emoji-bubble me gb-self-emoji">
     <img :src="`/images/emojis/${activeEmojis[userId]}`" alt="我的表情" />
   </div>
 
-  <aside class="gb-tools" aria-label="牌桌工具">
+  <aside v-if="!isPopBattle" class="gb-tools" aria-label="牌桌工具">
   <div class="right-side-controls gb-right-side-controls">
-    <button
-      type="button"
-      class="sound-toggle-btn gb-sound-btn"
-      @click="toggleSound"
-      :class="{ 'is-muted': !soundStatus }"
-      :aria-label="soundStatus ? '关闭所有声音' : '开启所有声音'"
-      :title="soundStatus ? '关闭所有声音' : '开启所有声音'"
-      :aria-pressed="!soundStatus"
-    >
-      <!--
-        内联 SVG（与 Lobby / WaitingRoom 同步），让图标颜色可继承 currentColor，
-        摆脱 iconfont sprite 内 fill="#000000" 黑屏问题。
-      -->
-      <svg
-        v-if="soundStatus"
-        class="gb-sound-icon"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          fill="currentColor"
-          d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
-        />
-        <path
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          d="M15.5 8.5a5 5 0 0 1 0 7"
-        />
-        <path
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          d="M19 5a10 10 0 0 1 0 14"
-        />
-      </svg>
-      <svg
-        v-else
-        class="gb-sound-icon"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          fill="currentColor"
-          d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
-        />
-        <path
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          d="m15.5 9.5 6 6M21.5 9.5l-6 6"
-        />
-      </svg>
-      <!-- 静音状态的脉动小红点，提醒用户当前为静音 -->
-      <span class="gb-sound-mute-dot" aria-hidden="true"></span>
-    </button>
-    <button v-if="!tutorialMode" type="button" class="gb-feedback-settings-btn" @click="effectsSettingsOpen = !effectsSettingsOpen" :aria-expanded="effectsSettingsOpen" aria-controls="gb-feedback-settings" aria-label="音效与特效设置" title="音效与特效设置">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 3v18M12 3v18M19 3v18"/><path d="M2 8h6M9 16h6M16 7h6" stroke-width="3" stroke-linecap="round"/></svg>
-    </button>
-    <div v-if="effectsSettingsOpen" id="gb-feedback-settings" class="gb-feedback-settings" @keydown.esc="effectsSettingsOpen = false">
-      <div class="gb-feedback-settings-heading"><span>声音与画面</span><button type="button" @click="effectsSettingsOpen = false" aria-label="关闭设置">×</button></div>
-      <label>背景音乐 <input type="range" min="0" max="1" step="0.05" v-model.number="audioLevels.music" /></label>
-      <label>语音 <input type="range" min="0" max="1" step="0.05" v-model.number="audioLevels.voice" /></label>
-      <label>音效 <input type="range" min="0" max="1" step="0.05" v-model.number="audioLevels.effects" /></label>
-      <label class="gb-feedback-quality">特效 <select v-model="effectsQuality"><option value="full">完整演出</option><option value="lite">轻量演出</option></select></label>
-      <a class="gb-feedback-credits" href="/effects/CREDITS.md" target="_blank" rel="noopener">音效来源与署名</a>
-    </div>
+    <SettingsButton compact class="sound-toggle-btn gb-sound-btn" />
   </div>
 
   <aside v-if="!tutorialMode" class="emoji-sidebar gb-emoji-sidebar">
@@ -698,6 +661,10 @@
   </aside>
 
   </aside>
+  <dialog v-if="isPopBattle" ref="popEmojiDialog" id="pop-emoji-dialog" class="pop-emoji-dialog" aria-labelledby="pop-emoji-title" @cancel.prevent="closePopEmoji" @click.self="closePopEmoji">
+    <header><h2 id="pop-emoji-title">发个表情</h2><button type="button" aria-label="关闭表情" @click="closePopEmoji">×</button></header>
+    <div class="pop-emoji-grid"><button v-for="(emoji,index) in emojiList" :key="emoji" type="button" :data-emoji="emoji" :aria-label="'发送表情 ' + (index+1)" @click="sendEmoji(emoji)"><img :src="'/images/emojis/'+emoji" alt="" draggable="false" /></button></div>
+  </dialog>
 
   <dialog
     v-if="!tutorialMode"
@@ -717,11 +684,14 @@
     </div>
   </dialog>
 
-  <div v-if="winner && !tutorialMode" class="game-over-modal">
-    <div class="gb-gameover-wrap">
+  <div v-if="winner && !tutorialMode" class="game-over-modal" :role="isPopBattle ? 'dialog' : undefined" :aria-modal="isPopBattle || undefined" aria-label="对局结算">
+    <div class="gb-gameover-wrap" :class="{ 'pop-result-lose': isPopBattle && winner !== userId }">
+      <div v-if="isPopBattle" class="pop-result-cut" aria-hidden="true"></div>
+      <svg v-if="isPopBattle" class="pop-result-burst" viewBox="0 0 600 600" aria-hidden="true"><g fill="currentColor"><path d="m300 300-28-300h56Z"/><path d="m300 300 182-240 40 40Z"/><path d="m300 300 300-28v56Z"/><path d="m300 300 240 182-40 40Z"/><path d="m300 300 28 300h-56Z"/><path d="m300 300-182 240-40-40Z"/><path d="m300 300-300 28v-56Z"/><path d="m300 300-240-182 40-40Z"/></g></svg>
       <div class="modal-content">
-        <h2 class="bounce-text">游戏结束</h2>
-        <p class="winner-text">本局胜者：<span>{{ winner }}</span></p>
+        <p v-if="isPopBattle" class="pop-result-kicker">对局结束</p>
+        <h2 class="bounce-text">{{ isPopBattle ? (winner === userId ? '胜利' : '惜败') : '游戏结束' }}</h2>
+        <p class="winner-text">本局胜者：<span>{{ isPopBattle ? popPlayerName(winner) : winner }}</span></p>
 
         <div
           v-if="winningCards && winningCards.length > 0"
@@ -771,16 +741,16 @@
     </div>
   </div>
 
-  <div v-if="showSkillSelection" class="game-over-modal skill-overlay">
+  <div v-if="showSkillSelection" class="game-over-modal skill-overlay" :role="isPopBattle ? 'dialog' : undefined" :aria-modal="isPopBattle || undefined" aria-label="选择武将技能">
     <h2 class="skill-title bounce-text">选择你的武将技能</h2>
 
     <div class="skills-container">
-      <div class="skill-card zhiheng-card" @click="selectSkill('ZHIHENG')">
+      <div class="skill-card zhiheng-card" :role="isPopBattle ? 'button' : undefined" :tabindex="isPopBattle ? 0 : undefined" @keydown.enter.prevent="isPopBattle && selectSkill('ZHIHENG')" @keydown.space.prevent="isPopBattle && selectSkill('ZHIHENG')" @click="selectSkill('ZHIHENG')">
         <h3>制衡</h3>
         <p>出牌阶段限一次，弃置 1 张手牌并重新摸 1 张牌。</p>
       </div>
 
-      <div class="skill-card luanjian-card" @click="selectSkill('LUANJIAN')">
+      <div class="skill-card luanjian-card" :role="isPopBattle ? 'button' : undefined" :tabindex="isPopBattle ? 0 : undefined" @keydown.enter.prevent="isPopBattle && selectSkill('LUANJIAN')" @keydown.space.prevent="isPopBattle && selectSkill('LUANJIAN')" @click="selectSkill('LUANJIAN')">
         <h3>乱箭</h3>
         <p>
           出牌阶段限一次，弃置 2
@@ -789,13 +759,13 @@
         </p>
       </div>
 
-      <div class="skill-card guanxing-card" @click="selectSkill('GUANXING')">
+      <div class="skill-card guanxing-card" :role="isPopBattle ? 'button' : undefined" :tabindex="isPopBattle ? 0 : undefined" @keydown.enter.prevent="isPopBattle && selectSkill('GUANXING')" @keydown.space.prevent="isPopBattle && selectSkill('GUANXING')" @click="selectSkill('GUANXING')">
         <h3>观星</h3>
         <p>
           代替【要不起】。观看牌堆顶 5 张牌，将其中 2 张加入手牌，其余弃置。
         </p>
       </div>
-      <div class="skill-card gushou-card" @click="selectSkill('GUSHOU')">
+      <div class="skill-card gushou-card" :role="isPopBattle ? 'button' : undefined" :tabindex="isPopBattle ? 0 : undefined" @keydown.enter.prevent="isPopBattle && selectSkill('GUSHOU')" @keydown.space.prevent="isPopBattle && selectSkill('GUSHOU')" @click="selectSkill('GUSHOU')">
         <h3>固守</h3>
         <p>
           立即结束回合并摸 4 张牌。若下回接牌，则弃置 2
@@ -803,7 +773,7 @@
         </p>
       </div>
 
-      <div class="skill-card kurou-card" @click="selectSkill('KUROU')">
+      <div class="skill-card kurou-card" :role="isPopBattle ? 'button' : undefined" :tabindex="isPopBattle ? 0 : undefined" @keydown.enter.prevent="isPopBattle && selectSkill('KUROU')" @keydown.space.prevent="isPopBattle && selectSkill('KUROU')" @click="selectSkill('KUROU')">
         <h3>苦肉</h3>
         <p>
           出牌阶段每回合最多 2 次，弃置 2 张手牌并摸 4 张牌。累计使用 3
@@ -811,7 +781,7 @@
         </p>
       </div>
 
-      <div class="skill-card tieqi-card" @click="selectSkill('TIEQI')">
+      <div class="skill-card tieqi-card" :role="isPopBattle ? 'button' : undefined" :tabindex="isPopBattle ? 0 : undefined" @keydown.enter.prevent="isPopBattle && selectSkill('TIEQI')" @keydown.space.prevent="isPopBattle && selectSkill('TIEQI')" @click="selectSkill('TIEQI')">
         <h3>铁骑</h3>
         <p>
           打出含红色牌时，亮出牌堆顶一张判定牌。
@@ -819,7 +789,7 @@
         </p>
       </div>
 
-      <div class="skill-card guixin-card" @click="selectSkill('GUIXIN')">
+      <div class="skill-card guixin-card" :role="isPopBattle ? 'button' : undefined" :tabindex="isPopBattle ? 0 : undefined" @keydown.enter.prevent="isPopBattle && selectSkill('GUIXIN')" @keydown.space.prevent="isPopBattle && selectSkill('GUIXIN')" @click="selectSkill('GUIXIN')">
         <h3>归心</h3>
         <p>
           回合内可使用，除你外所有角色摸 2 张牌，你立即结束回合并禁用归心。之后当桌面是你的牌且其他玩家要不起时，可保护其本次不摸牌并解除禁用。
@@ -836,7 +806,7 @@
     </div>
   </div>
 
-  <div v-if="showGuanxingModal" class="skill-action-overlay">
+  <div v-if="showGuanxingModal" class="skill-action-overlay" :role="isPopBattle ? 'dialog' : undefined" :aria-modal="isPopBattle || undefined" aria-label="观星选牌">
     <div class="modal-content guanxing-content">
       <h2
         class="wgfd-title breath-text"
@@ -853,6 +823,8 @@
           :key="index"
           class="card mini-card selectable"
           :class="{ selected: card.selected }"
+          :role="isPopBattle ? 'button' : undefined" :tabindex="isPopBattle ? 0 : undefined" :aria-label="isPopBattle ? '挑选 ' + popCardLabel(card) : undefined" :aria-pressed="isPopBattle ? card.selected : undefined"
+          @keydown.enter.prevent="isPopBattle && toggleGuanxingSelect(card)" @keydown.space.prevent="isPopBattle && toggleGuanxingSelect(card)"
           @click="toggleGuanxingSelect(card)"
         >
           <img :src="getCardImageUrl(card)" @error="handleImageError" />
@@ -881,7 +853,7 @@
 
       <button
         @click="confirmGuanxing"
-        :disabled="selectedGuanxingCards.length < 1 || selectedGuanxingCards.length > 2"
+        :disabled="isPopBattle ? selectedGuanxingCards.length !== 2 : selectedGuanxingCards.length < 1 || selectedGuanxingCards.length > 2"
         class="return-room-btn wgfd-confirm-btn"
         style="
           background: linear-gradient(180deg, #8e44ad 0%, #6f2c91 55%, #512070 100%) !important;
@@ -895,7 +867,7 @@
     </div>
   </div>
 
-  <div v-if="showWgfdModal" class="skill-action-overlay">
+  <div v-if="showWgfdModal" class="skill-action-overlay" :role="isPopBattle ? 'dialog' : undefined" :tabindex="isPopBattle ? -1 : undefined" :aria-modal="isPopBattle || undefined" aria-label="五谷丰登选牌">
     <div class="modal-content wgfd-content">
       <h2 class="wgfd-title breath-text">五谷丰登</h2>
 
@@ -914,13 +886,13 @@
           :class="{ selected: card.selected, 'selectable': amIPendingAoe }"
           :data-tutorial-target="'wgfd-card:' + boardCardId(card)"
           :data-tutorial-highlight="cardIsTarget(card) || undefined"
-          :role="tutorialMode ? 'button' : undefined"
-          :aria-label="tutorialMode ? '挑选 ' + boardCardLabel(card) : undefined"
-          :aria-pressed="tutorialMode ? card.selected : undefined"
+          :role="tutorialMode || isPopBattle ? 'button' : undefined"
+          :aria-label="isPopBattle ? '挑选 ' + popCardLabel(card) : tutorialMode ? '挑选 ' + boardCardLabel(card) : undefined"
+          :aria-pressed="tutorialMode || isPopBattle ? card.selected : undefined"
           :aria-disabled="tutorialMode ? !cardIsSelectable(card) : undefined"
-          :tabindex="tutorialMode && cardIsSelectable(card) ? 0 : undefined"
-          @keydown.enter.prevent="tutorialMode && toggleWgfdSelect(card)"
-          @keydown.space.prevent="tutorialMode && toggleWgfdSelect(card)"
+          :tabindex="(tutorialMode || (isPopBattle && amIPendingAoe)) && cardIsSelectable(card) ? 0 : undefined"
+          @keydown.enter.prevent="(tutorialMode || isPopBattle) && toggleWgfdSelect(card)"
+          @keydown.space.prevent="(tutorialMode || isPopBattle) && toggleWgfdSelect(card)"
           @click="toggleWgfdSelect(card)"
         >
           <img :src="getCardImageUrl(card)" @error="handleImageError" />

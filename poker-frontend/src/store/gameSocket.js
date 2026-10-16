@@ -110,6 +110,7 @@ const clearRoomState = () => {
   state.tableCards.value = [];
   state.otherPlayers.value = [];
   state.spectators.value = [];
+  state.roomChatMessages.value = [];
   state.currentTurn.value = "";
   state.lastPlayPlayer.value = "";
   state.currentAoeType.value = null;
@@ -692,6 +693,13 @@ export const connectWebSocket = (isCreating = false, isRecovery = false) => {
             state.warningUserId.value = "";
           }
         }, 1000);
+        break;
+      case "CHAT_RECEIVED":
+        if (typeof res.userId === "string" && typeof res.text === "string" && res.text.trim()) {
+          state.roomChatMessages.value = [...state.roomChatMessages.value.slice(-49), {
+            userId: res.userId, text: res.text.slice(0, 24), sentAt: Number(res.sentAt) || Date.now(),
+          }];
+        }
         break;
       case "EMOJI_RECEIVED":
         state.activeEmojis.value[res.userId] = res.emoji;

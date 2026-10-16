@@ -75,6 +75,7 @@ export const showCreateModal = ref(false);
 
 export const showEmojiPanel = ref(false);
 export const activeEmojis = ref({});
+export const roomChatMessages = ref([]);
 export const activeActionTexts = ref({});
 export const isSoundOn = ref(true);
 export const isShuffling = ref(false);

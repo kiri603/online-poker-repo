@@ -2,6 +2,7 @@
   <div class="game-container">
     <div class="app-viewport">
     <ErrorToast />
+    <GameSettings />
     <RulesDetail v-if="showRuleDetail" />
     <AccountHub
       v-if="
@@ -40,20 +41,24 @@
       </div>
     </div>
 
+    <Transition name="app-page" @before-enter="enableEnteringPage" @before-leave="disableLeavingPage">
     <AuthView v-if="!authChecked || !isAuthenticated" />
     <TutorialView v-else-if="showTutorial && !isConnected && !isReconnecting" :key="tutorialKind" :kind="tutorialKind"
       @exit="closeTutorial" @advanced="openTutorial('advanced')" />
     <Lobby v-else-if="!isConnected && !isReconnecting" />
 
-    <div v-else class="game-table">
-      <div v-if="gameStarted" class="header">
+    <div v-else class="game-table" :class="{ 'game-table--pop-battle': gameStarted && uiTheme === 'pop' }">
+      <div v-if="gameStarted && uiTheme !== 'pop'" class="header">
         <span>房间号: {{ roomId }}</span>
         <span>我的ID: {{ userId }}</span>
       </div>
 
-      <WaitingRoom v-if="!gameStarted" />
-      <GameBoard v-else />
+      <Transition name="app-page" @before-enter="enableEnteringPage" @before-leave="disableLeavingPage">
+        <WaitingRoom v-if="!gameStarted" />
+        <GameBoard v-else />
+      </Transition>
     </div>
+    </Transition>
     <div v-if="isReconnecting" class="connection-recovery" role="status" aria-live="polite">
       <div>
         <p>连接中断，正在恢复...</p>
@@ -91,6 +96,7 @@ import {
 } from "@/store/gameState.js";
 
 import ErrorToast from "@/views/Modals/ErrorToast.vue";
+import GameSettings from "@/components/GameSettings.vue";
 import AuthView from "@/views/Auth/index.vue";
 import Lobby from "@/views/Lobby/index.vue";
 import WaitingRoom from "@/views/WaitingRoom/index.vue";
@@ -99,10 +105,13 @@ import RulesDetail from "@/views/RulesDetail/index.vue";
 import AccountHub from "@/views/Social/AccountHub.vue";
 import TutorialView from "@/views/Tutorial/index.vue";
 import { showTutorial, tutorialKind, openTutorial, closeTutorial } from "@/store/tutorialState.js";
+import { uiTheme } from '@/store/uiSettings.js';
 
 let authHeartbeat = null;
 let socialHeartbeat = null;
 let stopViewport = null;
+const disableLeavingPage = (element) => { element.inert = true; };
+const enableEnteringPage = (element) => { element.inert = false; };
 
 onMounted(() => {
   stopViewport = observeViewport(window, ({ width, height, left, top }) => {
@@ -170,6 +179,22 @@ watch(
 </script>
 
 <style>
+@media(prefers-reduced-motion:no-preference) {
+  .app-page-enter-active { transition:opacity 320ms ease,translate 420ms cubic-bezier(.2,.8,.2,1); }
+  .app-page-leave-active { position:absolute!important;inset:0;pointer-events:none;transition:opacity 180ms ease; }
+  .app-page-enter-from { opacity:0;translate:0 16px; }
+  .app-page-leave-to { opacity:0; }
+  ::view-transition-old(root) { animation:theme-fade-out 260ms ease both; }
+  ::view-transition-new(root) { animation:theme-reveal 480ms cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes theme-fade-out { to { opacity:0; } }
+  @keyframes theme-reveal { from { clip-path:inset(0 100% 0 0); }to { clip-path:inset(0); } }
+}
+@media(prefers-reduced-motion:reduce) { ::view-transition-group(*) { animation-duration:0s!important; } }
+[data-ui-theme=pop] .daily-signin-overlay { background:#20212499;backdrop-filter:none; }
+[data-ui-theme=pop] .daily-signin-card { background:#fff5e6;border:0;border-radius:4px;box-shadow:none;color:#202124; }
+[data-ui-theme=pop] :is(.daily-signin-title,.daily-signin-glow) { color:#a53542;background:none;text-shadow:none;animation:none; }
+[data-ui-theme=pop] .daily-signin-btn { background:#202124;color:#fff1d7;border:0;border-radius:2px;box-shadow:none; }
+[data-ui-theme=pop] .daily-signin-message { color:#68615c; }
 .connection-recovery {
   position: fixed;
   inset: 0;
@@ -230,6 +255,7 @@ body,
   line-height: 1.5;
   flex-wrap: wrap;
 }
+.game-table.game-table--pop-battle { grid-template-rows: minmax(0,1fr); }
 
 .header {
   padding: 3px 12px;

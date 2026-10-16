@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j // 引入 Lombok 的日志注解
 @Service
@@ -19,6 +20,9 @@ public class GameService {
 
     @Autowired(required = false) // 如果你还没有写 RuleEngine，可以先加上 required=false 防止报错
     private RuleEngine ruleEngine;
+
+    @Autowired
+    private AvatarCatalog avatarCatalog;
 
     public static final String GUIXIN_DECISION = "GUIXIN_DECISION";
     public static final String GUIXIN_SOURCE_PASS = "PASS";
@@ -160,6 +164,8 @@ public class GameService {
 
         String botId = nextBotId(room);
         Player bot = new Player(botId, true);
+        var avatars = avatarCatalog.list();
+        bot.setAvatar(avatars.get(ThreadLocalRandom.current().nextInt(avatars.size())).url());
         bot.setStatus("WAITING");
         bot.setReady(true);
         room.getPlayers().add(bot);
@@ -926,6 +932,8 @@ public class GameService {
                 }
             }
             if (isJdsrSuccess) {
+                // 借刀响应结束后进入本人的新回合，恢复本回合行动次数。
+                resetTurnActionLimits(player);
                 room.setCurrentTurnStartTime(System.currentTimeMillis());
                 return true;
             }
@@ -1131,10 +1139,7 @@ public class GameService {
             room.setCurrentTurnStartTime(System.currentTimeMillis());
             Player initiator = getPlayer(room, initiatorUid);
             if (initiator != null) {
-                initiator.setHasReplacedCardThisTurn(false);
-                initiator.setHasUsedAoeThisTurn(false);
-                initiator.setHasUsedSkillThisTurn(false);
-                initiator.setKurouUsesThisTurn(0);
+                resetTurnActionLimits(initiator);
             }
 
             // —— 对其他 PLAYING 玩家执行「压制」：各罚摸 2 张 ——
@@ -1172,11 +1177,15 @@ public class GameService {
         Player nextPlayer = room.getPlayers().get(nextIndex);
 
         // 允许下一位玩家在新回合换牌
-        nextPlayer.setHasReplacedCardThisTurn(false);
-        nextPlayer.setHasUsedAoeThisTurn(false); // 【新增】
-        nextPlayer.setHasUsedSkillThisTurn(false);
-        nextPlayer.setKurouUsesThisTurn(0);
+        resetTurnActionLimits(nextPlayer);
         log.info(">>> 回合流转: 当前轮到玩家 [{}] 行动", nextPlayer.getUserId());
+    }
+
+    private void resetTurnActionLimits(Player player) {
+        player.setHasReplacedCardThisTurn(false);
+        player.setHasUsedAoeThisTurn(false);
+        player.setHasUsedSkillThisTurn(false);
+        player.setKurouUsesThisTurn(0);
     }
 
     private Player getPlayer(GameRoom room, String userId) {

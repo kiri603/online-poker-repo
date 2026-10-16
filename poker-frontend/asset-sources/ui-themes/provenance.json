@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-14",
+  "theme": "简约波普",
+  "approvedUi": "temp-screenshots/peach-ui-preview/ (A 方案、账号与设置，用户已确认实装)",
+  "loginSource": "poker-frontend/public/design-preview/login-v2/minimal.{html,css,js}（来自本地主检出已有设计）",
+  "files": [
+    {
+      "file": "public/images/themes/pop-background-clean.png",
+      "source": "temp-screenshots/peach-ui-preview/login/assets/pop-background-clean.png",
+      "changes": "原样复制"
+    },
+    {
+      "file": "public/images/themes/pop-title-ink.png",
+      "source": "temp-screenshots/peach-ui-preview/login/assets/pop-title-ink.png",
+      "changes": "原样复制"
+    },
+    {
+      "file": "public/images/themes/pop-xiaotao.png",
+      "source": "temp-screenshots/peach-ui-preview/login/assets/pop-xiaotao.png",
+      "changes": "原样复制"
+    },
+    {
+      "file": "public/images/themes/xiaotao-silhouette-complete.png",
+      "source": "built-in imagegen, edit of public/images/themes/xiaotao-silhouette.png",
+      "date": "2026-10-14",
+      "prompt": "Preserve the existing winking Xiaotao portrait, pose, monochrome pink fill and rose linework. Complete the hair curls clipped at the right edge on a true transparent background. Keep the head and hair inside the canvas; no redesign, text or extra objects.",
+      "changes": "补全右侧发梢，原素材保留"
+    },
+    {
+      "file": "public/images/themes/pop-login-cover.png",
+      "source": "temp-screenshots/peach-ui-preview/assets/pop-login-cover.png",
+      "changes": "复用已审核的纯登录封面；不显示开始、登录或注册控件"
+    },
+    {
+      "file": "public/images/themes/original-login-cover.png",
+      "source": "temp-screenshots/peach-ui-preview/assets/original-login-cover.png",
+      "changes": "复用已审核的纯登录封面；不显示开始、登录或注册控件"
+    }
+  ],
+  "waitingRoom": {
+    "date": "2026-10-15",
+    "approvedUi": "历史审核稿 waiting-room-depth/index.html?variant=print，仅记录来源，不随正式版本发布",
+    "implementation": "src/views/WaitingRoom/WaitingRoomPop.{vue,html,css}，采用印刷光场围桌布局并绑定真实房间状态。",
+    "materials": "牌桌、套色桌沿、网点、扫光和顺手推牌均由正式 CSS/JS 实现；头像复用已有资源。",
+    "foreground": "正式等待房间不使用小桃形象或等待标题图片。"
+  },
+  "battle": {
+    "date": "2026-10-15",
+    "approvedUi": "public/design-preview/battle/index.html#b",
+    "implementation": "src/views/GameBoard/GameBoardPop.css 与 PopBattleTable.vue、PopCardFace.vue，沿用审核稿米色切版构图、印刷网点和牌面，接入 GameBoard 的现有状态与消息处理函数。",
+    "materials": "锦囊原卡面、JQK 原图、现有 29 个表情和胜败 Q 版形象原样复用。切版背景与牌框为审核稿代码 SVG/CSS。",
+    "scope": "只在 pop 主题的实际对战页启用。原版主题与教学会话沿用现有界面和逻辑。不显示牌堆、提示按钮或独立动效设置；表情从单一入口打开。"
+  },
+  "foregroundPolicy": "登录小桃及手中卡牌沿用已审核文件，未重绘；等待房间不使用小桃。大厅三张牌为正式代码 SVG。",
+  "archivePolicy": "独立预览和未采用素材仅保留在本地；历史来源路径不构成正式页面或测试的运行依赖。"
+}

@@ -560,6 +560,17 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     }
                     broadcastGameState(roomId);
                     break;
+                case "SEND_CHAT": {
+                    if (actionRoom == null || !(gameMsg.getData() instanceof String content)) break;
+                    boolean member = actionRoom.getPlayers().stream().anyMatch(player -> userId.equals(player.getUserId()))
+                            || actionRoom.getSpectators().contains(userId);
+                    String text = content.replaceAll("\\p{Cntrl}", "").trim();
+                    if (!member || text.isBlank() || text.length() > 24) break;
+                    broadcastToRoom(roomId, new TextMessage(objectMapper.writeValueAsString(Map.of(
+                            "event", "CHAT_RECEIVED", "userId", userId, "text", text,
+                            "sentAt", System.currentTimeMillis()))));
+                    break;
+                }
                 case "SEND_EMOJI":
                     if (gameMsg.getData() != null) {
                         String emojiFileName = gameMsg.getData().toString();

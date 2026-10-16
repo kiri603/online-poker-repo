@@ -317,3 +317,23 @@ test("replacement message ends the old page without logging out the new page", a
   assert.equal(paths.includes("/api/auth/logout"), false);
   assert.match(t.state.errorMessage.value, /其他页面/);
 });
+
+test("room chat retains plain text with a bounded history and clears on leave", async () => {
+  const t = setup();
+  for (let index = 0; index < 55; index++) {
+    await t.socket.onmessage({ data: JSON.stringify({ event: "CHAT_RECEIVED", userId: "p2", text: index === 54 ? '<b>ready</b>' : String(index), sentAt: index + 1 }) });
+  }
+  assert.equal(t.state.roomChatMessages.value.length, 50);
+  assert.equal(t.state.roomChatMessages.value[0].text, "5");
+  assert.equal(t.state.roomChatMessages.value.at(-1).text, '<b>ready</b>');
+  t.context.api.disconnectWebSocket();
+  assert.equal(t.state.roomChatMessages.value.length, 0);
+});
+
+test("invalid room chat messages cannot enter the displayed history", async () => {
+  const t = setup();
+  for (const message of [{ userId: "p2", text: {} }, { userId: null, text: "ready" }, { userId: "p2", text: " " }]) {
+    await t.socket.onmessage({ data: JSON.stringify({ event: "CHAT_RECEIVED", ...message }) });
+  }
+  assert.equal(t.state.roomChatMessages.value.length, 0);
+});

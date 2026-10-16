@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { playBGM, soundStatus, toggleSound } from "@/store/audioManager.js";
+import { playBGM } from "@/store/audioManager.js";
 import {
   isPrivate,
   publicRooms,
@@ -69,6 +69,8 @@ const handleJoinClick = async () => {
     const data = await response.json();
 
     if (data.exists) {
+      // Creation options can remain set after canceling its dialog.
+      isPrivate.value = !!data.isPrivate;
       if (data.isPrivate) {
         const pwd = prompt("该房间为私密房间，请输入 4 位密码：");
         if (!pwd) return;
@@ -92,6 +94,17 @@ const confirmCreateRoom = () => {
   }
   showCreateModal.value = false;
   connectWebSocket(true);
+};
+
+// A separate create entry must not reuse the default/last joined room number.
+const openCreateRoom = () => {
+  const usedIds = new Set(publicRooms.value.map(room => String(room.roomId)));
+  let candidate = 1000 + Math.floor(Math.random() * 9000);
+  while (usedIds.has(String(candidate))) candidate++;
+  roomId.value = String(candidate);
+  isPrivate.value = false;
+  roomPassword.value = '';
+  showCreateModal.value = true;
 };
 
 const quickJoin = (id) => {
@@ -180,6 +193,7 @@ export {
   handleJoinClick,
   isPrivate,
   openInfoPanel,
+  openCreateRoom,
   playBGM,
   publicRooms,
   quickJoin,
@@ -193,8 +207,6 @@ export {
   showRuleDetail,
   showRules,
   showUpdates,
-  soundStatus,
   startPolling,
   stopPolling,
-  toggleSound,
 };

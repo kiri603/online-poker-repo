@@ -8,7 +8,7 @@ export function useTutorialVoice(getText, getPaused = () => false, getEnabled = 
   const playback = ref({ source: "", status: "idle", currentTime: 0, duration: 0 });
   const hasVoice = computed(() => Boolean(TUTORIAL_VOICES[getText()]));
   const subtitleCues = computed(() => TUTORIAL_VOICE_TIMINGS[getText()] || []);
-  const enabled = computed(() => soundStatus.value && getEnabled());
+  const enabled = computed(() => soundStatus.value && audioLevels.voice > 0 && getEnabled());
   const hidden = ref(document.hidden);
   const isPaused = computed(() => Boolean(getPaused() || hidden.value));
   let player = null;

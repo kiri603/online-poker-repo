@@ -1,7 +1,10 @@
 <template src="./WaitingRoom.html"></template>
 
 <script setup>
+import SettingsButton from '@/components/SettingsButton.vue';
 import PlayerAvatar from '@/components/PlayerAvatar.vue';
+import WaitingRoomPop from './WaitingRoomPop.vue';
+import { uiTheme } from '@/store/uiSettings.js';
 import {
   showSettings,
   roomSettings,
@@ -63,6 +66,7 @@ const avatarForPlayer = avatarForPlayerImpl;
 
 // ====== 【核心防白屏机制】：强制暴露变量，防 Vite 误删 ======
 const _exposeToHtml = {
+  WaitingRoomPop, uiTheme,
   showSettings,
   roomSettings,
   isClassicMode,

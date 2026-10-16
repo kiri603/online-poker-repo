@@ -10,6 +10,7 @@ test("waiting seats use the account avatar for self and the server avatar for op
     .replace(/export\s*\{[\s\S]*?\};/g, "");
   const state = {
     ref, computed,
+    authUser: ref({ nickname: "Owner" }),
     userId: ref("owner"), ownerId: ref("owner"), isReady: ref(true), isSpectator: ref(false),
     canUseSocial: ref(true), socialOverview: ref({ avatar: "/images/avatars/hoodie-girl-smug.png" }),
     otherPlayers: ref([{ userId: "friend", avatar: "/images/avatars/general.png" }]),
@@ -17,6 +18,7 @@ test("waiting seats use the account avatar for self and the server avatar for op
   const context = vm.createContext(state);
   vm.runInContext(source + "\nglobalThis.seats = { displayPlayers, avatarForPlayer };", context);
   assert.equal(context.seats.avatarForPlayer(context.seats.displayPlayers.value[0], 0), "/images/avatars/hoodie-girl-smug.png");
+  assert.equal(context.seats.displayPlayers.value[0].nickname, "Owner");
   assert.equal(context.seats.avatarForPlayer(context.seats.displayPlayers.value[1], 1), "/images/avatars/general.png");
   state.socialOverview.value = { avatar: "/images/avatars/alan-walker-smug.png" };
   assert.equal(context.seats.avatarForPlayer(context.seats.displayPlayers.value[0], 0), "/images/avatars/alan-walker-smug.png");

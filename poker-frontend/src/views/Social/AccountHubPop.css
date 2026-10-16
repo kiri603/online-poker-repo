@@ -1,0 +1,481 @@
+/* Ported from the approved peach-ui-preview; account data remains in socialStore. */
+.peach-hub{--peach:#f3d5dd;--lime:#dce89d;--ink:#202124;--red:#a53542;--paper:#fff1d7;--muted:#68615c;--line:#c6b9a5;--sans:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;--display:"STKaiti","KaiTi",serif;color:var(--ink);font-family:var(--sans);font-size:14px;color-scheme:light}
+.peach-hub *, .peach-hub *::before,.peach-hub *::after{box-sizing:border-box}
+:where(.peach-hub) button,:where(.peach-hub) input,:where(.peach-hub) textarea{font:inherit;touch-action:manipulation;box-shadow:none;border-radius:0}
+:where(.peach-hub) button{cursor:pointer;color:inherit;text-shadow:none;transition:opacity .15s}
+:where(.peach-hub) button:disabled{cursor:default;opacity:.5}
+:where(.peach-hub) button:focus-visible,:where(.peach-hub) input:focus-visible,:where(.peach-hub) textarea:focus-visible{outline:3px solid var(--red);outline-offset:5px}
+:where(.peach-hub) button:active{opacity:.75}
+:where(.peach-hub) button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+:where(.peach-hub) h2,:where(.peach-hub) h3,:where(.peach-hub) p{margin:0}
+.account-dialog{border:0;padding:0;color:var(--ink);background:var(--paper);max-height:90dvh;max-width:calc(100vw - 32px)}
+.account-dialog::backdrop{background:rgba(32,33,36,.72)}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.icon-button{width:44px;height:44px;flex:none;display:grid;place-items:center;border:1px solid var(--ink);border-radius:50%;background:transparent}
+.icon-button:hover{background:var(--lime)}
+.ink-button{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--ink);color:var(--paper);border:1px solid var(--ink);padding:16px 24px;font-size:17px;font-weight:700;min-height:48px}
+.ink-button>span{font-size:24px;font-weight:400}
+.ink-button:hover{background:var(--red)}
+.text-button{display:inline-flex;align-items:center;gap:8px;background:transparent;border:0;padding:8px 0;font-size:11px;min-height:36px}
+.text-button:hover{color:var(--red)}
+.text-button svg{width:14px;height:14px}
+.account-dialog{width:min(1180px,calc(100vw - 80px));height:min(740px,calc(100dvh - 100px));overflow:hidden}
+.account-layout{display:grid;grid-template-columns:256px minmax(0,1fr);height:100%}
+.identity-panel{background:var(--peach);padding:28px;position:relative;display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+.identity-kicker{font-size:9px;letter-spacing:1px}
+.avatar-portrait{position:relative;align-self:flex-start;margin-top:36px}
+.avatar-portrait img{width:130px;height:130px;object-fit:cover;border-radius:50%;border:2px solid var(--ink);background:var(--paper)}
+.level-stamp{position:absolute;bottom:0;right:-44px;display:flex;align-items:baseline;gap:4px;background:var(--lime);border:1px solid var(--ink);padding:6px 10px;transform:rotate(-7deg);font-family:Georgia,serif;font-size:12px}
+.level-stamp b{font-size:27px}
+.player-name{font-family:Georgia,serif;font-size:42px;line-height:1.2;margin-top:22px;overflow-wrap:anywhere}
+.player-id{font-size:10px;display:flex;gap:12px;margin-top:10px}
+.player-id span{font-family:Consolas,monospace}
+.experience-label{display:flex;justify-content:space-between;font-size:10px;margin-top:26px}
+.experience-track{height:5px;margin-top:9px;background:#cba4ad}
+.experience-track span{display:block;width:57%;height:100%;background:var(--ink)}
+.experience-note{font-size:10px;margin-top:9px;color:#635058}
+.account-tabs{display:flex;flex-direction:column;gap:4px;margin:30px -28px 0}
+.account-tabs button{min-height:54px;border:0;background:transparent;display:flex;align-items:center;gap:12px;text-align:left;padding:12px 26px;font-weight:700;font-size:13px}
+.account-tabs button.active{background:var(--ink);color:var(--paper)}
+.account-tabs button:not(.active):hover{background:#eac1cb}
+.account-tabs button>span{font-family:Georgia,serif;font-size:11px;opacity:.7;font-weight:400}
+.account-tabs button>b{margin-left:auto;font-size:22px;font-weight:400}
+.account-tabs i{font-style:normal;font-size:10px;width:18px;height:18px;background:var(--red);color:var(--paper);border-radius:50%;display:grid;place-items:center}
+.identity-bottom{margin-top:auto;padding-top:22px;z-index:1}
+.identity-bottom p{font-size:10px}
+.identity-bottom button{margin-top:8px;font-size:10px}
+.identity-leaf{position:absolute;width:190px;height:190px;bottom:-50px;right:-90px;transform:rotate(-12deg);color:#e8b9c5;z-index:-1}
+.account-content{padding:32px 40px;display:flex;flex-direction:column;min-height:0;min-width:0}
+.account-heading{display:flex;align-items:center;justify-content:space-between;padding-bottom:28px;flex:none}
+.account-heading h2{font-family:var(--display);font-size:42px;transform:rotate(-2deg);margin-top:10px;font-weight:700;line-height:1.2}
+.account-body{overflow:auto;min-height:0;flex:1;scrollbar-width:thin;scrollbar-color:var(--red) transparent}
+.battle-summary{display:grid;grid-template-columns:45% 55%;padding:10px 0 28px;border-bottom:2px solid var(--ink);align-items:center;min-height:194px}
+.win-rate{position:relative;padding-left:16px;isolation:isolate}
+.win-rate::before{content:"";position:absolute;background:var(--lime);width:185px;height:160px;border-radius:50% 45% 48% 40%;left:-3px;top:-7px;transform:rotate(-10deg);z-index:-1}
+.win-rate>small{font-size:10px;letter-spacing:1px}
+.win-rate strong{display:block;font-family:Georgia,serif;font-size:102px;line-height:1.1;letter-spacing:-8px;font-weight:400}
+.win-rate strong span{font-family:var(--sans);font-size:20px;letter-spacing:0;margin-left:10px}
+.win-loss-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 32px}
+.open-stat small{font-size:10px;color:var(--muted)}
+.open-stat strong{display:block;font-family:Georgia,serif;font-size:42px;line-height:1.2;margin-top:6px;font-weight:400}
+.open-stat.total{grid-column:1/-1;display:flex;align-items:baseline;gap:16px}
+.open-stat.total strong{font-size:40px}
+.open-stat .loss-number{color:var(--red)}
+.stats-note{font-size:10px;line-height:1.8;color:var(--muted);padding:14px 0 22px}
+.records-heading{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.records-heading h3{font-size:16px}
+.records-heading span{font-size:10px;color:var(--muted)}
+.record-row{border-top:1px solid var(--line);padding:15px 0;display:grid;grid-template-columns:64px 1fr;gap:18px}
+.record-result{align-self:start;text-align:center;line-height:32px;font-family:var(--display);font-size:22px;color:var(--ink);border:1px solid var(--ink);transform:rotate(-6deg);margin-top:7px;background:var(--lime)}
+.record-result.lose{background:var(--peach);color:var(--red);transform:rotate(4deg)}
+.record-top{display:flex;align-items:center;justify-content:space-between;font-size:12px;gap:16px}
+.record-top time{font-size:10px;white-space:nowrap;color:var(--muted)}
+.record-meta{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:11px;margin-top:9px}
+.record-players{font-size:10px;overflow-wrap:anywhere;color:var(--muted);margin-top:8px;line-height:1.5}
+.login-info{padding:16px 0 20px;border-block:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.login-info small{font-size:10px;color:var(--muted)}
+.login-info strong{display:block;margin-top:8px;font-size:15px}
+.avatar-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.avatar-heading h3{font-family:var(--display);font-size:28px}
+.avatar-heading span{font-size:10px;color:var(--muted)}
+.avatar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:24px 0}
+.avatar-option{position:relative;border:1px solid transparent;padding:10px 6px 8px;text-align:center;cursor:pointer;min-height:90px;border-radius:0}
+.avatar-option:hover{background:#f0e3c9}
+.avatar-option:has(input:checked){border-color:var(--ink);background:var(--lime)}
+.avatar-option:focus-within{outline:2px solid var(--red);outline-offset:3px}
+.avatar-option input{position:absolute;width:1px;height:1px;opacity:0}
+.avatar-option img{width:64px;height:64px;object-fit:cover;border-radius:50%;border:1px solid var(--ink);background:var(--paper);display:block;margin:0 auto 8px}
+.avatar-option span{font-size:10px;display:block}
+.avatar-option:has(input:checked)::after{content:"✓";position:absolute;right:5px;top:5px;width:18px;height:18px;background:var(--ink);color:var(--paper);border-radius:50%;font-size:11px;display:grid;place-items:center}
+.avatar-save-row{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--line);padding-top:20px}
+.avatar-save-row>span{font-size:11px}
+.avatar-save-row .ink-button{font-size:13px;min-width:164px}
+.friends-layout{display:grid;grid-template-columns:42% 58%;height:100%;min-height:390px}
+.friend-sidebar{padding-right:24px;border-right:1px solid var(--line);overflow:auto;scrollbar-width:thin}
+.friend-search{display:flex;border-bottom:1px solid var(--ink);padding:0 0 8px;margin-bottom:20px}
+.friend-search input{border:0;background:transparent;min-width:0;width:100%;font-size:11px;padding:8px 0}
+.friend-search button{border:0;background:var(--ink);color:var(--paper);font-size:11px;padding:8px 12px;min-height:36px}
+.friend-section-title{font-size:10px;display:flex;align-items:center;justify-content:space-between;letter-spacing:1px;margin:20px 0 12px}
+.friend-section-title span{color:var(--red)}
+.request-row{padding:10px 12px;background:var(--peach);font-size:11px}
+.request-row p{margin-bottom:10px}
+.tiny-button{font-size:10px;background:transparent;border:1px solid var(--ink);padding:5px 10px;min-height:30px;margin-right:6px}
+.tiny-button.primary{background:var(--ink);color:var(--paper)}
+.friend-item{display:flex;align-items:center;gap:12px;border:0;background:transparent;width:100%;text-align:left;padding:14px 10px;min-height:70px}
+.friend-item.active{background:var(--lime)}
+.friend-item:hover{background:#efe5c8}
+.friend-item img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1px solid var(--ink);background:var(--paper)}
+.friend-item strong{font-size:12px;display:block;overflow-wrap:anywhere}
+.friend-item small{font-size:9px;color:var(--muted);display:block;margin-top:5px}
+.friend-unread{margin-left:auto;border-radius:50%;background:var(--red);color:var(--paper);width:18px;height:18px;font-size:9px;display:grid;place-items:center}
+.search-result{font-size:11px;background:var(--lime);padding:12px;margin-bottom:12px;line-height:1.8}
+.search-result button{display:block;margin-top:8px}
+.chat-panel{display:flex;flex-direction:column;padding-left:24px;min-width:0}
+.chat-heading{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-bottom:16px;flex-wrap:wrap;min-height:52px}
+.chat-heading h3{font-size:15px;overflow-wrap:anywhere}
+.online-label{font-size:9px;color:var(--red)}
+.chat-heading .text-button{margin-left:auto;font-size:10px;padding:0;min-height:24px}
+.chat-back{display:none}
+.chat-messages{flex:1;min-height:160px;overflow:auto;padding:24px 0;font-size:12px}
+.chat-date{text-align:center;font-size:9px;color:var(--muted);margin-bottom:22px}
+.chat-bubble{max-width:84%;line-height:1.8;margin:0 0 20px;background:var(--peach);padding:10px 14px;position:relative;overflow-wrap:anywhere}
+.chat-bubble.mine{margin-left:auto;background:var(--lime)}
+.chat-bubble small{font-size:9px;display:block;color:var(--muted);margin-top:6px}
+.chat-compose{border-top:1px solid var(--ink);padding-top:14px;display:flex;gap:12px;align-items:flex-end}
+.chat-compose textarea{height:64px;border:0;background:transparent;padding:8px 0;resize:none;flex:1;min-width:0;font-size:12px}
+.chat-compose button{font-size:12px;padding:10px 16px;min-height:44px}
+.invite-strip{border:1px solid var(--ink);padding:12px;margin-bottom:18px;font-size:11px;line-height:1.9;transform:rotate(-1deg);background:var(--paper)}
+.invite-strip strong{display:block;font-family:var(--display);font-size:20px}
+.invite-strip button{margin-top:8px}
+.friend-empty{font-size:11px;color:var(--muted);padding:12px 0}
+.confirm-actions .ink-button{font-size:13px}
+@media(min-width:1800px){.ink-button{font-size:20px}}
+@media(max-width:1150px){.account-dialog{width:calc(100vw - 48px)}
+.account-layout{grid-template-columns:216px minmax(0,1fr)}
+.identity-panel{padding:24px}
+.account-tabs{margin-inline:-24px}
+.account-tabs button{padding-inline:22px}
+.account-content{padding:28px}
+.avatar-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:800px){.icon-button{width:40px;height:40px}
+.account-dialog{width:calc(100vw - 32px);height:calc(100dvh - 48px);max-height:calc(100dvh - 48px)}
+.account-layout{grid-template-columns:192px minmax(0,1fr)}
+.identity-panel{padding:20px}
+.identity-kicker{font-size:8px}
+.avatar-portrait{margin-top:32px}
+.avatar-portrait img{width:110px;height:110px}
+.level-stamp{right:-22px}
+.player-name{font-size:36px}
+.account-tabs{margin-inline:-20px}
+.account-tabs button{padding-inline:18px;font-size:12px;gap:10px}
+.account-content{padding:24px}
+.account-heading h2{font-size:36px}
+.battle-summary{grid-template-columns:1fr;gap:32px}
+.win-rate::before{width:170px;height:140px}
+.win-rate strong{font-size:88px}
+.win-loss-grid{grid-template-columns:1fr 1fr 1fr;gap:16px}
+.open-stat.total{grid-column:auto;display:block}
+.open-stat strong,.open-stat.total strong{font-size:34px}
+.avatar-grid{grid-template-columns:repeat(3,1fr);gap:10px}
+.avatar-option img{width:54px;height:54px}
+.friends-layout{grid-template-columns:1fr;min-height:400px}
+.friend-sidebar{border-right:0;padding-right:0}
+.chat-panel{display:none;padding:0}
+.friends-layout.chat-open .friend-sidebar{display:none}
+.friends-layout.chat-open .chat-panel{display:flex}
+.chat-back{display:block}
+.chat-heading .text-button{margin-left:0}
+.identity-bottom{padding-bottom:12px}}
+@media(max-width:520px){.account-dialog{width:calc(100vw - 20px);height:calc(100dvh - 24px);max-height:calc(100dvh - 24px)}
+.account-layout{display:flex;flex-direction:column}
+.identity-panel{padding:16px 20px 0;display:grid;grid-template-columns:66px 1fr auto;gap:6px 16px;overflow:visible;flex:none;align-items:center}
+.identity-kicker,.experience-label,.experience-track,.experience-note,.identity-bottom,.identity-leaf{display:none}
+.avatar-portrait{margin:0;grid-row:1/3}
+.avatar-portrait img{width:60px;height:60px}
+.level-stamp{right:-9px;bottom:-3px;font-size:8px;padding:3px 4px;gap:2px}
+.level-stamp b{font-size:16px}
+.player-name{font-size:28px;margin:0;grid-column:2;align-self:end}
+.player-id{font-size:9px;margin:0;grid-column:2;align-self:start}
+.account-tabs{grid-column:1/-1;flex-direction:row;margin:16px -20px 0;gap:0;border-top:1px solid #d5a9b7}
+.account-tabs button{flex:1;justify-content:center;min-height:46px;padding:10px 6px;font-size:11px;gap:5px}
+.account-tabs button>span{display:none}
+.account-tabs button>b{display:none}
+.account-tabs i{width:15px;height:15px;font-size:8px}
+.account-content{padding:20px;min-height:0;flex:1}
+.account-heading{padding-bottom:20px}
+.account-heading h2{font-size:32px}
+.account-heading .eyebrow{font-size:9px}
+.account-heading .icon-button{width:36px;height:36px}
+.battle-summary{grid-template-columns:46% 54%;gap:8px;min-height:170px;padding:6px 0 18px}
+.win-rate{padding-left:8px}
+.win-rate::before{width:138px;height:138px;top:-5px;left:-3px}
+.win-rate>small{font-size:9px}
+.win-rate strong{font-size:76px;letter-spacing:-6px}
+.win-rate strong span{font-size:14px;margin-left:6px}
+.win-loss-grid{grid-template-columns:1fr 1fr;gap:16px}
+.open-stat.total{grid-column:1/-1;display:flex;gap:10px}
+.open-stat.total strong{font-size:30px}
+.open-stat strong{font-size:28px}
+.open-stat small{font-size:9px}
+.stats-note{font-size:9px;padding-block:16px}
+.record-row{grid-template-columns:44px 1fr;gap:12px;padding-block:15px}
+.record-result{font-size:18px;line-height:28px}
+.record-top{font-size:11px;gap:6px}
+.record-top time{font-size:8px}
+.record-meta{font-size:10px;gap:6px 12px}
+.record-players{font-size:9px}
+.login-info{gap:16px}
+.login-info strong{font-size:12px}
+.avatar-heading h3{font-size:24px}
+.avatar-heading span{font-size:9px}
+.avatar-grid{grid-template-columns:repeat(3,1fr);padding-block:18px;gap:8px}
+.avatar-option{padding:8px 4px}
+.avatar-option img{width:58px;height:58px}
+.avatar-save-row{align-items:flex-start}
+.avatar-save-row .ink-button{min-width:138px;font-size:12px;padding:12px 14px}
+.friends-layout{min-height:440px}
+.friend-sidebar{overflow:visible}
+.chat-compose{position:sticky;bottom:0;background:var(--paper)}}
+@media(orientation:landscape) and (max-height:580px) and (min-width:521px){.account-layout{grid-template-columns:170px minmax(0,1fr)}
+.account-dialog{height:calc(100dvh - 24px);max-height:calc(100dvh - 24px)}
+.identity-panel{padding:16px;overflow:auto;display:block}
+.identity-kicker,.experience-label,.experience-track,.experience-note,.identity-bottom{display:none}
+.avatar-portrait{margin:0;display:inline-block}
+.avatar-portrait img{width:68px;height:68px}
+.level-stamp{right:-48px;font-size:9px}
+.level-stamp b{font-size:22px}
+.player-name{font-size:26px;margin-top:10px}
+.player-id{font-size:9px}
+.account-tabs{margin:18px -16px 0}
+.account-tabs button{font-size:11px;min-height:42px;padding-inline:14px}
+.account-content{padding:20px 24px}
+.account-heading{padding-bottom:18px}
+.account-heading h2{font-size:30px}
+.battle-summary{grid-template-columns:42% 58%;gap:16px}
+.win-loss-grid{grid-template-columns:1fr 1fr;gap:16px}
+.open-stat.total{grid-column:1/-1}
+.friends-layout{grid-template-columns:42% 58%;height:450px}
+.friend-sidebar{display:block!important;padding-right:16px;border-right:1px solid var(--line)}
+.chat-panel{display:flex!important;padding-left:16px}
+.chat-back{display:none}
+.avatar-grid{grid-template-columns:repeat(5,1fr)}}
+.friend-search input{flex:1;width:auto}
+.friend-search button{flex:none;min-width:52px;white-space:nowrap}
+.record-meta{font-size:12px}
+.record-players{font-size:11px}
+.record-top{font-size:13px}
+.record-top time{font-size:11px}
+.stats-note{font-size:12px}
+.player-id,.experience-label,.experience-note,.identity-bottom p{font-size:11px}
+.chat-compose button{flex:none;white-space:nowrap}
+.identity-panel .text-button{font-size:12px}
+.mobile-account-footer{display:none}
+@media(max-width:520px){.record-meta{font-size:11px}
+.record-players{font-size:10px}
+.record-top{font-size:12px}
+.record-top time{font-size:9px}
+.stats-note{font-size:11px}
+.player-id{font-size:9px}
+.experience-label{display:flex;grid-column:3;grid-row:1;flex-direction:column;gap:4px;margin:0;font-size:9px}
+.experience-label span:last-child::before{content:"/ "}
+.experience-track{display:block;grid-column:3;grid-row:2;width:70px;margin:0;height:3px}
+.mobile-account-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:20px;font-size:10px;margin-top:20px}
+.identity-panel .text-button{font-size:11px}
+.record-row{padding-block:16px}
+.tiny-button{min-height:40px}
+.friend-search button{min-height:44px}
+.chat-heading .text-button{min-height:36px}}
+@media(orientation:landscape) and (max-height:580px) and (min-width:521px){.record-top time{font-size:10px}
+.identity-bottom{display:block;padding-top:18px}
+.experience-label{display:flex;margin-top:12px;font-size:9px}
+.experience-track{display:block;margin-top:7px}
+.experience-note{display:none}}
+@media(max-width:520px){.battle-summary{grid-template-columns:minmax(0,.46fr) minmax(0,.54fr)}}
+@media(orientation:landscape) and (max-height:580px) and (min-width:521px){.battle-summary{grid-template-columns:minmax(0,.42fr) minmax(0,.58fr)}}
+.account-dialog{width:min(1080px,calc(100vw - 64px));height:min(720px,calc(100dvh - 80px))}
+.account-layout{grid-template-columns:220px minmax(0,1fr)}
+.identity-panel{background:transparent;padding:28px;border-right:1px solid var(--line)}
+.avatar-portrait{margin-top:20px}
+.avatar-portrait img{width:88px;height:88px;border:1px solid var(--ink)}
+.level-stamp{background:transparent;border:0;transform:none;bottom:4px;right:-50px;font:11px var(--sans);padding:0;gap:3px}
+.level-stamp b{font-size:18px;font-weight:500}
+.player-name{font-size:34px;margin-top:22px}
+.player-id{font-size:11px;margin-top:10px}
+.experience-label{font-size:11px;margin-top:24px}
+.experience-track{height:3px;background:var(--line)}
+.account-tabs{margin:36px -28px 0;gap:6px}
+.account-tabs button{border-left:3px solid transparent;min-height:48px;padding:12px 25px;font-size:14px;font-weight:400}
+.account-tabs button.active{background:transparent;border-color:var(--red);color:var(--red);font-weight:600}
+.account-tabs button:not(.active):hover{background:transparent;color:var(--red)}
+.identity-bottom button{font-size:12px}
+.account-content{padding:32px 40px}
+.account-heading{padding-bottom:28px}
+.account-heading h2{font-size:34px;transform:none;margin:0;font-weight:500}
+.battle-summary{padding:0 0 28px;min-height:176px;border-bottom:1px solid var(--line)}
+.win-rate{padding:0}
+.win-rate::before{display:none}
+.win-rate>small{font-size:12px;letter-spacing:0}
+.win-rate strong{font-size:96px;letter-spacing:-5px;margin-top:8px;line-height:1.1}
+.win-rate strong span{font-size:18px;letter-spacing:0;margin-left:12px}
+.open-stat small{font-size:12px}
+.open-stat strong{font-size:38px}
+.open-stat.total strong{font-size:38px}
+.open-stat.total{gap:20px}
+.open-stat .loss-number{color:var(--red)}
+.stats-explanation,.account-help{font-size:11px;color:var(--muted);margin:12px 0 28px;line-height:1.9}
+.stats-explanation summary,.account-help summary,.record-detail summary{cursor:pointer;width:fit-content;min-height:28px;padding-block:4px}
+.stats-explanation summary:focus-visible,.account-help summary:focus-visible,.record-detail summary:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.stats-explanation p,.account-help p{margin-top:8px;color:var(--ink);font-size:12px}
+.records-heading{margin-bottom:10px}
+.records-heading h3{font-size:15px;font-weight:500}
+.record-row{grid-template-columns:36px minmax(0,1fr);gap:24px;padding:18px 0}
+.record-result,.record-result.lose{background:transparent;border:0;transform:none;font-family:var(--display);font-size:32px;line-height:1.2;padding:0;margin:0}
+.record-top{font-size:13px;gap:12px}
+.record-top strong{font-weight:500}
+.record-top time{font-size:11px}
+.record-meta{font-size:12px;gap:16px;align-items:baseline;margin-top:6px}
+.record-detail{font-size:11px;line-height:1.8;min-width:0;color:var(--muted)}
+.record-detail[open]{flex-basis:100%;color:var(--ink)}
+.record-detail p{margin-top:8px;overflow-wrap:anywhere;font-size:12px}
+.login-info{border-top:0;padding-top:0;gap:24px}
+.login-info small{font-size:12px}
+.login-info strong{font-size:14px;font-weight:500}
+.registered-info{grid-column:1/-1}
+.account-help{margin-bottom:24px}
+.avatar-heading h3{font:500 15px var(--sans)}
+.avatar-grid{gap:10px;padding:20px 0}
+.avatar-option{padding:10px 4px}
+.avatar-option img{width:58px;height:58px;border-color:var(--line)}
+.avatar-option:hover{background:transparent}
+.avatar-option:has(input:checked){background:transparent;border-color:var(--ink)}
+.avatar-option span{font-size:10px}
+.avatar-save-row{justify-content:flex-end;border:0;padding-top:10px}
+.avatar-save-row .ink-button{min-width:140px;font-size:13px}
+.friends-layout{grid-template-columns:40% 60%}
+.friend-section-title{font-size:12px;letter-spacing:0;margin:20px 0 12px}
+.request-row{background:transparent;padding:0 0 14px;border-bottom:1px solid var(--line)}
+.tiny-button{background:transparent;min-height:36px;font-size:11px;border-color:var(--line)}
+.friend-item{padding:12px 8px;min-height:70px}
+.friend-item strong{font-size:13px;font-weight:500}
+.friend-item small{font-size:10px}
+.friend-item.active{background:transparent;border-left:2px solid var(--red)}
+.friend-item:not(.active){border-left:2px solid transparent}
+.friend-item:hover{background:transparent;color:var(--red)}
+.friend-item img{width:34px;height:34px;border-color:var(--line)}
+.chat-heading .text-button{font-size:11px}
+.chat-heading h3{font-size:14px;font-weight:500}
+.chat-bubble{background:var(--peach);font-size:12px;margin-bottom:20px}
+.chat-bubble.mine{background:var(--lime)}
+.invite-strip{border:0;border-block:1px solid var(--line);padding:14px 0;transform:none;background:transparent}
+.invite-strip strong{font:500 14px var(--sans)}
+.invite-strip p{font-size:11px}
+.invite-strip button{margin-top:10px}
+.chat-date{margin-bottom:18px}
+.confirm-actions .ink-button{min-width:88px;justify-content:center}
+@media(max-width:1150px){.account-layout{grid-template-columns:190px minmax(0,1fr)}
+.identity-panel{padding:24px}
+.account-tabs{margin-inline:-24px}
+.account-tabs button{padding-inline:21px}
+.account-content{padding:28px}
+.account-dialog{width:calc(100vw - 48px)}}
+@media(max-width:800px){.account-layout{grid-template-columns:176px minmax(0,1fr)}
+.identity-panel{padding:20px}
+.account-tabs{margin-inline:-20px}
+.account-tabs button{padding-inline:17px;font-size:13px}
+.account-content{padding:24px}
+.account-dialog{width:calc(100vw - 32px);height:calc(100dvh - 48px);max-height:calc(100dvh - 48px)}
+.battle-summary{grid-template-columns:1fr;gap:26px}
+.win-loss-grid{grid-template-columns:1fr 1fr 1fr}
+.open-stat.total{grid-column:auto;display:block}
+.open-stat strong,.open-stat.total strong{font-size:32px}
+.friends-layout{grid-template-columns:1fr;min-height:360px}
+.friend-item.active{border-color:transparent}}
+@media(max-width:520px){.account-dialog{width:calc(100vw - 20px);height:calc(100dvh - 24px);max-height:calc(100dvh - 24px)}
+.account-layout{display:flex;flex-direction:column}
+.identity-panel{display:grid;grid-template-columns:58px minmax(0,1fr) 78px;padding:16px 20px 0;border:0;gap:6px 14px;flex:none}
+.avatar-portrait{margin:0;grid-row:1/3}
+.avatar-portrait img{width:52px;height:52px}
+.level-stamp{position:absolute;right:2px;bottom:-5px;font-size:8px;background:var(--paper);padding:2px 4px}
+.level-stamp b{font-size:12px}
+.player-name{font-size:27px;margin:0;grid-column:2;align-self:end}
+.player-id{font-size:9px;margin:0;grid-column:2;align-self:start}
+.experience-label{display:flex;flex-direction:column;grid-column:3;grid-row:1;gap:4px;margin:0;font-size:9px}
+.experience-label span:last-child::before{content:none}
+.experience-track{display:block;grid-column:3;grid-row:2;width:78px;margin:0;height:3px}
+.account-tabs{grid-column:1/-1;flex-direction:row;margin:16px -20px 0;gap:0;border-block:1px solid var(--line)}
+.account-tabs button{flex:1;justify-content:center;border-left:0;border-bottom:2px solid transparent;padding:10px 6px;font-size:12px;min-height:46px}
+.account-tabs button.active{border-bottom-color:var(--red)}
+.identity-bottom{display:none}
+.account-content{padding:24px 20px;min-height:0;flex:1}
+.account-heading{padding-bottom:24px}
+.account-heading h2{font-size:28px}
+.battle-summary{grid-template-columns:minmax(0,.48fr) minmax(0,.52fr);gap:12px;min-height:155px;padding:0 0 20px}
+.win-rate>small{font-size:11px}
+.win-rate strong{font-size:76px;letter-spacing:-4px}
+.win-rate strong span{font-size:14px;margin-left:8px}
+.win-loss-grid{grid-template-columns:1fr 1fr;gap:16px}
+.open-stat.total{grid-column:1/-1;display:flex;gap:12px}
+.open-stat small{font-size:11px}
+.open-stat strong,.open-stat.total strong{font-size:28px}
+.stats-explanation{margin:8px 0 24px}
+.stats-explanation summary,.account-help summary,.record-detail summary{min-height:36px;padding-block:8px}
+.record-row{grid-template-columns:24px minmax(0,1fr);gap:16px;padding:18px 0}
+.record-result,.record-result.lose{font-size:26px}
+.record-top{font-size:12px;gap:8px}
+.record-top time{font-size:9px}
+.record-meta{font-size:11px;gap:12px;margin-top:2px}
+.record-detail summary{min-height:30px;padding-block:4px}
+.record-detail p{font-size:11px}
+.login-info{gap:18px}
+.login-info small{font-size:11px}
+.login-info strong{font-size:13px}
+.account-help{margin:8px 0 22px}
+.avatar-grid{grid-template-columns:repeat(3,1fr);padding:16px 0;gap:8px}
+.avatar-option img{width:52px;height:52px}
+.avatar-save-row .ink-button{min-width:136px}
+.mobile-account-footer{display:flex;justify-content:flex-start;margin-top:18px;padding-top:12px;border-top:1px solid var(--line)}
+.friend-section-title{font-size:11px}
+.tiny-button{min-height:40px}
+.friend-item{min-height:72px}
+.friends-layout{min-height:410px}
+.chat-panel{padding:0}
+.chat-compose{background:var(--paper)}}
+@media(orientation:landscape) and (max-height:580px) and (min-width:521px){.account-layout{display:grid;grid-template-columns:164px minmax(0,1fr)}
+.identity-panel{display:block;overflow:auto;padding:20px;border-right:1px solid var(--line)}
+.avatar-portrait img{width:54px;height:54px}
+.avatar-portrait{margin:0;display:inline-block}
+.level-stamp{right:-44px;bottom:4px}
+.player-name{font-size:26px;margin-top:14px}
+.player-id{font-size:9px}
+.experience-label{margin-top:16px;display:flex}
+.experience-track{margin-top:8px;display:block}
+.account-tabs{margin:24px -20px 0}
+.account-tabs button{min-height:44px;padding:10px 17px;font-size:12px}
+.identity-bottom{display:block;padding-top:20px}
+.account-content{padding:20px 24px}
+.account-dialog{height:calc(100dvh - 24px);max-height:calc(100dvh - 24px)}
+.battle-summary{grid-template-columns:minmax(0,.45fr) minmax(0,.55fr);gap:16px}
+.win-loss-grid{grid-template-columns:1fr 1fr}
+.open-stat.total{grid-column:1/-1;display:flex}
+.friends-layout{grid-template-columns:40% 60%;height:430px}
+.friend-sidebar{border-right:1px solid var(--line);padding-right:16px}
+.chat-panel{padding-left:16px}
+.avatar-grid{grid-template-columns:repeat(5,1fr)}}
+.avatar-picker{margin-top:24px}
+.avatar-picker>summary{cursor:pointer;width:fit-content;min-height:44px;padding:12px 0;font-size:13px;font-weight:500}
+.avatar-picker>summary:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.notification-dot{position:absolute;top:0;right:-5px;min-width:16px;height:16px;font-size:9px;display:grid;place-items:center;background:var(--red);color:var(--paper);border-radius:50%}
+.player-name,.player-id span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peach-hub{line-height:normal;text-align:left}
+:where(.peach-hub) h2,:where(.peach-hub) h3{color:inherit}
+.player-name{font-weight:700}
+.game-container .app-viewport .peach-hub :is(.friend-search input,.chat-compose textarea){font-size:12px}
+@media(max-width:800px){.game-container .app-viewport .peach-hub :is(.friend-search input,.chat-compose textarea){font-size:16px}}
+.player-id{flex-wrap:wrap;gap:4px 12px}
+.player-id span{max-width:100%}
+.win-rate{min-width:0}.win-rate strong{white-space:nowrap}.win-rate strong.long-rate{font-size:70px;letter-spacing:-3px}
+.open-stat strong{overflow-wrap:anywhere}
+.friend-item>span{min-width:0}.friend-item strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-heading h3{max-width:50%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peach-hub .chat-heading .text-button{min-height:36px}
+.form-error{font-size:12px;color:var(--red);padding-top:12px;line-height:1.8}
+.pop-invite-alert{position:fixed;right:24px;bottom:24px;z-index:2500;width:min(340px,calc(100vw - 48px));padding:20px;background:var(--paper);border:1px solid var(--ink)}
+@media(max-width:520px){
+ .account-dialog{max-width:calc(100vw - 20px)}
+ .win-rate strong{font-size:clamp(50px,17vw,76px);letter-spacing:-3px}
+ .win-rate strong.long-rate{font-size:clamp(38px,12vw,54px);letter-spacing:-2px}
+ .win-rate strong span{margin-left:5px}
+}
+@media(prefers-reduced-motion:reduce){.peach-hub *, .peach-hub *::before,.peach-hub *::after{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:no-preference) {
+ .account-dialog[open] { animation:account-open 320ms cubic-bezier(.2,.8,.2,1) both; }
+ .account-dialog::backdrop { animation:account-backdrop 200ms both; }
+ .account-section-enter-active { transition:opacity 240ms,transform 300ms cubic-bezier(.2,.8,.2,1); }
+ .account-section-leave-active { transition:opacity 120ms;pointer-events:none; }
+ .account-section-enter-from { opacity:0;transform:translateY(12px); }
+ .account-section-leave-to { opacity:0; }
+ .account-tabs button { transition:color 180ms,background 180ms,translate 180ms; }.account-tabs button.active { translate:4px 0; }
+ .avatar-option { transition:background 180ms,transform 180ms; }.avatar-option:hover { transform:translateY(-3px); }
+}
+@keyframes account-open { from { opacity:0;transform:translateY(20px) scale(.98); }to { opacity:1;transform:none; } }
+@keyframes account-backdrop { from { opacity:0; }to { opacity:1; } }

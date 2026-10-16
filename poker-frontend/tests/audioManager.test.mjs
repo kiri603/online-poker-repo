@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { getCardFeedback } from "../src/store/battleFeedback.js";
 
-function setup({ requireGesture = false } = {}) {
+function setup({ requireGesture = false, savedLevels = null } = {}) {
   const audios = [];
   const watchers = [];
   const warnings = [];
@@ -26,7 +26,7 @@ function setup({ requireGesture = false } = {}) {
     };
   };
   const document = { ...eventTarget(), hidden: false, visibilityState: "visible" };
-  const window = { ...eventTarget(), localStorage: { getItem: () => null, setItem: () => {} } };
+  const window = { ...eventTarget(), localStorage: { getItem: () => savedLevels, setItem: () => {} } };
   const sound = { value: true };
   const context = vm.createContext({
     isSoundOn: sound, getCardFeedback, console: { warn: (...args) => warnings.push(args) }, Date, setTimeout, clearTimeout,
@@ -63,12 +63,40 @@ function setup({ requireGesture = false } = {}) {
   const setSound = (value) => { sound.value = value; watchers.find((w) => w.source === sound).cb(value); };
   return {
     audios, api: context.api, warnings, playback, document, window,
+    setLevels(patch) { Object.assign(context.api.audioLevels, patch); watchers.find((w) => w.source === context.api.audioLevels).cb(); },
     bgm: () => audios.findLast((audio) => /\/(Normal|Exciting|Welcome|Win|Lose)\.mp3$/.test(audio.src)),
     dispatch: document.dispatch, mute: () => setSound(false), unmute: () => setSound(true),
   };
 }
 
 const settlePlayback = () => new Promise((resolve) => setImmediate(resolve));
+
+test("sound settings immediately adjust active music, dialogue, effects and countdown independently", () => {
+  const t = setup();
+  t.api.playBGM("Normal");
+  t.api.playAudio("action_gushou");
+  t.api.playAudio("skill_tieqi_horse");
+  t.api.playAudio("countdown");
+  t.setLevels({ music: .6, voice: .2, effects: .1 });
+  assert.equal(t.audios[0].volume, .6 * .38);
+  assert.equal(t.audios[1].volume, .2);
+  assert.equal(t.audios[2].volume, .1 * .6);
+  assert.equal(t.audios[3].volume, .1 * .8);
+  t.setLevels({ effects: 0 });
+  assert.equal(t.audios[1].volume, .2);
+  assert.equal(t.audios[2].volume, 0);
+  assert.equal(t.audios[3].volume, 0);
+  t.audios[1].finish();
+  assert.equal(t.audios[0].volume, .6);
+});
+
+test("saved volume settings clamp valid numbers and tolerate malformed storage", () => {
+  assert.equal(setup({ savedLevels: '{"music":9,"voice":-2,"effects":0}' }).api.audioLevels.music, 1);
+  assert.equal(setup({ savedLevels: '{"voice":-2}' }).api.audioLevels.voice, 0);
+  for (const savedLevels of ['null', 'false', '{"music":"bad"}', '{"music":1e999}', 'invalid']) {
+    assert.equal(setup({ savedLevels }).api.audioLevels.music, .3);
+  }
+});
 
 test("BGM keeps the media element unlocked by a gesture across track changes", async () => {
   const t = setup({ requireGesture: true });
@@ -317,4 +345,38 @@ test("room exit cancels pending judgement, whereas mute still shows it silently"
     assert.deepEqual(stages, leave ? [] : ["judge"]);
     assert.equal(t.audios.length, 1);
   }
+});
+
+test('changing effects volume updates running countdown and one-shot sounds', () => {
+  const t = setup();
+  t.api.playAudio('countdown');
+  t.api.playAudio('shuffle');
+  t.api.playAudio('skill_tieqi_horse');
+  t.setLevels({ effects: .2 });
+  assert.equal(t.audios[0].volume, .2 * .8);
+  assert.equal(t.audios[1].volume, .2 * .7);
+  assert.equal(t.audios[2].volume, .2 * .6);
+});
+
+test('zero dialogue volume releases queued visual stages without playing silent speech', () => {
+  const t = setup(), stages = [];
+  t.api.playAudio('single_7');
+  t.api.playVoicePresentation('action_tieqi', () => stages.push('judge'));
+  t.setLevels({ voice: 0 });
+  assert.equal(t.audios[0].paused, true);
+  assert.deepEqual(stages, ['judge']);
+  assert.equal(t.audios.length, 1);
+  t.api.playVoicePresentation('action_guixin', () => stages.push('unity'));
+  assert.deepEqual(stages, ['judge', 'unity']);
+  assert.equal(t.audios.length, 1);
+});
+
+test('audio preview suppression restores concurrent tutorial ducking', () => {
+  const t = setup();
+  t.api.playBGM('Welcome');
+  t.api.setMusicDucking('tutorial', true);
+  t.api.setMusicDucking('preview', true, 0);
+  assert.equal(t.bgm().volume, 0);
+  t.api.setMusicDucking('preview', false);
+  assert.equal(t.bgm().volume, .3 * .45);
 });

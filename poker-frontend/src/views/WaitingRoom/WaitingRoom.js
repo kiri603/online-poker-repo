@@ -147,7 +147,7 @@ const seatSlots = computed(() => {
 
 const occupiedCount = computed(() => displayPlayers.value.length);
 
-// 游客和脚本 AI 沿用按座位轮换的默认头像，注册账号使用服务端保存的头像。
+// 优先显示服务端分配的 AI 头像或账号头像，缺失时按座位使用默认头像。
 const DEFAULT_AVATARS = [
   "/images/emojis/01_xiao.png",
   "/images/emojis/02_kaixin.png",
@@ -293,5 +293,6 @@ export {
   addAiAndClose,
   inviteFromModal,
   toggleSettingsPanel,
+  updateSettings,
   toggleFriendDrawerExclusive,
 };

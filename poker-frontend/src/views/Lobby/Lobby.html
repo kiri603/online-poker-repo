@@ -1,9 +1,9 @@
-<div class="lobby-shell">
+<div class="lobby-shell" :class="{ 'lobby-shell-pop': uiTheme === 'pop' }">
   <TutorialInvitation />
   <TutorialSelector v-if="showTutorialSelector" />
-  <div class="lobby-vignette" aria-hidden="true"></div>
+  <div v-if="uiTheme !== 'pop'" class="lobby-vignette" aria-hidden="true"></div>
 
-  <div class="lobby-top-left">
+  <div v-if="uiTheme !== 'pop'" class="lobby-top-left">
     <div class="lobby-brand" aria-label="三国斗地主">
       <div class="brand-frame">
         <span class="brand-main">三国斗地主</span>
@@ -47,68 +47,71 @@
     </div>
   </div>
 
-  <div class="lobby-top-right">
-    <button
-      type="button"
-      class="global-sound-btn"
-      :class="{ 'is-muted': !soundStatus }"
-      @click="toggleSound"
-      :aria-label="soundStatus ? '静音背景音乐' : '开启背景音乐'"
-    >
-      <!--
-        Inline SVG instead of <use href="#icon-soundsize"> because the
-        iconfont.cn sprite hard-codes fill="#000000" on the inner <path>.
-        Paths inside a <use> shadow tree can't inherit a color change from
-        outside, which is why the icon previously rendered pitch-black
-        against the dark button.
-      -->
-      <svg
-        v-if="soundStatus"
-        class="sound-icon"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          fill="currentColor"
-          d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
-        />
-        <path
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          d="M15.5 8.5a5 5 0 0 1 0 7"
-        />
-        <path
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          d="M19 5a10 10 0 0 1 0 14"
-        />
-      </svg>
-      <svg
-        v-else
-        class="sound-icon"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          fill="currentColor"
-          d="M11 5 6 9H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l5 4a1 1 0 0 0 1.6-.8V5.8A1 1 0 0 0 11 5Z"
-        />
-        <path
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          d="m15.5 9.5 6 6M21.5 9.5l-6 6"
-        />
-      </svg>
-    </button>
+  <div v-if="uiTheme !== 'pop'" class="lobby-top-right">
+    <SettingsButton compact class="global-sound-btn" />
   </div>
 
-  <main class="lobby-main">
+
+  <main v-if="uiTheme === 'pop'" class="pop-lobby scene paper-scene" :class="{ 'motion-paused': motionPaused }" :inert="showCreateModal || showRules || showUpdates">
+    <header class="pop-lobby-header scene-header">
+      <div v-if="authUser?.guest" class="pop-guest"><span>{{ authUser.nickname || authUser.username }}</span><button type="button" @click="logout">退出</button></div>
+      <PopAccountButton v-else-if="authUser" class="pop-hall-account" />
+      <SettingsButton compact class="pop-hall-settings" />
+    </header>
+    <div class="pop-lobby-body paper-layout">
+      <section class="paper-stage" aria-labelledby="pop-hall-title">
+        <div class="paper-title-wrap">
+          <span class="title-index" aria-hidden="true">♠ / 01</span>
+          <h1 id="pop-hall-title">联机<span>大厅<i class="title-period" aria-hidden="true"></i></span></h1>
+          <span class="paper-title-sticker" aria-hidden="true"><svg class="suit" viewBox="0 0 100 120" fill="currentColor"><path :d="roomSuits[1]" /></svg></span>
+        </div>
+        <div class="paper-art art-area" aria-hidden="true" @pointermove="updatePaperParallax" @pointerleave="resetPaperParallax">
+          <div class="paper-dot-field"></div><div class="paper-step step-one"></div><div class="paper-step step-two"></div><div class="paper-disc breathe"></div>
+          <div class="paper-card-stack float">
+            <div v-for="card in paperCards" :key="card.rank" class="playing-card paper-card" :class="card.className">
+              <span class="card-corner">{{ card.rank }}<svg class="suit" viewBox="0 0 100 120" fill="currentColor"><path :d="roomSuits[card.suit]" /></svg></span>
+              <svg class="suit card-face" viewBox="0 0 100 120" fill="currentColor"><path :d="roomSuits[card.suit]" /></svg>
+              <span class="card-corner card-corner-bottom">{{ card.rank }}<svg class="suit" viewBox="0 0 100 120" fill="currentColor"><path :d="roomSuits[card.suit]" /></svg></span>
+            </div>
+          </div>
+          <div class="paper-spark"><svg class="icon" viewBox="0 0 24 24"><path d="m12 1 2.2 7.8L22 6l-4.8 6 4.8 6-7.8-2.8L12 23l-2.2-7.8L2 18l4.8-6L2 6l7.8 2.8Z" /></svg></div>
+          <div class="paper-chip"><svg class="suit" viewBox="0 0 100 120" fill="currentColor"><path :d="roomSuits[2]" /></svg></div><div class="paper-ground"></div>
+        </div>
+        <div class="paper-entry-dock">
+          <form class="pop-room-entry room-entry" @submit.prevent="handleJoinClick">
+            <label for="paper-room-id">房间号</label>
+            <div class="entry-field"><input id="paper-room-id" v-model="roomId" inputmode="numeric" pattern="[0-9]{1,6}" maxlength="6" placeholder="输入房间号" autocomplete="off" required /><button type="submit" aria-label="加入输入的房间"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button></div>
+          </form>
+          <button class="action primary create-button" type="button" @click="openCreateRoom">创建房间 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></button>
+        </div>
+      </section>
+      <section class="pop-room-ledger paper-ledger" aria-labelledby="pop-room-list-title">
+        <div class="ledger-binding" aria-hidden="true"><i></i><i></i></div>
+        <header class="room-heading"><h2 id="pop-room-list-title">公开房间 <span class="room-count">{{ String(filteredRooms.length).padStart(2, '0') }}</span></h2><button type="button" class="pop-refresh refresh-button" :disabled="refreshing" aria-label="刷新房间" @click="refreshRooms"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10a8 8 0 1 0-1 8M20 4v6h-6" /></svg><span>{{ refreshing ? '刷新中…' : '刷新' }}</span></button></header>
+        <nav class="pop-room-filters room-filters" aria-label="房间模式筛选"><button type="button" :aria-pressed="roomFilter==='all'" @click="roomFilter='all'">全部</button><button type="button" :aria-pressed="roomFilter==='classic'" @click="roomFilter='classic'">经典</button><button type="button" :aria-pressed="roomFilter==='skill'" @click="roomFilter='skill'">武将 / 锦囊</button></nav>
+        <TransitionGroup name="pop-room" tag="div" class="pop-room-list room-list">
+          <div v-if="!filteredRooms.length" key="empty" class="pop-room-empty"><p>{{ roomFilter==='all' ? '暂无公开房间' : '该模式暂无房间' }}</p><button type="button" class="action primary" @click="openCreateRoom">创建房间</button></div>
+          <article v-for="(room, index) in filteredRooms" :key="room.roomId" class="pop-room-row room-row">
+            <div class="room-emblem" aria-hidden="true"><svg class="suit" viewBox="0 0 100 120" fill="currentColor"><path :d="roomSuits[index % roomSuits.length]" /></svg></div>
+            <div class="room-identity"><h3>{{ room.roomId }}</h3><span class="room-mode">{{ getRoomModeLabel(room) }}</span><span v-if="room.status==='PLAYING'" class="compact-room-state">游戏中</span></div>
+            <div class="pop-seat-group room-occupancy" role="img" :aria-label="'已入座 '+(room.playerCount || 0)+' 人，共 '+getRoomCapacity(room)+' 个座位'">
+              <div class="pop-seats seats" aria-hidden="true"><svg v-for="seat in getRoomCapacity(room)" :key="seat" class="suit seat-suit" viewBox="-8 -8 116 136" :class="{ occupied: seat <= (room.playerCount || 0), 'red-suit': seat % 2 === 0 }"><path :d="roomSuits[(seat - 1) % roomSuits.length]" /></svg></div>
+              <span aria-hidden="true">{{ room.playerCount || 0 }} / {{ getRoomCapacity(room) }} 人</span>
+            </div>
+            <span class="room-state" :class="{ 'is-playing': room.status==='PLAYING' }">{{ room.status==='PLAYING' ? '游戏中' : '准备中' }}</span>
+            <button type="button" class="room-join" :aria-label="'加入房间 '+room.roomId" @click="quickJoin(room.roomId)">加入 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12" /></svg></button>
+          </article>
+        </TransitionGroup>
+        <div class="ledger-bottom" aria-hidden="true"><span>♠</span><span></span><span>{{ String(filteredRooms.length).padStart(2, '0') }}</span></div>
+      </section>
+    </div>
+    <footer class="pop-lobby-footer scene-footer">
+      <div class="footer-links"><button type="button" @click="openTutorialSelection"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6C8 3 4 4 3 5v14c3-2 6-2 9 0 3-2 6-2 9 0V5c-3-2-6-1-9 1Zm0 0v13" /></svg>新手教学</button><button type="button" @click="openInfoPanel('rules')">游戏规则 ↗</button><button type="button" @click="openInfoPanel('updates')">更新公告</button></div>
+      <button type="button" class="paper-motion" :aria-pressed="!motionPaused" @click="motionPaused = !motionPaused">{{ motionPaused ? '开启动效' : '暂停动效' }}</button>
+      <span class="footer-suits" aria-hidden="true">♠ <i>♥</i> ♣ <i>♦</i></span>
+    </footer>
+  </main>
+  <main v-if="uiTheme !== 'pop'" class="lobby-main">
     <h1 class="lobby-title">
       <span class="lobby-title-text">联机大厅</span>
     </h1>
@@ -198,6 +201,7 @@
     </section>
   </main>
 
+  <Transition name="pop-info">
   <div
     v-if="showRules || showUpdates"
     class="info-overlay"
@@ -238,7 +242,8 @@
         </button>
       </div>
 
-      <div v-if="activeInfoTab === 'updates'" class="info-body">
+      <Transition name="pop-info-section" mode="out-in">
+      <div v-if="activeInfoTab === 'updates'" key="updates" class="info-body">
         <h2 class="info-headline">最新更新内容</h2>
         <ul class="info-list">
 
@@ -289,7 +294,7 @@
         </ul>
       </div>
 
-      <div v-else class="info-body">
+      <div v-else key="rules" class="info-body">
         <h2 class="info-headline">核心规则玩法</h2>
         <ul class="info-list">
           <li>
@@ -324,6 +329,7 @@
         </ul>
       </div>
 
+      </Transition>
       <div class="info-actions">
         <button type="button" class="info-primary" @click="closeInfoPanel">
           我知道了
@@ -334,15 +340,21 @@
       </div>
     </div>
   </div>
+  </Transition>
 
+  <Transition name="pop-info">
   <div
     v-if="showCreateModal"
     class="info-overlay create-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-room-title"
     @click.self="showCreateModal = false"
+    @keydown="handleCreateKeydown"
   >
-    <div class="info-panel info-panel-narrow">
+    <div ref="createPanel" class="info-panel info-panel-narrow">
       <div class="info-panel-tabs single">
-        <span class="info-tab active">创建房间</span>
+        <span id="create-room-title" class="info-tab active">创建房间</span>
         <button
           type="button"
           class="info-close"
@@ -357,11 +369,14 @@
       </div>
 
       <div class="info-body create-body">
-        <div class="create-roomno">
+        <label v-if="uiTheme === 'pop'" class="create-roomno create-roomno-field">
+          <span>房间号</span><input v-model="roomId" class="create-roomno-input" aria-label="创建房间号" inputmode="numeric" pattern="[0-9]{1,6}" maxlength="6" required autocomplete="off" @keydown.enter.prevent="confirmPaperCreate" />
+        </label>
+        <div v-else class="create-roomno">
           房间号 <strong>{{ roomId }}</strong>
         </div>
         <ul class="settings-list">
-          <li class="setting-item">
+          <li v-if="uiTheme !== 'pop'" class="setting-item">
             <span>🎴 经典场（默认规则）</span>
             <label class="switch">
               <input type="checkbox" checked disabled />
@@ -369,23 +384,23 @@
             </label>
           </li>
           <li class="setting-item">
-            <span>📐 启用锦囊牌</span>
+            <span>{{ uiTheme === 'pop' ? '锦囊牌' : '📐 启用锦囊牌' }}</span>
             <label class="switch">
-              <input type="checkbox" v-model="roomSettings.enableScrollCards" />
+              <input type="checkbox" v-model="roomSettings.enableScrollCards" aria-label="锦囊牌" />
               <span class="slider"></span>
             </label>
           </li>
           <li class="setting-item">
-            <span>🗡️ 启用武将技能</span>
+            <span>{{ uiTheme === 'pop' ? '武将技能' : '🗡️ 启用武将技能' }}</span>
             <label class="switch">
-              <input type="checkbox" v-model="roomSettings.enableSkills" />
+              <input type="checkbox" v-model="roomSettings.enableSkills" aria-label="武将技能" />
               <span class="slider"></span>
             </label>
           </li>
           <li class="setting-item">
-            <span>🔐 设为私密房间</span>
+            <span>{{ uiTheme === 'pop' ? '私密房间' : '🔐 设为私密房间' }}</span>
             <label class="switch">
-              <input type="checkbox" v-model="isPrivate" />
+              <input type="checkbox" v-model="isPrivate" aria-label="私密房间" />
               <span class="slider"></span>
             </label>
           </li>
@@ -396,6 +411,9 @@
           v-model="roomPassword"
           type="password"
           class="create-password-input"
+          aria-label="房间密码"
+          pattern="[0-9]{4}"
+          required
           placeholder="请设置 4 位数字密码"
           maxlength="4"
           inputmode="numeric"
@@ -413,11 +431,12 @@
         <button
           type="button"
           class="info-primary"
-          @click="confirmCreateRoom"
+          @click="uiTheme === 'pop' ? confirmPaperCreate() : confirmCreateRoom()"
         >
           确认创建
         </button>
       </div>
     </div>
   </div>
+  </Transition>
 </div>

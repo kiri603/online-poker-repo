@@ -126,3 +126,19 @@ test("the Xiaotao voice switch mutes only narration and is retained across dialo
     assert.equal(t.audio.paused, true, "The local switch cannot override global mute");
   } finally { t.close(); }
 });
+
+test('zero dialogue volume pauses narration and exposes a muted state for full subtitles', async () => {
+  const t = setup();
+  try {
+    t.audio.currentTime = 3;
+    t.audioLevels.voice = 0;
+    await nextTick();
+    assert.equal(t.voice.enabled.value, false);
+    assert.equal(t.audio.paused, true);
+    assert.equal(t.voice.playback.value.status, 'muted');
+    t.audioLevels.voice = .5;
+    await nextTick();
+    assert.equal(t.audio.paused, false);
+    assert.equal(t.audio.currentTime, 3);
+  } finally { t.close(); }
+});

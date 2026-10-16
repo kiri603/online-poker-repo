@@ -13,9 +13,10 @@ import { TUTORIAL_INVITATION_TEXT } from "@/tutorial/tutorialVoiceLines.js";
 import { authUser, dailySignInVisible, showRules, showUpdates, showCreateModal, showRuleDetail, isConnected, isReconnecting } from "@/store/gameState.js";
 import { socialDrawerOpen, socialProfileVisible, socialInvitePrompt } from "@/store/socialStore.js";
 import { openTutorial, tutorialInvitations, showTutorialSelector } from "@/store/tutorialState.js";
+import { settingsOpen } from '@/store/uiSettings.js';
 const visible = ref(false);
 let offeredTo = null;
-const blocked = computed(() => showTutorialSelector.value || dailySignInVisible.value || showRules.value || showUpdates.value ||
+const blocked = computed(() => settingsOpen.value || showTutorialSelector.value || dailySignInVisible.value || showRules.value || showUpdates.value ||
   showCreateModal.value || showRuleDetail.value || isConnected.value || isReconnecting.value ||
   socialDrawerOpen.value || socialProfileVisible.value || !!socialInvitePrompt.value);
 watch([authUser, blocked], ([user, waiting]) => {

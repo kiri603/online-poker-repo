@@ -553,6 +553,84 @@ class GameWebSocketReliabilityTest {
         assertEquals(session.getId(), attributes.get(AuthSessionKeys.GAME_HTTP_SESSION_ID));
     }
 
+    @Test
+    void publicHarvestSnapshotIncludesRemainingPoolAndNeverPrivateHands() throws Exception {
+        WebSocketSession viewer=session("viewer", "watcher");join(viewer,true);
+        GameRoom room=service.getRoom("room");
+        Card card=Card.getCard("♥","4",2);
+        room.setCurrentAoeType("WGFD");
+        room.getSettings().put("wgfdCards",List.of(card));
+        room.getSettings().put("wgfdQueue",List.of("a"));
+        clearInvocations(viewer);
+        ReflectionTestUtils.invokeMethod(handler,"broadcastGameState","room");
+        verify(viewer).sendMessage(argThat(m->m instanceof TextMessage t&&t.getPayload().contains("wgfdCards")&&t.getPayload().contains("wgfdQueue")&&!t.getPayload().contains("handCards")));
+    }
+
+    @Test
+    void scriptedBotAvatarsStayInSyncAcrossWaitingPlayingAndReconnect() throws Exception {
+        var catalog = new com.game.poker.service.AvatarCatalog();
+        ReflectionTestUtils.setField(service, "avatarCatalog", catalog);
+        WebSocketSession owner = session("owner", "p1");
+        join(owner, true);
+        WebSocketSession viewer = session("viewer", "p2");
+        join(viewer, false);
+        List<com.fasterxml.jackson.databind.JsonNode> ownerStates = new ArrayList<>();
+        List<com.fasterxml.jackson.databind.JsonNode> viewerStates = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
+        doAnswer(invocation -> {
+            var state = mapper.readTree(((TextMessage) invocation.getArgument(0)).getPayload());
+            if ("SYNC_STATE".equals(state.path("event").asText())) ownerStates.add(state);
+            return null;
+        }).when(owner).sendMessage(any());
+        doAnswer(invocation -> {
+            var state = mapper.readTree(((TextMessage) invocation.getArgument(0)).getPayload());
+            if ("SYNC_STATE".equals(state.path("event").asText())) viewerStates.add(state);
+            return null;
+        }).when(viewer).sendMessage(any());
+
+        handler.handleTextMessage(owner, new TextMessage("{\"type\":\"ADD_SCRIPT_AI\",\"roomId\":\"room\"}"));
+        handler.handleTextMessage(owner, new TextMessage("{\"type\":\"ADD_SCRIPT_AI\",\"roomId\":\"room\"}"));
+        GameRoom room = service.getRoom("room");
+        Map<String, String> avatars = new HashMap<>();
+        for (var player : room.getPlayers()) {
+            if (!player.isBot()) continue;
+            assertTrue(catalog.list().stream().anyMatch(avatar -> avatar.url().equals(player.getAvatar())),
+                    "Each AI must receive an avatar from the existing catalog when it joins");
+            avatars.put(player.getUserId(), player.getAvatar());
+        }
+        assertEquals(2, avatars.size());
+        assertFalse(ownerStates.getLast().path("isStarted").asBoolean());
+        assertEquals(ownerStates.getLast().path("players"), viewerStates.getLast().path("players"));
+
+        room.getPlayers().get(1).setReady(true);
+        room.getSettings().put("enableSkills", true);
+        service.startGame("room", "p1");
+        ReflectionTestUtils.invokeMethod(handler, "broadcastGameState", "room");
+        assertEquals("SKILL_SELECTION", ownerStates.getLast().path("phase").asText());
+        service.doStartGame(room);
+        room.setCurrentTurnIndex(0);
+        ReflectionTestUtils.invokeMethod(handler, "broadcastGameState", "room");
+        assertTrue(ownerStates.getLast().path("isStarted").asBoolean());
+        assertEquals(ownerStates.getLast().path("players"), viewerStates.getLast().path("players"));
+
+        WebSocketSession recovered = session("reconnected", "p1");
+        List<com.fasterxml.jackson.databind.JsonNode> recoveredStates = new ArrayList<>();
+        doAnswer(invocation -> {
+            var state = mapper.readTree(((TextMessage) invocation.getArgument(0)).getPayload());
+            if ("SYNC_STATE".equals(state.path("event").asText())) recoveredStates.add(state);
+            return null;
+        }).when(recovered).sendMessage(any());
+        join(recovered, false);
+        assertFalse(recoveredStates.isEmpty());
+        for (var state : java.util.stream.Stream.of(ownerStates, viewerStates, recoveredStates).flatMap(List::stream).toList()) {
+            for (var player : state.path("players")) {
+                if (player.path("isBot").asBoolean()) {
+                    assertEquals(avatars.get(player.path("userId").asText()), player.path("avatar").asText());
+                }
+            }
+        }
+    }
+
     private GameRoom startTwoPlayerGame(WebSocketSession first) throws Exception {
         join(first, true);
         join(session("second", "p2"), false);

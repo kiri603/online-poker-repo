@@ -58,7 +58,7 @@ watch(
 
 const trapHubFocus = (event) => {
   const items = Array.from(event.currentTarget.querySelectorAll(
-    "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex='0']",
+    "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), summary, [tabindex='0']",
   )).filter((element) => element.getClientRects().length > 0);
   const first = items[0], last = items.at(-1);
   if (event.shiftKey && document.activeElement === first) {

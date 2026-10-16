@@ -1,4 +1,5 @@
-<div class="auth-shell">
+<div class="auth-shell" :class="{ 'auth-shell-pop': uiTheme === 'pop' }">
+  <SettingsButton class="auth-settings-entry" />
   <div v-if="!authChecked" class="auth-loading-card">
     <div class="loading-spinner" aria-hidden="true"></div>
     <h2 class="auth-loading-title">正在恢复登录</h2>
@@ -6,9 +7,18 @@
   </div>
 
   <template v-else>
-    <div class="auth-vignette" aria-hidden="true"></div>
+    <div v-if="uiTheme !== 'pop'" class="auth-vignette" aria-hidden="true"></div>
 
-    <section class="auth-hero">
+    <section ref="popHero" class="auth-stage" :class="{ 'pop-login-hero': uiTheme === 'pop', 'artwork-ready': artworkReady, 'pop-auth-open': uiTheme === 'pop' && authModalVisible }" @pointermove="moveArtwork" @pointerleave="resetArtwork">
+      <Transition name="pop-entry">
+      <div v-if="uiTheme === 'pop' && !authModalVisible" class="pop-login-entry">
+        <h1 class="pop-login-title"><span class="pop-sr-only">三国斗地主</span><img src="/images/themes/pop-title-ink.png" class="pop-title-art" alt="" aria-hidden="true" fetchpriority="high" /></h1>
+        <div class="pop-entry-actions"><button type="button" class="pop-start-button" :disabled="authLoading" @click="submitGuestLogin"><span>{{ authLoading ? '进入中…' : '开始游戏' }}</span><span aria-hidden="true">→</span></button><button type="button" class="pop-account-button" :disabled="authLoading" @click="openAuthModal">账号登录</button></div>
+      </div>
+      </Transition>
+      <div v-if="uiTheme === 'pop'" class="pop-login-visual"><div class="pop-portrait-layer"><img class="pop-silhouette" src="/images/themes/xiaotao-silhouette-complete.png" alt="" aria-hidden="true" /></div><div class="pop-character-layer"><img class="pop-xiaotao" src="/images/themes/pop-xiaotao.png" alt="小桃眨眼比耶，手持红色卡牌" fetchpriority="high" /></div></div>
+
+    <section v-if="uiTheme !== 'pop'" class="auth-hero">
       <h1 class="auth-title">
         <span class="auth-title-text">三国斗地主</span>
       </h1>
@@ -16,7 +26,7 @@
       <p class="auth-tagline">经典玩法 · 轻松上手 · 随时开局</p>
     </section>
 
-      <div class="auth-cta-row">
+      <div v-if="uiTheme !== 'pop'" class="auth-cta-row">
         <button
           type="button"
           class="cta cta-primary"
@@ -49,22 +59,26 @@
         </button>
       </div>
 
+    <Transition name="auth-form" @after-enter="focusAuthInput">
     <div
       v-if="authModalVisible"
-      class="auth-modal-overlay"
-      role="dialog"
-      aria-modal="true"
+      :class="uiTheme === 'pop' ? 'pop-auth-inline' : 'auth-modal-overlay'"
+      :role="uiTheme === 'pop' ? 'region' : 'dialog'"
+      :aria-modal="uiTheme === 'pop' ? undefined : true"
       aria-labelledby="auth-modal-title"
       @click.self="closeAuthModal"
+      @keydown.esc.stop="closeAuthModal"
+      @keydown.tab="trapAuthFocus"
     >
-      <div class="auth-modal">
+      <form class="auth-modal" @submit.prevent="submitAuth">
         <button
           type="button"
           class="modal-close"
-          aria-label="关闭登录"
+          :aria-label="uiTheme === 'pop' ? '返回首页' : '关闭登录'"
           @click="closeAuthModal"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <span v-if="uiTheme === 'pop'"><span aria-hidden="true">←</span> 返回</span>
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M18 6L6 18"/>
             <path d="M6 6l12 12"/>
           </svg>
@@ -75,11 +89,10 @@
         </h2>
         <p class="modal-subtitle">欢迎回到三国战局</p>
 
-        <div class="auth-tabs" role="tablist">
+        <div class="auth-tabs" role="group" aria-label="登录或注册" :data-mode="authMode">
           <button
             type="button"
-            role="tab"
-            :aria-selected="authMode === 'login'"
+            :aria-pressed="authMode === 'login'"
             :class="['auth-tab', { active: authMode === 'login' }]"
             @click="switchAuthMode('login')"
           >
@@ -87,8 +100,7 @@
           </button>
           <button
             type="button"
-            role="tab"
-            :aria-selected="authMode === 'register'"
+            :aria-pressed="authMode === 'register'"
             :class="['auth-tab', { active: authMode === 'register' }]"
             @click="switchAuthMode('register')"
           >
@@ -101,19 +113,21 @@
           <input
             v-model.trim="authUsername"
             maxlength="20"
-            placeholder="用户名（4-20位）"
+            :placeholder="uiTheme === 'pop' ? '请输入用户名' : '用户名（4-20位）'"
+            autocomplete="username"
           />
         </label>
 
         <label class="field">
           <span class="field-label">密码</span>
-          <input
+          <span class="password-input-wrap" :class="{ 'pop-password-field': uiTheme === 'pop' }"><input
             v-model="authPassword"
-            type="password"
+            aria-label="密码"
+            :type="uiTheme === 'pop' && authPasswordVisible ? 'text' : 'password'"
             maxlength="64"
-            placeholder="密码（至少8位，需含字母和数字）"
-            @keyup.enter="submitAuth"
-          />
+            :placeholder="uiTheme === 'pop' ? '请输入密码' : '密码（至少8位，需含字母和数字）'"
+            :autocomplete="authMode === 'register' ? 'new-password' : 'current-password'"
+          /><button v-if="uiTheme === 'pop'" type="button" class="pop-password-toggle" :aria-label="authPasswordVisible ? '隐藏密码' : '显示密码'" :aria-pressed="authPasswordVisible" @click="authPasswordVisible = !authPasswordVisible"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button></span>
         </label>
 
         <label class="field captcha-field">
@@ -121,12 +135,13 @@
           <div class="captcha-row">
             <input
               v-model.trim="authCaptchaCode"
+              aria-label="验证码"
               maxlength="8"
               placeholder="请输入验证码"
-              @keyup.enter="submitAuth"
             />
+            <button v-if="uiTheme === 'pop'" type="button" class="pop-captcha-button" aria-label="刷新验证码" @click="refreshCaptcha"><img v-if="authCaptchaImage" :src="authCaptchaImage" alt="验证码" /></button>
             <img
-              v-if="authCaptchaImage"
+              v-else-if="authCaptchaImage"
               :src="authCaptchaImage"
               alt="点击刷新验证码"
               title="点击刷新"
@@ -138,15 +153,18 @@
 
         <p v-if="authError" class="auth-message error" role="alert">{{ authError }}</p>
         <p v-if="authSuccess" class="auth-message success" role="status">{{ authSuccess }}</p>
+        <p v-if="uiTheme === 'pop' && !authError && !authSuccess" class="pop-form-message" aria-hidden="true"></p>
 
         <button
-          type="button"
+          type="submit"
           class="modal-submit"
           :disabled="authLoading"
-          @click="submitAuth"
         >
-          {{ authLoading ? '提交中...' : authMode === 'register' ? '注册并进入大厅' : '登录进入大厅' }}
+          <Transition name="pop-label" mode="out-in"><span :key="authMode">
+          {{ authLoading ? '提交中...' : uiTheme === 'pop' ? (authMode === 'register' ? '注册' : '登录') : (authMode === 'register' ? '注册并进入大厅' : '登录进入大厅') }}
+          </span></Transition>
         </button>
+        <p v-if="uiTheme === 'pop'" class="pop-password-hint">注册密码至少 8 位，包含字母和数字</p>
 
         <p class="modal-hint">
           还没账号？
@@ -158,7 +176,9 @@
             {{ authMode === 'login' ? '点此注册' : '返回登录' }}
           </button>
         </p>
-      </div>
+      </form>
     </div>
+    </Transition>
+    </section>
   </template>
 </div>

@@ -2092,8 +2092,8 @@
   bottom: 220px;
   height: auto;
   background: rgba(10, 6, 4, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   display: flex;
   justify-content: center;
   align-items: center;
