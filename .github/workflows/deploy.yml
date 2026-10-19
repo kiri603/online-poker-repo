@@ -10,6 +10,14 @@ on:
         description: '已验证的安卓资源草稿 Release ID，留空执行原有网站与后端发布'
         required: false
         type: string
+      android_archive_url:
+        description: '资源包的短期下载链接，由发布脚本传入'
+        required: false
+        type: string
+      android_checksum_url:
+        description: '校验文件的短期下载链接，由发布脚本传入'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -101,7 +109,6 @@ jobs:
       - name: 下载并验证已签名的安卓资源
         id: resources
         env:
-          GH_TOKEN: ${{ github.token }}
           RELEASE_ID: ${{ inputs.android_release_id }}
         run: |
           mkdir android-release
@@ -113,13 +120,15 @@ jobs:
           import { pipeline } from 'node:stream/promises';
           import { createHash } from 'node:crypto';
           const config = JSON.parse(await readFile('scripts/android-update-release.json', 'utf8'));
+          const event = JSON.parse(await readFile(process.env.GITHUB_EVENT_PATH, 'utf8'));
           assert.match(process.env.RELEASE_ID, /^[0-9]+$/);
           assert.equal(String(config.releaseId), process.env.RELEASE_ID);
-          for (const [id, name] of [[config.archiveAssetId, 'android-updates.tar.gz'], [config.checksumAssetId, 'android-updates.tar.gz.sha256']]) {
+          for (const [id, name, download] of [[config.archiveAssetId, 'android-updates.tar.gz', event.inputs.android_archive_url], [config.checksumAssetId, 'android-updates.tar.gz.sha256', event.inputs.android_checksum_url]]) {
             assert.ok(Number.isSafeInteger(id) && id > 0);
-            const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/releases/assets/${id}`, {
-              headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/octet-stream' }, signal: AbortSignal.timeout(300000),
-            });
+            const url = new URL(download);
+            assert.ok(url.protocol === 'https:' && ['release-assets.githubusercontent.com', 'objects.githubusercontent.com'].includes(url.hostname));
+            console.log('::add-mask::' + url.href);
+            const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(300000) });
             assert.equal(response.status, 200, 'Release asset download failed');
             await pipeline(Readable.fromWeb(response.body), createWriteStream('android-release/' + name));
           }
