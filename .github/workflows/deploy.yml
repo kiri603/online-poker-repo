@@ -5,6 +5,23 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      android_release_id:
+        description: '已验证的安卓资源草稿 Release ID，留空执行原有网站与后端发布'
+        required: false
+        type: string
+      android_archive_url:
+        description: '资源包的短期下载链接，由发布脚本传入'
+        required: false
+        type: string
+      android_checksum_url:
+        description: '校验文件的短期下载链接，由发布脚本传入'
+        required: false
+        type: string
+      android_base_archive_url:
+        description: '差异发布复用的旧完整包短期下载链接'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -15,6 +32,7 @@ concurrency:
 
 jobs:
   build-and-deploy:
+    if: github.event_name != 'workflow_dispatch' || inputs.android_release_id == ''
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -81,3 +99,135 @@ jobs:
             else
               sudo -n bash "$stage/deploy-poker.sh" "$stage"
             fi
+
+  deploy-android-resources:
+    if: github.event_name == 'workflow_dispatch' && inputs.android_release_id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 验证差异资源组装逻辑
+        run: node --test scripts/assemble-android-update.test.mjs
+
+      - name: 下载并验证已签名的安卓资源
+        id: resources
+        env:
+          RELEASE_ID: ${{ inputs.android_release_id }}
+        run: |
+          mkdir android-release
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFile, appendFile } from 'node:fs/promises';
+          import { createWriteStream } from 'node:fs';
+          import { Readable } from 'node:stream';
+          import { pipeline } from 'node:stream/promises';
+          import { createHash } from 'node:crypto';
+          const config = JSON.parse(await readFile('scripts/android-update-release.json', 'utf8'));
+          const event = JSON.parse(await readFile(process.env.GITHUB_EVENT_PATH, 'utf8'));
+          assert.match(process.env.RELEASE_ID, /^[0-9]+$/);
+          assert.equal(String(config.releaseId), process.env.RELEASE_ID);
+          const assets = [[config.archiveAssetId, 'android-updates.tar.gz', event.inputs.android_archive_url], [config.checksumAssetId, 'android-updates.tar.gz.sha256', event.inputs.android_checksum_url]];
+          if (config.delta) {
+            assert.ok(Number.isSafeInteger(config.delta.baseSequence) && config.delta.baseSequence > 0 && config.delta.baseSequence < config.sequence);
+            assert.match(config.delta.baseArchiveSha256, /^[a-f0-9]{64}$/);
+            assets.push([config.delta.baseArchiveAssetId, 'android-base.tar.gz', event.inputs.android_base_archive_url]);
+          }
+          for (const [id, name, download] of assets) {
+            assert.ok(Number.isSafeInteger(id) && id > 0);
+            const url = new URL(download);
+            assert.ok(url.protocol === 'https:' && ['release-assets.githubusercontent.com', 'objects.githubusercontent.com'].includes(url.hostname));
+            console.log('::add-mask::' + url.href);
+            const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(300000) });
+            assert.equal(response.status, 200, 'Release asset download failed');
+            await pipeline(Readable.fromWeb(response.body), createWriteStream('android-release/' + name));
+          }
+          assert.match(config.archiveSha256, /^[a-f0-9]{64}$/);
+          assert.equal(createHash('sha256').update(await readFile('android-release/android-updates.tar.gz')).digest('hex'), config.archiveSha256);
+          assert.equal((await readFile('android-release/android-updates.tar.gz.sha256', 'utf8')).trim().split(/\s+/)[0], config.archiveSha256);
+          if (config.delta) assert.equal(createHash('sha256').update(await readFile('android-release/android-base.tar.gz')).digest('hex'), config.delta.baseArchiveSha256);
+          assert.ok(Number.isSafeInteger(config.sequence) && config.sequence > 0);
+          const scriptHash = createHash('sha256').update(await readFile('scripts/deploy-android-updates.sh')).digest('hex');
+          await appendFile(process.env.GITHUB_OUTPUT, `sequence=${config.sequence}\nscript_hash=${scriptHash}\n`);
+          NODE
+          mkdir android-extracted
+          tar -xzf android-release/android-updates.tar.gz -C android-extracted --no-same-owner
+          if [ -f android-release/android-base.tar.gz ]; then
+            mkdir android-base
+            tar -xzf android-release/android-base.tar.gz -C android-base --no-same-owner
+            mv android-release/android-base.tar.gz android-base-input.tar.gz
+            node scripts/assemble-android-update.mjs android-base android-extracted android-complete scripts/android-update-release.json
+            tar -czf android-release/android-updates.tar.gz -C android-complete android-updates
+          else
+            node scripts/verify-android-update.mjs android-extracted scripts/android-update-release.json
+          fi
+          # Repacking changes the archive hash; deploy the hash of the complete archive.
+          (cd android-release && sha256sum android-updates.tar.gz > android-updates.tar.gz.sha256)
+          printf 'archive_hash=%s\n' "$(sha256sum android-release/android-updates.tar.gz | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+          cp scripts/deploy-android-updates.sh android-release/
+
+      - name: 准备服务器发布目录
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 2m
+          script: |
+            set -eu
+            umask 077
+            test -d /var/www/html
+            mkdir /tmp/poker-android-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: 上传安卓资源
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: 'android-release/*'
+          target: '/tmp/poker-android-${{ github.run_id }}-${{ github.run_attempt }}'
+          strip_components: 1
+          timeout: 60s
+          command_timeout: 10m
+
+      - name: 校验资源并原子切换版本清单
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 5m
+          script: |
+            set -eu
+            stage=/tmp/poker-android-${{ github.run_id }}-${{ github.run_attempt }}
+            printf '%s  %s\n' '${{ steps.resources.outputs.script_hash }}' "$stage/deploy-android-updates.sh" | sha256sum -c -
+            if [ "$(id -u)" = 0 ]; then
+              bash "$stage/deploy-android-updates.sh" "$stage" '${{ steps.resources.outputs.sequence }}' '${{ steps.resources.outputs.archive_hash }}'
+            else
+              sudo -n bash "$stage/deploy-android-updates.sh" "$stage" '${{ steps.resources.outputs.sequence }}' '${{ steps.resources.outputs.archive_hash }}'
+            fi
+
+      - name: 验证公网版本清单和资源
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFile } from 'node:fs/promises';
+          import { createHash } from 'node:crypto';
+          const expected = await readFile('android-extracted/android-updates/latest.json');
+          const response = await fetch('http://39.102.60.181/android-updates/latest.json', { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(30000) });
+          assert.equal(response.status, 200);
+          assert.deepEqual(Buffer.from(await response.arrayBuffer()), expected);
+          const manifest = JSON.parse(Buffer.from(JSON.parse(expected).payload, 'base64'));
+          const sample = ['index.html', ...['js', 'css'].map(ext => manifest.files.find(file => file.path.startsWith('assets/index-') && file.path.endsWith('.' + ext)).path)];
+          for (const name of sample) {
+            const file = manifest.files.find(file => file.path === name);
+            const resource = await fetch(`http://39.102.60.181/android-updates/bundles/${manifest.sequence}/${name}`, { redirect: 'error', signal: AbortSignal.timeout(30000) });
+            assert.equal(resource.status, 200);
+            assert.equal(createHash('sha256').update(Buffer.from(await resource.arrayBuffer())).digest('hex'), file.sha256);
+          }
+          console.log(`Public Android resource release ${manifest.sequence} verified`);
+          NODE
