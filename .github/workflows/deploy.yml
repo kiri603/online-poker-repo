@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      privacy_only:
+        description: '只发布画地为刃隐私政策'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -15,6 +21,7 @@ concurrency:
 
 jobs:
   build-and-deploy:
+    if: github.event_name != 'workflow_dispatch' || inputs.privacy_only != true
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -81,3 +88,49 @@ jobs:
             else
               sudo -n bash "$stage/deploy-poker.sh" "$stage"
             fi
+
+  publish-tracebound-privacy:
+    if: github.event_name == 'workflow_dispatch' && inputs.privacy_only == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: 校验隐私政策
+        run: |
+          test -s tracebound-privacy/index.html
+          cd tracebound-privacy
+          sha256sum index.html > SHA256SUMS
+      - name: 上传政策到独立临时目录
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: 'tracebound-privacy/index.html,tracebound-privacy/SHA256SUMS'
+          target: '/tmp/tracebound-privacy-${{ github.run_id }}-${{ github.run_attempt }}'
+          strip_components: 1
+      - name: 创建独立网页目录
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 2m
+          script: |
+            set -eu
+            stage=/tmp/tracebound-privacy-${{ github.run_id }}-${{ github.run_attempt }}
+            target=/var/www/html/tracebound-privacy
+            test "$(realpath -e /var/www/html)" = /var/www/html
+            test ! -e "$target" && test ! -L "$target"
+            cd "$stage"
+            sha256sum -c SHA256SUMS
+            runroot() { if [ "$(id -u)" = 0 ]; then "$@"; else sudo -n "$@"; fi; }
+            runroot mkdir -- "$target"
+            runroot chmod 0755 -- "$target"
+            runroot install -m 0644 -- index.html "$target/index.html.tmp"
+            runroot mv -- "$target/index.html.tmp" "$target/index.html"
+      - name: 核对公网政策内容
+        run: |
+          status=$(curl -sS --max-time 30 -o published.html -w '%{http_code}' https://sanguoddz.xyz/tracebound-privacy/)
+          test "$status" = 200
+          cmp tracebound-privacy/index.html published.html
