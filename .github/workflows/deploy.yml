@@ -121,12 +121,19 @@ jobs:
             stage=/tmp/tracebound-privacy-${{ github.run_id }}-${{ github.run_attempt }}
             target=/var/www/html/tracebound-privacy
             test "$(realpath -e /var/www/html)" = /var/www/html
-            test ! -e "$target" && test ! -L "$target"
             cd "$stage"
             sha256sum -c SHA256SUMS
             runroot() { if [ "$(id -u)" = 0 ]; then "$@"; else sudo -n "$@"; fi; }
-            runroot mkdir -- "$target"
-            runroot chmod 0755 -- "$target"
+            if [ -d "$target" ] && [ ! -L "$target" ]; then
+              test "$(realpath -e "$target")" = "$target"
+              test -f "$target/index.html" && test ! -L "$target/index.html"
+              printf '%s  %s\n' b9eecc0e6365eb58db73799642e3f238e9578065fa77cb5a57353ff36e060298 "$target/index.html" | sha256sum -c -
+            else
+              test ! -e "$target" && test ! -L "$target"
+              runroot mkdir -- "$target"
+              runroot chmod 0755 -- "$target"
+            fi
+            test ! -e "$target/index.html.tmp" && test ! -L "$target/index.html.tmp"
             runroot install -m 0644 -- index.html "$target/index.html.tmp"
             runroot mv -- "$target/index.html.tmp" "$target/index.html"
       - name: 核对公网政策内容
