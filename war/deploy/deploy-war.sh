@@ -25,7 +25,7 @@ fi
 if [[ -e "$unit" && ! -f "$target/.war-game-managed" ]]; then
     printf 'Refusing to replace an existing unmanaged service\n'; exit 1
 fi
-if [[ -L "$target/current" ]]; then
+if [[ -L "$target/current" && -f "$unit" ]]; then
     old_current=$(readlink -f "$target/current")
     [[ "$old_current" == "$target/releases/"* ]]
 fi
@@ -50,6 +50,7 @@ printf '%s\n' "$old_current" > "$backup/previous-release"
 
 restore() {
     local result=$?
+    if [[ "$result" == 0 ]]; then result=1; fi
     trap - ERR INT TERM
     set +e
     if [[ "$service_changed" == 1 ]]; then
@@ -57,6 +58,8 @@ restore() {
         if [[ -n "$old_current" ]]; then
             ln -sfn "$old_current" "$target/current.rollback"
             mv -Tf "$target/current.rollback" "$target/current"
+        else
+            rm -f "$target/current"
         fi
         if [[ -f "$backup/war-game.service" ]]; then
             cp "$backup/war-game.service" "$unit"
@@ -117,7 +120,13 @@ if include.strip() not in text:
 PY
 nginx -t
 systemctl reload nginx
-curl -fsS --max-time 10 --resolve sanguoddz.xyz:443:127.0.0.1 https://sanguoddz.xyz/war/health | python3 -c 'import json,sys; assert json.load(sys.stdin)["version"] == "battle-pvp-1"'
+# Reload returns before old nginx workers have finished handing over the route.
+route_ready=0
+for attempt in $(seq 1 20); do
+    if curl -fsS --max-time 3 --resolve sanguoddz.xyz:443:127.0.0.1 https://sanguoddz.xyz/war/health | python3 -c 'import json,sys; assert json.load(sys.stdin)["version"] == "battle-pvp-1"' 2>/dev/null; then route_ready=1; break; fi
+    sleep 1
+done
+test "$route_ready" = 1
 curl -fsS --max-time 10 --resolve sanguoddz.xyz:443:127.0.0.1 https://sanguoddz.xyz/war/ -o "$backup/war-home.html"
 grep -q '<title>全面战争</title>' "$backup/war-home.html"
 main_after=$(curl -fsS --max-time 10 --resolve sanguoddz.xyz:443:127.0.0.1 https://sanguoddz.xyz/ | sha256sum | cut -d ' ' -f 1)
