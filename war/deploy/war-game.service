@@ -1,0 +1,29 @@
+[Unit]
+Description=War demo multiplayer server
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+WorkingDirectory=/opt/war-game/current
+ExecStart=/opt/war-game/current/runtime/node /opt/war-game/current/serve.mjs
+Environment=NODE_ENV=production
+Environment=BATTLE_HOST=127.0.0.1
+Environment=BATTLE_PORT=5190
+Environment=BATTLE_TRUST_PROXY=1
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

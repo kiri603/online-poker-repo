@@ -1,0 +1,81 @@
+name: Deploy war demo
+
+on:
+  push:
+    branches: [codex/war]
+    paths: [war/**, .github/workflows/deploy-war.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Serialize production changes with the existing poker deployment workflow.
+concurrency:
+  group: poker-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: war
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: war/package-lock.json
+      - name: Install, test, audit and build
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          npm audit --omit=dev --audit-level=high
+          npm run build
+          bash -n deploy/deploy-war.sh
+      - name: Package application and isolated Node runtime
+        run: |
+          mkdir -p release/app/runtime release/app/node_modules
+          cp index.html package.json serve.mjs release/app/
+          cp -R server src deploy release/app/
+          cp -R node_modules/ws release/app/node_modules/
+          cp "$(command -v node)" release/app/runtime/node
+          node_root="$(dirname "$(dirname "$(command -v node)")")"
+          cp "$node_root/LICENSE" release/app/runtime/LICENSE
+          tar -czf release/war.tar.gz -C release/app .
+          cp deploy/deploy-war.sh release/deploy-war.sh
+          cd release
+          sha256sum war.tar.gz deploy-war.sh > SHA256SUMS
+      - name: Upload war release
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: war/release/war.tar.gz,war/release/deploy-war.sh,war/release/SHA256SUMS
+          target: /tmp/war-release-${{ github.run_id }}-${{ github.run_attempt }}
+          strip_components: 2
+          timeout: 60s
+          command_timeout: 5m
+      - name: Activate isolated service and war route
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          command_timeout: 5m
+          script: |
+            set -eu
+            stage=/tmp/war-release-${{ github.run_id }}-${{ github.run_attempt }}
+            release=${{ github.run_id }}-${{ github.run_attempt }}
+            if [ "$(id -u)" = 0 ]; then
+              bash "$stage/deploy-war.sh" "$stage" "$release"
+            else
+              sudo -n bash "$stage/deploy-war.sh" "$stage" "$release"
+            fi
+      - name: Verify public HTTPS and multiplayer endpoint
+        run: |
+          curl --retry 3 --fail --silent --show-error https://sanguoddz.xyz/war/health
+          node deploy/smoke.mjs https://sanguoddz.xyz/war/

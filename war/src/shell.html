@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#aebebd">
+  <meta name="description" content="全面战争，荒诞军团的即时战术战场。">
+  <title>全面战争</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23b83c2b' d='M8 4h48v56H8z'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='38' fill='%23fff' font-family='serif'%3E战%3C/text%3E%3C/svg%3E">
+  <style>/* INLINE_STYLE */</style>
+</head>
+<body>
+  <main id="app" data-view="home">
+    <canvas id="world" aria-label="可以拖动旋转的三维荒诞军团战场"></canvas>
+    <div class="loading" id="loading" role="status">正在进入战场<span></span></div>
+    <section class="home" id="home" aria-label="主菜单">
+      <div class="wordmark">
+        <span class="seal" aria-hidden="true">乱</span>
+        <h1><span>全面</span><span>战争<span class="title-dot" aria-hidden="true">。</span></span></h1>
+      </div>
+      <nav class="menu" aria-label="游戏菜单">
+        <button class="enter" id="enter"><span>进入战场</span><svg viewBox="0 0 48 24" aria-hidden="true"><path d="M1 12H43M33 2l10 10-10 10"/></svg></button>
+        <div class="secondary"><button id="open-pvp">联网对战</button><span aria-hidden="true">/</span><button id="open-codex">兵种图鉴</button><span aria-hidden="true">/</span><button id="open-settings">设置</button></div>
+      </nav>
+    </section>
+    <section class="codex" id="codex" aria-label="兵种图鉴" hidden>
+      <button class="back" data-home><svg viewBox="0 0 24 16" aria-hidden="true"><path d="M23 8H2m6-6L2 8l6 6"/></svg>返回</button>
+      <div class="unit-copy"><span class="unit-number" id="unit-number">01 / 06</span><h2 id="unit-name">耄耋</h2><p class="unit-role" id="unit-role">突袭</p><p class="unit-trait" id="unit-trait"></p><dl id="unit-stats"></dl></div>
+      <div class="unit-pagination"><button id="previous-unit" aria-label="上一个兵种">←</button><div id="unit-tabs" aria-label="选择兵种"></div><button id="next-unit" aria-label="下一个兵种">→</button></div>
+    </section>
+    <section class="battle" id="battle" aria-label="第一关：河岸争夺" hidden>
+      <canvas id="battle-overlay" aria-hidden="true"></canvas>
+      <header class="battle-header">
+        <div class="battle-heading"><button id="battle-home" aria-label="返回主菜单">←</button><div><span id="battle-heading-label">第一关</span><h2 id="battle-title">河岸争夺</h2></div></div>
+        <div class="battle-score" aria-label="己方存活与视野内敌军人数"><b id="ally-count">0</b><span>对已发现</span><b id="enemy-count">0</b><small id="battle-phase">准备布阵</small></div>
+        <nav class="battle-top-actions" aria-label="战场选项"><button id="battle-sound" aria-pressed="true" title="开启或关闭战斗音效">音效 开</button><button id="battle-camera" title="重置视角 · H">视角</button><button id="battle-restart">重来</button><button id="battle-surrender" title="离开房间并认输" hidden>认输离开</button><button id="battle-help" aria-label="操作帮助">?</button></nav>
+      </header>
+      <p class="battle-objective" id="battle-objective">在西岸布阵，侦察并击败对岸守军</p>
+      <div class="battle-intel"><span>128 × 84 · 大战场</span><span id="vision-status">敌军位置未知 · 向前侦察</span></div>
+      <div class="battle-room" id="battle-room" hidden><span>房间 <b id="room-code"></b></span><button id="copy-room" title="复制房间码">复制房间码</button><span id="room-connection" role="status" aria-live="polite"></span></div>
+      <div class="battle-notice" id="battle-notice" role="status" aria-live="polite" hidden></div>
+      <div class="battle-hover" id="battle-hover" hidden></div>
+      <div class="battle-selection" id="battle-selection" hidden><strong id="selection-title">已选中</strong><span id="selection-mode">待命</span><span id="selection-order"></span><div class="army-modes" role="group" aria-label="军队状态"><button id="battle-hold" aria-pressed="true" title="待命：原地攻击射程内可见目标 · C">待命</button><button id="battle-auto" aria-pressed="false" title="自动战斗：追击全队视野内目标 · X">自动战斗</button></div><button id="battle-remove" title="移除并返还预算 · Delete">移除</button></div>
+      <nav class="battle-strategy" aria-label="战术计划">
+        <button id="tool-select" aria-pressed="true" title="选取部队 · V"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v16l5-5 4 7 3-2-4-7 7-1Z"/></svg><span>选择</span><kbd>V</kbd></button>
+        <button id="tool-frontline" aria-pressed="false" title="选中部队后，拖动画出战线 · F"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 18 5-9 8 3 5-8M7 11l-3-1m10 2 1-4m4-1 3 1"/></svg><span>战线</span><kbd>F</kbd></button>
+        <button id="tool-offensive" aria-pressed="false" title="从战线向目标拖出推进箭头 · G"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 20 4M11 4h9v9"/></svg><span>推进</span><kbd>G</kbd></button>
+        <span class="strategy-divider"></span><button id="execute-plan" title="执行或停止推进 · Enter"><span id="execute-icon">▷</span><span id="execute-label">执行计划</span></button>
+      </nav>
+      <div class="battle-dock" id="preparation-dock">
+        <div class="deployment-options"><span class="budget"><small>剩余预算</small><b id="battle-budget">4,200</b></span><fieldset id="batch-options"><legend>批量</legend><button data-count="1" aria-pressed="true">1</button><button data-count="5" aria-pressed="false">5</button><button data-count="10" aria-pressed="false">10</button></fieldset><fieldset id="formation-options"><legend>阵型</legend><button data-formation="grid" aria-pressed="true">方阵</button><button data-formation="line" aria-pressed="false">横列</button><button data-formation="wedge" aria-pressed="false">楔形</button></fieldset><div class="deployment-links"><button id="quick-deploy">推荐布阵</button><button id="undo-deploy" title="撤销上一批 · Ctrl+Z">撤销</button></div></div>
+        <div class="deployment-main"><div id="troop-roster" aria-label="选择部署兵种"></div><button class="start-battle" id="start-battle"><span id="start-label">开战</span><svg viewBox="0 0 36 20" aria-hidden="true"><path d="M1 10h32M24 2l9 8-9 8"/></svg></button></div>
+      </div>
+      <div class="combat-clock" id="combat-controls" hidden><button id="pause-battle" title="暂停 / 继续 · 空格" aria-label="暂停战斗">Ⅱ</button><time id="battle-time">00:00</time><button id="battle-speed" title="切换战斗速度">1×</button></div>
+      <div class="battle-map"><canvas id="minimap" width="360" height="236" aria-label="战场小地图，点击移动视角"></canvas><span>北 ↑</span></div>
+      <p class="battle-controls-hint" id="battle-controls-hint">左键框选 · 右键指挥 · 中键环视 · 滚轮缩放</p>
+      <div class="battle-result" id="battle-result" hidden><span id="result-eyebrow">第一关 · 河岸争夺</span><h2 id="result-title">拿下了。</h2><p id="result-stats"></p><div><button id="result-retry">重新布阵 ↗</button><button id="result-home">返回主菜单</button></div></div>
+    </section>
+    <div class="utilities"><button id="sound-toggle" aria-label="关闭声音" aria-pressed="true"><svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5zM16 9l6 6m0-6-6 6"/></svg><svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 5 9H2v6h3l6 5zM16 8q5 4 0 8m3-11q8 7 0 14"/></svg></button><button id="fullscreen" aria-label="全屏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></svg></button></div>
+    <p class="scene-hint" id="scene-hint">拖动 · 环视</p>
+    <dialog id="pvp-lobby" aria-labelledby="pvp-title">
+      <button class="close" id="close-pvp" aria-label="关闭联机面板">×</button>
+      <span class="lobby-eyebrow">1v1 · 河岸争夺</span><h2 id="pvp-title">联机对战</h2>
+      <p class="lobby-copy">创建房间，把房间码发给同一服务器上的对手。各自布阵，双方准备后开战。</p>
+      <button class="lobby-create" id="create-pvp">创建房间 <span aria-hidden="true">↗</span></button>
+      <form id="join-pvp-form"><label for="pvp-code">已有房间码</label><div class="lobby-join"><input id="pvp-code" autocomplete="off" spellcheck="false" maxlength="6" minlength="6" pattern="[A-Za-z2-9]{6}" placeholder="6 位房间码" required><button id="join-pvp" type="submit">加入</button></div></form>
+      <p id="pvp-status" role="status" aria-live="polite"></p>
+      <p class="lobby-note">每方 4,200 预算，最多 100 名。默认待命，可选自动战斗。联机不暂停、不倍速；掉线保留席位 30 秒，离开房间即认输。</p>
+    </dialog>
+    <dialog id="settings" aria-labelledby="settings-title">
+      <form method="dialog"><button class="close" aria-label="关闭设置">×</button></form>
+      <h2 id="settings-title">设置</h2>
+      <label class="setting-row"><span>场景亮度</span><input id="brightness" type="range" min="0.65" max="1.35" value="1" step="0.05"></label>
+      <label class="setting-row"><span>音效音量</span><input id="sound-volume" type="range" min="0" max="1" value="0.45" step="0.05"></label>
+      <label class="setting-row"><span>场景动态</span><input id="animation" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
+      <label class="setting-row"><span>精细阴影</span><input id="quality" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
+    </dialog>
+    <dialog id="battle-help-dialog" aria-labelledby="battle-help-title">
+      <form method="dialog"><button class="close" aria-label="关闭帮助">×</button></form><h2 id="battle-help-title">指挥手册</h2>
+      <dl class="help-controls"><div><dt>布阵</dt><dd>选兵种与数量，点击己方准备区内放置。R 旋转阵型；右键退出放置；Delete 移除选中部队。</dd></div><div><dt>指挥</dt><dd>左键点击或框选，Shift 追加，全选用 Ctrl+A。右键地面优先赶路；右键可见敌人集中攻击。默认待命，只攻击射程内可见目标，不主动移动。选中后按 C 待命、X 自动战斗；自动战斗会追击全队视野内目标，失去视野后停止。手动移动优先执行，到达后保留模式。</dd></div><div><dt>战略</dt><dd>先选部队，按 F 拖出战线，部队自动展开驻守。按 G 从战线拖向目的地，Enter 执行推进。右键可接管部分部队。单机可用慢速或暂停安排侧翼包抄；联机双方准备后统一开战，不能暂停或倍速。</dd></div><div><dt>视野</dt><dd>己方共享视野，耄耋侦察 18，坤坤 15，奶龙 11，其余 13。高地视野额外 +3.5。暗处保留地形，敌军模型、小地图标记和血条全部隐藏。敌军进入树林后，林外需靠近至 5.5 才能发现。高地与巨石也会挡住视线。</dd></div><div><dt>视角</dt><dd>WASD 平移，Q/E 旋转，中键环视，滚轮缩放，H 返回己方准备区。点击小地图快速转移视角，也可聚焦小地图后用方向键移动。单机按空格暂停，下令仍有效。</dd></div><div><dt>地形</dt><dd>高地对低处伤害 +15%，远程射程 +20%；树林移速 78%，远程伤害减免 35%；河流移速 43%，浅滩 72%，桥面正常通行；泥地移速 52%，道路 115%。树干与岩石阻挡行军，寻路会考虑减速与障碍。</dd></div><div><dt>音效</dt><dd>右上角切换战斗音效，主菜单设置可调整音量。近战、护盾、投射命中、音波和踏地有不同声音。关闭场景动态可关闭踏地镜头震动。</dd></div></dl>
+    </dialog>
+    <div class="error" id="error" role="alert" hidden><h2>画面未能启动</h2><p>请使用支持 WebGL 的浏览器，并开启图形加速。</p><button id="retry">重新进入</button></div>
+  </main>
+  <script>/* INLINE_SCRIPT */</script>
+</body>
+</html>
