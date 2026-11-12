@@ -23,7 +23,8 @@ jobs:
           script: |
             set -eu
             printf 'SSH user: '; id -un
-            printf 'System: '; uname -s
+            printf 'System: '; uname -sm
+            df -h /opt
             printf 'Node path: '; command -v node || true
             node --version 2>/dev/null || true
             printf 'Npm path: '; command -v npm || true
@@ -39,4 +40,7 @@ jobs:
                     clean=line.strip()
                     if re.match(r'^(server\s*\{|listen\s|server_name\s|root\s|location\s|proxy_pass\s|include\s)',clean):
                         print(clean)
+            print('DOMAIN_CONFIG_BEGIN')
+            print(pathlib.Path('/etc/nginx/sites-available/sanguoddz.xyz').read_text())
+            print('DOMAIN_CONFIG_END')
             PY
