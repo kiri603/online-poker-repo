@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>为什么说不改革就是死路一条</title>
+<style>
+:root{
+  color-scheme: light;
+  --paper:#efe9dd; --ink:#171512; --mute:#8a8276; --red:#c8211a;
+  --sans:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+  --serif:"Source Han Serif SC","Noto Serif SC","Noto Serif CJK SC","STZhongsong","Songti SC","SimSun",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--paper);overflow:hidden}
+svg{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center;font-family:var(--sans)}
+
+.trunk{fill:none;stroke:var(--ink);stroke-width:7;stroke-linecap:round}
+.twig{fill:none;stroke:var(--ink);stroke-width:1.6}
+.rule{stroke:var(--ink);stroke-width:1.6}
+.rule.main{stroke-width:7;stroke-linecap:round}
+.draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .7s cubic-bezier(.6,0,.2,1) forwards}
+
+.no{font-size:16px;font-weight:700;fill:var(--red);letter-spacing:.05em}
+.sub{font-size:16px;fill:var(--mute);letter-spacing:.12em}
+.lab{font-size:38px;font-weight:900;fill:var(--ink);letter-spacing:.06em}
+.kid{font-size:20px;fill:#2a2723}
+.kid .em{fill:var(--red);font-weight:700}
+.kid .big{font-size:48px;font-weight:900;fill:var(--red);letter-spacing:-.01em}
+.leaf{font-size:15px;fill:var(--mute);letter-spacing:.02em}
+
+.link{fill:none;stroke:var(--red);stroke-width:2;stroke-dasharray:2 7;stroke-linecap:round}
+.link-t{font-size:18px;fill:var(--ink);font-weight:700}
+.link-s{font-size:14px;fill:var(--red);letter-spacing:.3em;font-weight:700}
+
+.core circle{fill:var(--red)}
+.core text{fill:#fff;text-anchor:middle}
+.core .t1{font-size:19px;letter-spacing:.5em}
+.core .t2{font-family:var(--serif);font-size:72px;font-weight:900;letter-spacing:.04em}
+.core .t3{font-size:27px;font-weight:700;letter-spacing:.14em}
+.core{cursor:pointer}
+
+.br{opacity:0;animation:fade .6s ease-out forwards;transition:opacity .35s;cursor:pointer}
+.focus .br:not(.on),.focus .x{opacity:.1 !important}
+.x{opacity:0;animation:fade .8s 3.8s forwards;transition:opacity .35s}
+
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<svg id="map" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+  <g id="core" class="core">
+    <circle cx="800" cy="450" r="138" fill="#c8211a"/>
+    <text class="t1" x="809" y="400" fill="#fff" text-anchor="middle">为什么说</text>
+    <text class="t2" x="800" y="476" fill="#fff" text-anchor="middle">不改革</text>
+    <text class="t3" x="800" y="526" fill="#fff" text-anchor="middle">就是死路一条</text>
+  </g>
+</svg>
+
+<script>
+const B=[
+ {no:'01',lab:'背景',sub:'70年代末',side:'R',y:140,kids:[
+   {t:'建立起比较完整的工业体系'},
+   {t:'经济基础薄弱，一些农民还在为{吃饱饭}发愁'},
+   {t:'老办法不适应实际：{有力使不出}'}
+ ]},
+ {no:'02',lab:'转折',sub:'1978',side:'R',y:450,kids:[
+   {t:'12月 中央工作会议',leaf:'邓小平：不及时改革，现代化建设会面临严重困难'},
+   {t:'十一届三中全会',leaf:'权力过于集中 → 让地方和企业有更多经营管理自主权'}
+ ]},
+ {no:'03',lab:'工厂',sub:'宁江机床厂',side:'R',y:742,kids:[
+   {t:'计划 314 台，物资部门说只卖得掉 {165} 台'},
+   {t:'要用设备的手表厂、仪器厂却{买不到}'},
+   {t:'症结：统一分配，产需见不了面'},
+   {t:'1979.6.25 登报，接受用户直接订货'},
+   {big:'1300+',t:' 台供货合同，不到两个月'}
+ ]},
+ {no:'04',lab:'农村',sub:'顶云公社',side:'L',y:742,kids:[
+   {t:'平均主义：干多干少{报酬差不多}'},
+   {t:'1978 年试行“定产到组、超产奖励”'},
+   {t:'土地仍归集体，统一收获分配'},
+   {big:'+27.2%',t:' 16 个生产队粮食增产'},
+   {t:'全国粮食 3.05 → {4.07} 亿吨',leaf:'1978—1984，改革、提价与多年积累共同作用'}
+ ]},
+ {no:'05',lab:'本质',sub:'邓小平',side:'L',y:450,kids:[
+   {t:'解放生产力',leaf:'扫除发展生产的障碍（1985）'},
+   {t:'社会主义制度的自我完善',leaf:'国营仍是国营，土地仍归集体，变的是办法'}
+ ]},
+ {no:'06',lab:'结论',sub:'所以',side:'L',y:140,kids:[
+   {t:'问题{拖不得}',leaf:'办法妨碍了生产却不调整，生活就难改善'},
+   {t:'改革不是一改就灵'},
+   {t:'从实际困难出发，一点一点摸索'}
+ ]}
+];
+
+const NS='http://www.w3.org/2000/svg', svg=document.getElementById('map');
+const C={x:800,y:450,r:138}, LX={R:962,L:638}, KX={R:1180,L:420};
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e;}
+function rich(t,str){
+  str.split(/(\{[^}]+\})/).forEach(s=>{if(!s)return;
+    const sp=el('tspan',{},t);
+    if(s[0]==='{'){sp.setAttribute('class','em');sp.textContent=s.slice(1,-1);}else sp.textContent=s;});
+}
+function line(x1,y1,x2,y2,cls,delay){const p=el('path',{d:`M${x1},${y1} L${x2},${y2}`,class:cls+' draw',pathLength:1});p.style.animationDelay=delay+'s';return p;}
+function curve(d,cls,delay,g){const p=el('path',{d,class:cls+' draw',pathLength:1},g);p.style.animationDelay=delay+'s';return p;}
+
+function W(t){return Math.max(t.getBBox().width,t.getComputedTextLength());}
+function build(){
+/* 共同点：工厂 ↔ 农村 */
+const x=el('g',{class:'x'});
+el('path',{class:'link',d:'M965,770 C900,880 700,880 635,770'},x);
+el('text',{class:'link-s',x:800,y:806,'text-anchor':'middle'},x).textContent='共同点';
+el('text',{class:'link-t',x:800,y:836,'text-anchor':'middle'},x).textContent='办法不改，已有条件发挥不出来';
+
+B.forEach((b,i)=>{
+  const g=el('g',{class:'br','data-k':i+1}); g.style.animationDelay=(0.6+i*0.5)+'s';
+  const R=b.side==='R', s=R?1:-1, anc=R?'start':'end', d0=0.6+i*0.5;
+  const uy=b.y+14;
+
+  /* 主题 */
+  el('text',{class:'no',x:LX[b.side],y:b.y-44,'text-anchor':anc},g).textContent=b.no;
+  const sb=el('text',{class:'sub',x:LX[b.side]+s*30,y:b.y-44,'text-anchor':anc},g); sb.textContent=b.sub;
+  const lb=el('text',{class:'lab',x:LX[b.side],y:b.y,'text-anchor':anc},g); lb.textContent=b.lab;
+  const lw=W(lb), ex=LX[b.side]+s*lw;
+
+  /* 主干：圆心外沿 → 主题下划线 */
+  const a=Math.atan2(uy-C.y,(LX[b.side]-C.x)), sx=C.x+Math.cos(a)*(C.r-4), sy=C.y+Math.sin(a)*(C.r-4);
+  curve(`M${sx},${sy} C${sx+Math.cos(a)*70},${sy+Math.sin(a)*70} ${LX[b.side]-s*70},${uy} ${LX[b.side]},${uy}`,'trunk',d0,g);
+  const mr=line(LX[b.side],uy,ex,uy,'rule main',d0+.35); g.appendChild(mr);
+
+  /* 分支 */
+  const H=b.kids.map(k=>k.big?72:k.leaf?68:46), tot=H.reduce((p,q)=>p+q,0);
+  let cy=b.y-tot/2+4;
+  b.kids.forEach((k,j)=>{
+    const base=cy+(k.big?54:30); cy+=H[j];
+    const t=el('text',{class:'kid',x:KX[b.side],y:base,'text-anchor':anc},g);
+    if(k.big){const bs=el('tspan',{class:'big'},t);bs.textContent=k.big;}
+    rich(t,k.t);
+    let w=W(t);
+    if(k.leaf){const lf=el('text',{class:'leaf',x:KX[b.side],y:base+33,'text-anchor':anc},g);lf.textContent=k.leaf;w=Math.max(w,W(lf));}
+    const ky=base+9, kd=d0+.55+j*.08;
+    curve(`M${ex},${uy} C${ex+s*80},${uy} ${KX[b.side]-s*80},${ky} ${KX[b.side]},${ky}`,'twig',kd,g);
+    g.appendChild(line(KX[b.side],ky,KX[b.side]+s*w,ky,'rule',kd+.25));
+  });
+});
+
+/* 中心 */
+const core=document.getElementById('core');svg.appendChild(core);
+
+/* 适配 + 聚焦 */
+function fit(){const k=Math.min(innerWidth/1600,innerHeight/900);svg.style.transform=`translate(-50%,-50%) scale(${k})`;}
+addEventListener('resize',fit);fit();
+let cur=0;
+function focus(k){cur=k;svg.classList.toggle('focus',k>0);
+  svg.querySelectorAll('.br').forEach(g=>g.classList.toggle('on',+g.dataset.k===k));}
+addEventListener('keydown',e=>{
+  if(e.key>='1'&&e.key<='6')focus(+e.key===cur?0:+e.key);
+  else if(e.key==='Escape'||e.key==='0')focus(0);
+  else if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();focus(cur>=6?0:cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();focus(cur<=0?6:cur-1);}
+});
+svg.querySelectorAll('.br').forEach(g=>g.addEventListener('click',()=>focus(+g.dataset.k===cur?0:+g.dataset.k)));
+core.addEventListener('click',()=>focus(0));
+}
+let built=false;function go(){if(built)return;built=true;build();}
+Promise.race([document.fonts?document.fonts.ready:Promise.resolve(),new Promise(r=>setTimeout(r,400))]).then(go);
+</script>
+</body>
+</html>
